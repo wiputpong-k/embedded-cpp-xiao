@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="en/">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Embedded C++ บน XIAO</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -39,6 +40,8 @@ a { color: var(--accent); }
 .prog { flex: 0 0 72px; height: 6px; background: var(--code); border-radius: 3px; overflow: hidden; }
 .pf { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
 .pc { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lang { flex: none; font: 500 13px var(--body); color: var(--mask); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; }
+.lang:hover { border-color: var(--mask); }
 
 .wrap { max-width: 820px; margin: 0 auto; padding-block: 8px 64px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -149,12 +152,14 @@ details[open] summary { color: var(--accent); }
 <a href="#top" class="brand m">XIAO·C++</a>
 <select id="jump" aria-label="ไปที่บทเรียน"><option value="top">สารบัญ</option><option value="l00">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="l01">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="l02">02 · Reference, const และ constexpr แทน #define</option><option value="l03">03 · namespace, overloading, enum class</option><option value="l04">04 · class: encapsulation และ constructor</option><option value="l05">05 · RAII และ destructor</option><option value="l06">06 · ปุ่มกด, debounce และ state machine</option><option value="l07">07 · Inheritance, virtual และ interface</option><option value="l08">08 · Template: RingBuffer&lt;T, N&gt;</option><option value="l09">09 · หน่วยความจำใน embedded</option><option value="l10">10 · Interrupt, volatile และ lambda</option><option value="l11">11 · Mini project: cooperative scheduler</option><option value="l12">12 · Git พื้นฐาน: add, commit, log</option><option value="l13">13 · Branch, merge และแก้ conflict</option><option value="l14">14 · GitHub: push และ Pull Request</option><option value="l15">15 · แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC</option><option value="l16">16 · CI ด้วย GitHub Actions</option><option value="l17">17 · CD: release firmware อัตโนมัติด้วย tag</option><option value="l18">18 · Capstone และเตรียมสัมภาษณ์</option></select>
 <div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc">0/19</span>
+<a href="en/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
 </div></div>
 <main class="wrap" id="top">
 <header class="hero">
 <p class="eyebrow m">nRF52840 · Cortex-M4F · 19 บท · วันละ 20–30 นาที</p>
 <h1>Embedded C++ บน XIAO</h1>
 <p class="lede">ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้ repo ที่ใช้เป็น portfolio ตอนสมัครงานสาย firmware</p>
+
 </header>
 <section class="ov">
 <div class="ovg">
@@ -1116,6 +1121,15 @@ git push origin v0.1.0</code></pre></div>
   jump.addEventListener('change', function () {
     var el = document.getElementById(jump.value);
     if (el) el.scrollIntoView();
+  });
+  // Language switch: carry the lesson currently on screen over to the other page.
+  var lang = document.getElementById('lang');
+  if (lang) lang.addEventListener('click', function () {
+    var cur = location.hash;
+    document.querySelectorAll('.lesson').forEach(function (s) {
+      if (s.getBoundingClientRect().top < window.innerHeight / 3) cur = '#' + s.id;
+    });
+    if (cur) lang.href = lang.href.split('#')[0] + cur;
   });
   render();
   if (location.hash) {

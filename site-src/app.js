@@ -28,6 +28,15 @@
     var el = document.getElementById(jump.value);
     if (el) el.scrollIntoView();
   });
+  // Language switch: carry the lesson currently on screen over to the other page.
+  var lang = document.getElementById('lang');
+  if (lang) lang.addEventListener('click', function () {
+    var cur = location.hash;
+    document.querySelectorAll('.lesson').forEach(function (s) {
+      if (s.getBoundingClientRect().top < window.innerHeight / 3) cur = '#' + s.id;
+    });
+    if (cur) lang.href = lang.href.split('#')[0] + cur;
+  });
   render();
   if (location.hash) {
     var t = document.getElementById(location.hash.slice(1));

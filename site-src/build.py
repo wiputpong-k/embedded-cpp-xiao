@@ -1,5 +1,13 @@
-import html, os
+import html, os, runpy
 D = os.path.dirname(os.path.abspath(__file__))
+LANGS = ('th', 'en')
+# Running `python build.py` re-runs this file once per language with LANG preset.
+if 'LANG' not in globals():
+    for l in LANGS: runpy.run_path(os.path.abspath(__file__), init_globals={'LANG': l}, run_name='__build__')
+    raise SystemExit
+def T(th, en=None):
+    """Bilingual text: Thai is the source; English falls back to Thai until translated."""
+    return en if LANG == 'en' and en is not None else th
 def rd(p): return open(os.path.join(D, 'hw', p), encoding='utf-8').read().rstrip()
 RING, DEB, TEST = rd('firmware/src/RingBuffer.h'), rd('firmware/src/Debouncer.h'), rd('test/test_main.cpp')
 
@@ -266,19 +274,19 @@ SVG_ROAD = flow([
 
 # ---------------- lessons ----------------
 MODS = {
- 'S': 'โมดูล 0 · เตรียมเครื่อง',
- 'A': 'โมดูล A · C++ สำหรับคนเขียน C',
- 'B': 'โมดูล B · Git และ GitHub',
- 'C': 'โมดูล C · Testable code และ CI/CD',
+ 'S': T('โมดูล 0 · เตรียมเครื่อง', 'Module 0 · Setup'),
+ 'A': T('โมดูล A · C++ สำหรับคนเขียน C', 'Module A · C++ for C programmers'),
+ 'B': T('โมดูล B · Git และ GitHub', 'Module B · Git and GitHub'),
+ 'C': T('โมดูล C · Testable code และ CI/CD', 'Module C · Testable code and CI/CD'),
 }
 LESSONS = []
 def lesson(num, mod, title, mins, hw, body):
     LESSONS.append(dict(num=num, mod=mod, title=title, mins=mins, hw=hw, body=body))
 
 def qa(pairs):
-    return '<h3>เช็กความเข้าใจ</h3>' + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in pairs)
-def iv(t): return f'<aside class="iv"><b>มุมสัมภาษณ์</b><p>{t}</p></aside>'
-def goal(t): return f'<p class="goal"><b>เป้าหมาย</b> {t}</p>'
+    return f'<h3>{T("เช็กความเข้าใจ", "Check your understanding")}</h3>' + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in pairs)
+def iv(t): return f'<aside class="iv"><b>{T("มุมสัมภาษณ์", "Interview angle")}</b><p>{t}</p></aside>'
+def goal(t): return f'<p class="goal"><b>{T("เป้าหมาย", "Goal")}</b> {t}</p>'
 def vs(c, cpp): return f'<div class="vs"><div><span class="tag">C</span><p>{c}</p></div><div><span class="tag t2">C++</span><p>{cpp}</p></div></div>'
 
 lesson('00', 'S', 'ติดตั้งเครื่องมือ + Blink แรก', 30, 'บอร์ดอย่างเดียว', goal('IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW') + '''
@@ -932,8 +940,9 @@ lesson('18', 'C', 'Capstone และเตรียมสัมภาษณ์'
 ]) + fig(SVG_ROAD, 'เส้นทางต่อหลังจบคอร์ส') + iv('ประสบการณ์ PCB, failure analysis และ V&amp;V ที่มีอยู่คือจุดแข็งที่คนสาย firmware ล้วนไม่มี ใน portfolio ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร'))
 
 # ---------------- page ----------------
-WEEKS = [('สัปดาห์ 1', ['00', '01', '02', '03', '04']), ('สัปดาห์ 2', ['05', '06', '07', '08', '09']),
-         ('สัปดาห์ 3', ['10', '11', '12', '13', '14']), ('สัปดาห์ 4', ['15', '16', '17', '18'])]
+WK = T('สัปดาห์', 'Week')
+WEEKS = [(f'{WK} 1', ['00', '01', '02', '03', '04']), (f'{WK} 2', ['05', '06', '07', '08', '09']),
+         (f'{WK} 3', ['10', '11', '12', '13', '14']), (f'{WK} 4', ['15', '16', '17', '18'])]
 byn = {l['num']: l for l in LESSONS}
 plan = ''
 for w, nums in WEEKS:
@@ -944,14 +953,16 @@ opts = ''.join(f'<option value="l{l["num"]}">{l["num"]} · {html.escape(l["title
 secs = ''
 for l in LESSONS:
     secs += f'''<section class="lesson" id="l{l["num"]}">
-<header class="lh"><span class="big m">{l["num"]}</span><div class="lhm"><p class="mod">{MODS[l["mod"]]}</p><h2>{html.escape(l["title"])}</h2><p class="meta">{l["mins"]} นาที · ฮาร์ดแวร์: {l["hw"]}</p></div></header>
+<header class="lh"><span class="big m">{l["num"]}</span><div class="lhm"><p class="mod">{MODS[l["mod"]]}</p><h2>{html.escape(l["title"])}</h2><p class="meta">{l["mins"]} {T("นาที · ฮาร์ดแวร์", "min · Hardware")}: {l["hw"]}</p></div></header>
 {l["body"]}
-<label class="done"><input type="checkbox" id="done-l{l["num"]}" data-l="l{l["num"]}"> เรียนบทนี้จบแล้ว</label>
+<label class="done"><input type="checkbox" id="done-l{l["num"]}" data-l="l{l["num"]}"> {T("เรียนบทนี้จบแล้ว", "I finished this lesson")}</label>
 </section>'''
 
 CSS = open(os.path.join(D, 'style.css'), encoding='utf-8').read()
 JS = open(os.path.join(D, 'app.js'), encoding='utf-8').read()
-page = f'''<title>Embedded C++ บน XIAO</title>
+# th lives at the site root, en under /en/
+OTHER = {'th': ('en/', 'EN', 'Read in English'), 'en': ('../', 'ไทย', 'อ่านภาษาไทย')}[LANG]
+page = f'''<title>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -962,44 +973,55 @@ page = f'''<title>Embedded C++ บน XIAO</title>
 </defs></svg>
 <div class="bar"><div class="barin">
 <a href="#top" class="brand m">XIAO·C++</a>
-<select id="jump" aria-label="ไปที่บทเรียน"><option value="top">สารบัญ</option>{opts}</select>
-<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc">0/19</span>
+<select id="jump" aria-label="{T('ไปที่บทเรียน', 'Go to lesson')}"><option value="top">{T('สารบัญ', 'Contents')}</option>{opts}</select>
+<div class="prog" aria-label="{T('ความคืบหน้า', 'Progress')}"><div class="pf" id="pf"></div></div><span class="pc m" id="pc">0/19</span>
+<a href="{OTHER[0]}" class="lang" id="lang" hreflang="{'en' if LANG == 'th' else 'th'}" aria-label="{OTHER[2]}">{OTHER[1]}</a>
 </div></div>
 <main class="wrap" id="top">
 <header class="hero">
-<p class="eyebrow m">nRF52840 · Cortex-M4F · 19 บท · วันละ 20–30 นาที</p>
-<h1>Embedded C++ บน XIAO</h1>
-<p class="lede">ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้ repo ที่ใช้เป็น portfolio ตอนสมัครงานสาย firmware</p>
+<p class="eyebrow m">nRF52840 · Cortex-M4F · {T('19 บท · วันละ 20–30 นาที', '19 lessons · 20–30 min a day')}</p>
+<h1>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</h1>
+<p class="lede">{T('ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้ repo ที่ใช้เป็น portfolio ตอนสมัครงานสาย firmware',
+ 'C++ foundations for people who already write C, learned hands-on with a real board, followed by Git, GitHub and CI/CD, ending with a repo you can use as a portfolio when applying for firmware jobs.')}</p>
+{T('', '<p class="note">The English translation is in progress. Lessons that are not translated yet are shown in Thai.</p>')}
 </header>
 <section class="ov">
 <div class="ovg">
-<div><h2>วิธีเรียน</h2><p>เรียนวันละบทตามลำดับ แต่ละบทมี เป้าหมาย → แนวคิด + diagram → hands-on → คำถามเช็ก ทุกบทต่อยอดจากบทก่อน โค้ดในบท 6, 8, 11 จะถูกนำไป test และ build ใน CI ช่วงท้าย</p>
-<p>บท 00–11 ใช้ Arduino IDE 2 + core Seeed nRF52 (non-mbed) เพราะเร็วที่สุดในการเห็นผล หลักภาษาเหมือนกันทุก framework เมื่อจบแล้วย้ายไป nRF Connect SDK / Zephyr ได้ทันที</p></div>
-<div><h2>อุปกรณ์</h2><ul class="kit">
-<li><b>1</b> Seeed XIAO nRF52840 (Sense) + สาย USB-C แบบ data</li>
-<li><b>1</b> breadboard + สาย jumper</li>
+<div><h2>{T('วิธีเรียน', 'How to study')}</h2><p>{T('เรียนวันละบทตามลำดับ แต่ละบทมี เป้าหมาย → แนวคิด + diagram → hands-on → คำถามเช็ก ทุกบทต่อยอดจากบทก่อน โค้ดในบท 6, 8, 11 จะถูกนำไป test และ build ใน CI ช่วงท้าย',
+ 'Take one lesson a day, in order. Each lesson goes goal → concept + diagram → hands-on → check questions, and builds on the one before. The code from lessons 6, 8 and 11 is tested and built in CI near the end.')}</p>
+<p>{T('บท 00–11 ใช้ Arduino IDE 2 + core Seeed nRF52 (non-mbed) เพราะเร็วที่สุดในการเห็นผล หลักภาษาเหมือนกันทุก framework เมื่อจบแล้วย้ายไป nRF Connect SDK / Zephyr ได้ทันที',
+ 'Lessons 00–11 use Arduino IDE 2 with the Seeed nRF52 (non-mbed) core, the fastest way to see results. The language rules are the same in every framework, so you can move to nRF Connect SDK / Zephyr right after.')}</p></div>
+<div><h2>{T('อุปกรณ์', 'Parts')}</h2><ul class="kit">
+<li><b>1</b> Seeed XIAO nRF52840 (Sense) + {T('สาย USB-C แบบ data', 'USB-C data cable')}</li>
+<li><b>1</b> breadboard + {T('สาย jumper', 'jumper wires')}</li>
 <li><b>1</b> LED 5 mm + R 1 kΩ</li>
-<li><b>1</b> ปุ่มกด tactile</li>
+<li><b>1</b> {T('ปุ่มกด tactile', 'tactile push button')}</li>
 <li><b>1</b> potentiometer 10 kΩ</li>
-<li><b>—</b> Git, Arduino IDE 2, arduino-cli, บัญชี GitHub</li></ul></div>
+<li><b>—</b> Git, Arduino IDE 2, arduino-cli, {T('บัญชี GitHub', 'GitHub account')}</li></ul></div>
 </div>
 <div class="plan">{plan}</div>
 </section>
 {secs}
 <section class="author" id="author">
-<p class="mod">ผู้จัดทำ</p>
+<p class="mod">{T('ผู้จัดทำ', 'Author')}</p>
 <h2>Wiputpong Klinsukon (Ake)</h2>
-<p>Hardware &amp; firmware engineer ประสบการณ์กว่า 13 ปีในงานออกแบบวงจร, PCB, firmware C/C++, การทดสอบ V&amp;V และ failure analysis ของอุปกรณ์ wearable และ IoT เขียนคอร์สนี้จากการเรียนจริงบนบอร์ด XIAO nRF52840 เพื่อแบ่งปันให้คนที่อยากเริ่มสาย embedded</p>
-<p class="links"><span>GitHub: <a href="https://github.com/wiputpong-k">github.com/wiputpong-k</a></span><span>ข้อเสนอแนะ: <a href="https://github.com/wiputpong-k/embedded-cpp-xiao/issues">เปิด Issue ใน repo ของคอร์ส</a></span></p>
+<p>{T('Hardware &amp; firmware engineer ประสบการณ์กว่า 13 ปีในงานออกแบบวงจร, PCB, firmware C/C++, การทดสอบ V&amp;V และ failure analysis ของอุปกรณ์ wearable และ IoT เขียนคอร์สนี้จากการเรียนจริงบนบอร์ด XIAO nRF52840 เพื่อแบ่งปันให้คนที่อยากเริ่มสาย embedded',
+ 'Hardware &amp; firmware engineer with over 13 years in circuit design, PCB, C/C++ firmware, V&amp;V testing and failure analysis for wearable and IoT devices. I wrote this course while learning on the XIAO nRF52840 myself, to share it with anyone starting out in embedded.')}</p>
+<p class="links"><span>GitHub: <a href="https://github.com/wiputpong-k">github.com/wiputpong-k</a></span><span>{T('ข้อเสนอแนะ', 'Feedback')}: <a href="https://github.com/wiputpong-k/embedded-cpp-xiao/issues">{T('เปิด Issue ใน repo ของคอร์ส', 'open an issue in the course repo')}</a></span></p>
 </section>
-<footer class="ft"><p>ตรวจแล้ว: Debouncer.h, RingBuffer.h และ test_main.cpp คอมไพล์ด้วย g++ 13 (-Wall -Wextra -Werror) และ test ผ่านทั้งหมด ส่วนโค้ดบนบอร์ดและ workflow ให้ยืนยัน FQBN กับเวอร์ชัน core ในเครื่องของคุณ</p></footer>
+<footer class="ft"><p>{T('ตรวจแล้ว: Debouncer.h, RingBuffer.h และ test_main.cpp คอมไพล์ด้วย g++ 13 (-Wall -Wextra -Werror) และ test ผ่านทั้งหมด ส่วนโค้ดบนบอร์ดและ workflow ให้ยืนยัน FQBN กับเวอร์ชัน core ในเครื่องของคุณ',
+ 'Verified: Debouncer.h, RingBuffer.h and test_main.cpp compile with g++ 13 (-Wall -Wextra -Werror) and all tests pass. For the on-board code and workflows, confirm the FQBN and core version on your own machine.')}</p></footer>
 </main>
 <script>{JS}</script>'''
-open(os.path.join(D, 'course.html'), 'w', encoding='utf-8').write(page)
-print(len(page))
-std = ('<!doctype html>\n<html lang="th">\n<head>\n<meta charset="utf-8">\n'
+sfx = '' if LANG == 'th' else '-en'
+open(os.path.join(D, f'course{sfx}.html'), 'w', encoding='utf-8').write(page)
+print(LANG, len(page))
+alt = {'th': ('./', 'en/'), 'en': ('../', './')}[LANG]
+std = (f'<!doctype html>\n<html lang="{LANG}">\n<head>\n<meta charset="utf-8">\n'
        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+       f'<link rel="alternate" hreflang="th" href="{alt[0]}"><link rel="alternate" hreflang="en" href="{alt[1]}">\n'
        '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n'
        + page.replace('<div class="bar">', '</head>\n<body>\n<div class="bar">', 1) + '\n</body>\n</html>\n')
-os.makedirs(os.path.join(D, 'pages'), exist_ok=True)
-open(os.path.join(D, 'pages', 'index.html'), 'w', encoding='utf-8').write(std)
+out = os.path.join(D, 'pages', '' if LANG == 'th' else 'en')
+os.makedirs(out, exist_ok=True)
+open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(std)
