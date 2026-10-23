@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Embedded C++ บน XIAO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>/* Layout: single reading column, sticky progress bar, lessons stacked like a lab notebook; copper-on-soldermask palette */
+:root {
+  --bg: #F2F5F1; --surface: #FFFFFF; --fg: #17221C; --muted: #5B6B61; --line: #C9D4CB;
+  --accent: #A14E1B; --accent-soft: #F7E7DB; --mask: #1D6847; --mask-soft: #DFEEE5; --code: #E8EEE9;
+  --display: "Chakra Petch", "IBM Plex Sans Thai", system-ui, sans-serif;
+  --body: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0E1512; --surface: #141E19; --fg: #E1E9E3; --muted: #95A79C; --line: #2A3A31;
+  --accent: #E59B64; --accent-soft: #3A2518; --mask: #6DC79B; --mask-soft: #15301F; --code: #101914; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0E1512; --surface: #141E19; --fg: #E1E9E3; --muted: #95A79C; --line: #2A3A31;
+  --accent: #E59B64; --accent-soft: #3A2518; --mask: #6DC79B; --mask-soft: #15301F; --code: #101914; color-scheme: dark; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { background: var(--bg); color: var(--fg); font: 16px/1.75 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.m { font-family: var(--mono); }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.barin { max-width: 820px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.brand { font-weight: 500; font-size: 13px; color: var(--mask); text-decoration: none; letter-spacing: .04em; white-space: nowrap; }
+#jump { flex: 1 1 auto; min-width: 0; font: 14px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+.prog { flex: 0 0 72px; height: 6px; background: var(--code); border-radius: 3px; overflow: hidden; }
+.pf { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.pc { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.wrap { max-width: 820px; margin: 0 auto; padding-block: 8px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.hero { padding-block: 40px 28px; border-bottom: 2px solid var(--fg); }
+.eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--mask); text-transform: uppercase; margin: 0 0 10px; }
+h1 { font: 700 clamp(34px, 7vw, 56px)/1.1 var(--display); margin: 0 0 14px; text-wrap: balance; letter-spacing: -.01em; }
+.lede { font-size: 18px; color: var(--muted); max-width: 62ch; margin: 0; }
+
+.ov { padding-block: 28px; }
+.ovg { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; }
+.ovg > div { min-width: 0; }
+.ov h2 { font: 600 20px/1.3 var(--display); margin: 0 0 8px; }
+.ov p { margin: 0 0 12px; max-width: 65ch; }
+.kit { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.kit li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 15px; }
+.kit b { font-family: var(--mono); color: var(--accent); font-weight: 500; }
+.plan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px; margin-top: 24px; }
+.wk { min-width: 0; }
+.wk h3 { font: 600 13px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--mask); margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.wk ol { list-style: none; padding: 0; margin: 0; }
+.wk li { display: flex; align-items: center; gap: 8px; }
+.wk a { flex: 1; min-width: 0; display: flex; gap: 10px; align-items: baseline; text-decoration: none; color: var(--fg); padding: 5px 0; font-size: 15px; }
+.wk a:hover .pt { color: var(--accent); }
+.pn2 { color: var(--muted); font-size: 12px; }
+.pt { flex: 1; min-width: 0; }
+.pm2 { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line); flex: none; }
+.dot.on { background: var(--accent); border-color: var(--accent); }
+
+.lesson { padding-block: 40px 28px; border-top: 1px solid var(--line); }
+.lh { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+.big { font-size: 40px; line-height: 1; color: var(--accent); font-weight: 500; padding-top: 4px; }
+.lhm { min-width: 0; }
+.mod { margin: 0; font-size: 12px; letter-spacing: .06em; color: var(--mask); text-transform: uppercase; }
+.lesson h2 { font: 600 clamp(22px, 4.2vw, 28px)/1.25 var(--display); margin: 2px 0 4px; text-wrap: balance; }
+.meta { margin: 0; color: var(--muted); font-size: 14px; }
+.lesson h3 { font: 600 17px var(--display); margin: 24px 0 8px; }
+.lesson p, .lesson li { max-width: 68ch; }
+.goal { background: var(--mask-soft); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; }
+.goal b { color: var(--mask); margin-right: 6px; }
+.note { font-size: 15px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; }
+.il { font-family: var(--mono); font-size: .86em; background: var(--code); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 16px 0; }
+.vs > div { background: var(--surface); padding: 12px 14px; min-width: 0; }
+.vs p { margin: 6px 0 0; font-size: 15px; }
+.tag { font: 500 11px var(--mono); letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+.tag.t2 { color: var(--accent); border-color: var(--accent); }
+
+.code { margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--code); overflow: hidden; }
+.cl { font: 12px var(--mono); color: var(--muted); padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.code pre { margin: 0; padding: 12px; overflow-x: auto; }
+.code code { font: 13px/1.6 var(--mono); white-space: pre; }
+
+.dg { margin: 20px 0; }
+.sv { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.sv svg { display: block; width: 100%; max-width: 520px; height: auto; margin: 0 auto; }
+.dg figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
+svg text { font-family: var(--body); font-size: 13px; fill: var(--fg); }
+svg text.m { font-family: var(--mono); }
+svg .tt { font-size: 13px; fill: var(--fg); }
+svg .sm { font-size: 11.5px; }
+svg .sub { font-size: 11px; fill: var(--muted); }
+svg .acc { fill: var(--accent); }
+svg .b { fill: var(--surface); stroke: var(--line); stroke-width: 1.3; }
+svg .ba { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.3; }
+svg .bm { fill: var(--mask-soft); stroke: var(--mask); stroke-width: 1.3; }
+svg .dash { stroke-dasharray: 4 3; }
+svg .ln { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .la { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+svg .w { stroke: var(--fg); stroke-width: 2; fill: none; }
+svg .w.acc { stroke: var(--accent); fill: none; }
+svg .pn { fill: var(--surface); stroke: var(--muted); stroke-width: 1.5; }
+svg .pa { fill: var(--accent); stroke: var(--accent); }
+svg .pm { fill: var(--mask); stroke: var(--mask); }
+.mk { fill: var(--muted); } .mka { fill: var(--accent); }
+
+details { border: 1px solid var(--line); border-radius: 8px; margin: 8px 0; background: var(--surface); }
+summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
+details p { margin: 0; padding: 0 14px 12px; color: var(--fg); }
+details[open] summary { color: var(--accent); }
+.iv { margin: 20px 0 0; padding: 12px 14px; border: 1px dashed var(--accent); border-radius: 8px; }
+.iv b { font: 600 13px var(--display); letter-spacing: .06em; color: var(--accent); text-transform: uppercase; }
+.iv p { margin: 4px 0 0; }
+.check { padding-left: 20px; }
+.done { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font-size: 15px; background: var(--surface); }
+.done input { accent-color: var(--accent); width: 18px; height: 18px; }
+.ft { border-top: 2px solid var(--fg); padding-top: 16px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 640px) {
+  .ovg, .plan, .vs { grid-template-columns: 1fr; }
+  .big { font-size: 30px; }
+  .brand { display: none; }
+  .sv svg { max-width: 100%; }
+}
+.author { padding-block: 32px; border-top: 2px solid var(--fg); }
+.author h2 { font: 600 24px/1.3 var(--display); margin: 2px 0 8px; }
+.author p { max-width: 68ch; margin: 0 0 10px; }
+.links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 15px; color: var(--muted); }
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+</head>
+<body>
+<div class="bar"><div class="barin">
+<a href="#top" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="top">สารบัญ</option><option value="l00">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="l01">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="l02">02 · Reference, const และ constexpr แทน #define</option><option value="l03">03 · namespace, overloading, enum class</option><option value="l04">04 · class: encapsulation และ constructor</option><option value="l05">05 · RAII และ destructor</option><option value="l06">06 · ปุ่มกด, debounce และ state machine</option><option value="l07">07 · Inheritance, virtual และ interface</option><option value="l08">08 · Template: RingBuffer&lt;T, N&gt;</option><option value="l09">09 · หน่วยความจำใน embedded</option><option value="l10">10 · Interrupt, volatile และ lambda</option><option value="l11">11 · Mini project: cooperative scheduler</option><option value="l12">12 · Git พื้นฐาน: add, commit, log</option><option value="l13">13 · Branch, merge และแก้ conflict</option><option value="l14">14 · GitHub: push และ Pull Request</option><option value="l15">15 · แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC</option><option value="l16">16 · CI ด้วย GitHub Actions</option><option value="l17">17 · CD: release firmware อัตโนมัติด้วย tag</option><option value="l18">18 · Capstone และเตรียมสัมภาษณ์</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc">0/19</span>
+</div></div>
+<main class="wrap" id="top">
+<header class="hero">
+<p class="eyebrow m">nRF52840 · Cortex-M4F · 19 บท · วันละ 20–30 นาที</p>
+<h1>Embedded C++ บน XIAO</h1>
+<p class="lede">ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้ repo ที่ใช้เป็น portfolio ตอนสมัครงานสาย firmware</p>
+</header>
+<section class="ov">
+<div class="ovg">
+<div><h2>วิธีเรียน</h2><p>เรียนวันละบทตามลำดับ แต่ละบทมี เป้าหมาย → แนวคิด + diagram → hands-on → คำถามเช็ก ทุกบทต่อยอดจากบทก่อน โค้ดในบท 6, 8, 11 จะถูกนำไป test และ build ใน CI ช่วงท้าย</p>
+<p>บท 00–11 ใช้ Arduino IDE 2 + core Seeed nRF52 (non-mbed) เพราะเร็วที่สุดในการเห็นผล หลักภาษาเหมือนกันทุก framework เมื่อจบแล้วย้ายไป nRF Connect SDK / Zephyr ได้ทันที</p></div>
+<div><h2>อุปกรณ์</h2><ul class="kit">
+<li><b>1</b> Seeed XIAO nRF52840 (Sense) + สาย USB-C แบบ data</li>
+<li><b>1</b> breadboard + สาย jumper</li>
+<li><b>1</b> LED 5 mm + R 1 kΩ</li>
+<li><b>1</b> ปุ่มกด tactile</li>
+<li><b>1</b> potentiometer 10 kΩ</li>
+<li><b>—</b> Git, Arduino IDE 2, arduino-cli, บัญชี GitHub</li></ul></div>
+</div>
+<div class="plan"><div class="wk"><h3>สัปดาห์ 1</h3><ol><li><a href="#l00"><span class="pn2 m">00</span><span class="pt">ติดตั้งเครื่องมือ + Blink แรก</span><span class="pm2">30′</span></a><span class="dot" data-for="l00"></span></li><li><a href="#l01"><span class="pn2 m">01</span><span class="pt">.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</span><span class="pm2">20′</span></a><span class="dot" data-for="l01"></span></li><li><a href="#l02"><span class="pn2 m">02</span><span class="pt">Reference, const และ constexpr แทน #define</span><span class="pm2">25′</span></a><span class="dot" data-for="l02"></span></li><li><a href="#l03"><span class="pn2 m">03</span><span class="pt">namespace, overloading, enum class</span><span class="pm2">20′</span></a><span class="dot" data-for="l03"></span></li><li><a href="#l04"><span class="pn2 m">04</span><span class="pt">class: encapsulation และ constructor</span><span class="pm2">30′</span></a><span class="dot" data-for="l04"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 2</h3><ol><li><a href="#l05"><span class="pn2 m">05</span><span class="pt">RAII และ destructor</span><span class="pm2">25′</span></a><span class="dot" data-for="l05"></span></li><li><a href="#l06"><span class="pn2 m">06</span><span class="pt">ปุ่มกด, debounce และ state machine</span><span class="pm2">30′</span></a><span class="dot" data-for="l06"></span></li><li><a href="#l07"><span class="pn2 m">07</span><span class="pt">Inheritance, virtual และ interface</span><span class="pm2">25′</span></a><span class="dot" data-for="l07"></span></li><li><a href="#l08"><span class="pn2 m">08</span><span class="pt">Template: RingBuffer&lt;T, N&gt;</span><span class="pm2">30′</span></a><span class="dot" data-for="l08"></span></li><li><a href="#l09"><span class="pn2 m">09</span><span class="pt">หน่วยความจำใน embedded</span><span class="pm2">25′</span></a><span class="dot" data-for="l09"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 3</h3><ol><li><a href="#l10"><span class="pn2 m">10</span><span class="pt">Interrupt, volatile และ lambda</span><span class="pm2">25′</span></a><span class="dot" data-for="l10"></span></li><li><a href="#l11"><span class="pn2 m">11</span><span class="pt">Mini project: cooperative scheduler</span><span class="pm2">30′</span></a><span class="dot" data-for="l11"></span></li><li><a href="#l12"><span class="pn2 m">12</span><span class="pt">Git พื้นฐาน: add, commit, log</span><span class="pm2">25′</span></a><span class="dot" data-for="l12"></span></li><li><a href="#l13"><span class="pn2 m">13</span><span class="pt">Branch, merge และแก้ conflict</span><span class="pm2">25′</span></a><span class="dot" data-for="l13"></span></li><li><a href="#l14"><span class="pn2 m">14</span><span class="pt">GitHub: push และ Pull Request</span><span class="pm2">25′</span></a><span class="dot" data-for="l14"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 4</h3><ol><li><a href="#l15"><span class="pn2 m">15</span><span class="pt">แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC</span><span class="pm2">30′</span></a><span class="dot" data-for="l15"></span></li><li><a href="#l16"><span class="pn2 m">16</span><span class="pt">CI ด้วย GitHub Actions</span><span class="pm2">30′</span></a><span class="dot" data-for="l16"></span></li><li><a href="#l17"><span class="pn2 m">17</span><span class="pt">CD: release firmware อัตโนมัติด้วย tag</span><span class="pm2">25′</span></a><span class="dot" data-for="l17"></span></li><li><a href="#l18"><span class="pn2 m">18</span><span class="pt">Capstone และเตรียมสัมภาษณ์</span><span class="pm2">30′</span></a><span class="dot" data-for="l18"></span></li></ol></div></div>
+</section>
+<section class="lesson" id="l00">
+<header class="lh"><span class="big m">00</span><div class="lhm"><p class="mod">โมดูล 0 · เตรียมเครื่อง</p><h2>ติดตั้งเครื่องมือ + Blink แรก</h2><p class="meta">30 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW</p>
+<h3>ติดตั้ง</h3>
+<ol>
+<li>ติดตั้ง <b>Arduino IDE 2</b> และ <b>Git</b> (Windows: Git for Windows, เลือก editor เป็น VS Code)</li>
+<li>File → Preferences → Additional boards manager URLs ใส่<br><code class="il">https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></li>
+<li>Boards Manager ค้น <b>Seeed nRF52 Boards</b> (ตัวที่ไม่มีคำว่า mbed) แล้วติดตั้ง → เลือกบอร์ด <b>Seeed XIAO nRF52840 Sense</b></li>
+<li>ติดตั้ง <b>arduino-cli</b> ไว้ด้วย จะใช้ในบท CI แล้วรัน <code class="il">arduino-cli board listall xiao</code> จดค่า FQBN ที่ได้</li>
+</ol>
+<p class="note">เลือก core แบบ non-mbed เพราะ build เร็วกว่าและใช้ BLE library ของ Adafruit ได้ ถ้าอัปโหลดไม่ขึ้น ให้กดปุ่ม reset 2 ครั้งเร็ว ๆ เพื่อเข้า bootloader แล้วเลือกพอร์ตใหม่</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 300" role="img">
+<rect x="178" y="24" width="44" height="22" rx="5" class="b"/><text x="200" y="39" text-anchor="middle" class="sub m">USB-C</text>
+<rect x="140" y="44" width="120" height="226" rx="12" class="bm"/>
+<circle cx="200" cy="66" r="7" class="pa"/><text x="200" y="92" text-anchor="middle" class="sub">RGB LED</text><text x="200" y="105" text-anchor="middle" class="sub">active-LOW</text>
+<text x="200" y="245" text-anchor="middle" class="tt m">XIAO</text><text x="200" y="260" text-anchor="middle" class="sub m">nRF52840</text>
+<circle cx="152" cy="76" r="6" class="pa"/><text x="138" y="80" text-anchor="end" class="tt acc m">D0 / A0</text><circle cx="152" cy="104" r="6" class="pa"/><text x="138" y="108" text-anchor="end" class="tt acc m">D1</text><circle cx="152" cy="132" r="6" class="pa"/><text x="138" y="136" text-anchor="end" class="tt acc m">D2</text><circle cx="152" cy="160" r="6" class="pn"/><text x="138" y="164" text-anchor="end" class="tt m">D3</text><circle cx="152" cy="188" r="6" class="pn"/><text x="138" y="192" text-anchor="end" class="tt m">D4 / SDA</text><circle cx="152" cy="216" r="6" class="pn"/><text x="138" y="220" text-anchor="end" class="tt m">D5 / SCL</text><circle cx="152" cy="244" r="6" class="pn"/><text x="138" y="248" text-anchor="end" class="tt m">D6 / TX</text><circle cx="248" cy="76" r="6" class="pn"/><text x="262" y="80" text-anchor="start" class="tt m">5V</text><circle cx="248" cy="104" r="6" class="pa"/><text x="262" y="108" text-anchor="start" class="tt acc m">GND</text><circle cx="248" cy="132" r="6" class="pa"/><text x="262" y="136" text-anchor="start" class="tt acc m">3V3</text><circle cx="248" cy="160" r="6" class="pn"/><text x="262" y="164" text-anchor="start" class="tt m">D10 / MOSI</text><circle cx="248" cy="188" r="6" class="pn"/><text x="262" y="192" text-anchor="start" class="tt m">D9 / MISO</text><circle cx="248" cy="216" r="6" class="pn"/><text x="262" y="220" text-anchor="start" class="tt m">D8 / SCK</text><circle cx="248" cy="244" r="6" class="pn"/><text x="262" y="248" text-anchor="start" class="tt m">D7 / RX</text>
+<text x="8" y="292" class="sub">สีส้ม = ขาที่ใช้ในคอร์ส: D0 Pot · D1 ปุ่ม · D2 LED ภายนอก</text>
+</svg></div><figcaption>XIAO nRF52840 Sense: GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">blink.ino</div><pre><code>// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
+void setup() {
+  pinMode(LED_RED, OUTPUT);
+  digitalWrite(LED_RED, HIGH);   // ดับ
+}
+
+void loop() {
+  digitalWrite(LED_RED, LOW);    // ติด
+  delay(200);
+  digitalWrite(LED_RED, HIGH);   // ดับ
+  delay(800);
+}</code></pre></div>
+<p>ลองเปลี่ยนเป็น <code class="il">LED_GREEN</code> / <code class="il">LED_BLUE</code> แล้วเปิด Preferences → Show verbose output during compile เพื่อดูคำสั่ง compiler ที่ IDE เรียกจริง</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ทำไม LED_RED ติดตอนเขียน LOW?</summary><p>LED ต่อแบบ active-LOW: ขั้วบวกอยู่ที่ 3V3 ขา GPIO ทำหน้าที่ sink กระแส เมื่อขาเป็น LOW จึงมีกระแสไหล</p></details><details><summary>ทำไมต้องใช้ core non-mbed ในคอร์สนี้?</summary><p>build เร็วกว่า ใช้ Bluefruit BLE ได้ และ compile ใน CI ได้ง่าย ทั้งสอง core เขียน C++ ได้เหมือนกัน</p></details>
+<label class="done"><input type="checkbox" id="done-l00" data-l="l00"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l01">
+<header class="lh"><span class="big m">01</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</h2><p class="meta">20 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เข้าใจว่า Arduino ซ่อนอะไรไว้ และเห็น toolchain จริง</p>
+<p>ไฟล์ .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ ส่วน <code class="il">main()</code> อยู่ใน core:</p>
+<div class="code"><div class="cl">core/main.cpp (ย่อ)</div><pre><code>int main() {
+  init();          // clock, timer, USB CDC
+  setup();
+  for (;;) {
+    loop();
+  }
+}</code></pre></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 470" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">firmware.ino</text><text x="200" y="49" text-anchor="middle" class="sub">ที่คุณเขียน</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="50" rx="8" class="b"/><text x="200" y="111" text-anchor="middle" class="tt">Arduino preprocessor</text><text x="200" y="129" text-anchor="middle" class="sub">#include &lt;Arduino.h&gt; + สร้าง prototype ให้</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">firmware.ino.cpp</text><text x="200" y="209" text-anchor="middle" class="sub">กลายเป็นไฟล์ C++ ปกติ</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="ba"/><text x="200" y="271" text-anchor="middle" class="tt">arm-none-eabi-g++</text><text x="200" y="289" text-anchor="middle" class="sub">compile → .o (Cortex-M4F)</text><line x1="200" y1="302" x2="200" y2="326" class="ln" marker-end="url(#ah)"/><rect x="40" y="330" width="320" height="50" rx="8" class="b"/><text x="200" y="351" text-anchor="middle" class="tt">linker + linker script</text><text x="200" y="369" text-anchor="middle" class="sub">รวม core.a + libs → .elf</text><line x1="200" y1="382" x2="200" y2="406" class="ln" marker-end="url(#ah)"/><rect x="40" y="410" width="320" height="50" rx="8" class="bm"/><text x="200" y="431" text-anchor="middle" class="tt">objcopy / packager</text><text x="200" y="449" text-anchor="middle" class="sub">.hex · .zip (DFU) · .uf2</text></svg></div><figcaption>pipeline การ build ที่เกิดขึ้นทุกครั้งที่กด Verify</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">whoami.ino</div><pre><code>void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}             // รอ USB CDC พร้อม
+  Serial.print(&quot;__cplusplus = &quot;);  Serial.println(__cplusplus);
+  Serial.print(&quot;sizeof(int) = &quot;);  Serial.println(sizeof(int));
+  Serial.print(&quot;sizeof(void*) = &quot;);Serial.println(sizeof(void*));
+  Serial.print(&quot;sizeof(bool) = &quot;); Serial.println(sizeof(bool));
+}
+
+void loop() {}</code></pre></div>
+<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (เช่น 201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ จากนั้นดูบรรทัดท้ายของ output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = RAM แบบ static</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ถ้า __cplusplus ได้ 201103 จะใช้ if constexpr ได้ไหม?</summary><p>ไม่ได้ if constexpr เป็นของ C++17 ต้องเพิ่ม flag -std=gnu++17 หรือเลี่ยงไปใช้ template overload</p></details><details><summary>"Global variables use" นับ stack ด้วยไหม?</summary><p>ไม่นับ นับเฉพาะ .data + .bss ที่รู้ขนาดตอน link ตัวแปร local บน stack ไม่อยู่ในตัวเลขนี้</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>ถูกถามบ่อยว่า "อธิบายขั้นตอน build firmware" ให้ตอบเป็นลำดับ preprocess → compile → link (linker script กำหนด address) → objcopy → flash และบอกว่า .elf มี debug symbol ส่วน .hex/.bin คือ image ที่ลงชิป</p></aside>
+<label class="done"><input type="checkbox" id="done-l01" data-l="l01"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l02">
+<header class="lh"><span class="big m">02</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>Reference, const และ constexpr แทน #define</h2><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เลิกใช้ #define กับค่าคงที่ และส่งพารามิเตอร์ด้วย reference ได้ถูกที่</p><div class="vs"><div><span class="tag">C</span><p>ค่าคงที่ใช้ <code class="il">#define</code> ไม่มี type ไม่มี scope แก้ตัวแปรของผู้เรียกต้องส่ง pointer</p></div><div><span class="tag t2">C++</span><p><code class="il">constexpr</code> มี type และคำนวณตอน compile ไม่กิน RAM ส่วน <code class="il">T&amp;</code> คือชื่อเล่นของตัวแปรเดิม ไม่มี null ไม่ต้องเขียน <code class="il">*</code></p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
+<text x="205" y="22" text-anchor="middle" class="sub m">current @ 0x2000_0104</text>
+<rect x="150" y="30" width="110" height="46" rx="8" class="ba"/><text x="205" y="59" text-anchor="middle" class="tt m">2</text>
+<rect x="14" y="120" width="140" height="42" rx="8" class="b"/><text x="84" y="138" text-anchor="middle" class="tt m">size_t* p</text><text x="84" y="154" text-anchor="middle" class="sub m">= 0x2000_0104</text>
+<path d="M84 118 C84 90 120 70 148 60" class="ln" marker-end="url(#ah)"/>
+<rect x="252" y="120" width="140" height="42" rx="8" class="b dash"/><text x="322" y="138" text-anchor="middle" class="tt m">size_t&amp; idx</text><text x="322" y="154" text-anchor="middle" class="sub">ชื่อเล่นของ current</text>
+<path d="M300 118 C300 95 270 85 262 72" class="la" marker-end="url(#aha)"/>
+<text x="84" y="182" text-anchor="middle" class="sub">เป็นตัวแปรแยก · null ได้ · ชี้ใหม่ได้</text>
+<text x="322" y="182" text-anchor="middle" class="sub">ไม่ใช่ตัวแปรใหม่ · ต้องผูกตอนสร้าง</text>
+</svg></div><figcaption>pointer เก็บ address แยก ส่วน reference ผูกกับตัวแปรเดิมตลอดชีวิต</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">rgb_cycle.ino</div><pre><code>constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
+constexpr size_t  kLedCount  = sizeof(kLedPins) / sizeof(kLedPins[0]);
+constexpr uint32_t kStepMs   = 150;
+
+void allOff() {
+  for (uint8_t pin : kLedPins) {   // range-based for (C++11)
+    digitalWrite(pin, HIGH);
+  }
+}
+
+void nextIndex(size_t&amp; idx) {      // reference: แก้ตัวแปรของผู้เรียกได้เลย
+  idx = (idx + 1) % kLedCount;
+}
+
+size_t current = 0;
+
+void setup() {
+  for (uint8_t pin : kLedPins) pinMode(pin, OUTPUT);
+  allOff();
+}
+
+void loop() {
+  allOff();
+  digitalWrite(kLedPins[current], LOW);
+  delay(kStepMs);
+  nextIndex(current);
+}</code></pre></div>
+<p>ลองเพิ่มฟังก์ชัน <code class="il">void printPin(const uint8_t&amp; p)</code> แล้วพยายามเขียน <code class="il">p = 0;</code> ข้างใน ดู error ที่ compiler ฟ้อง นี่คือประโยชน์ของ const: จับบั๊กตอน compile</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>เมื่อไหร่ควรส่ง const T& แทนส่งค่า?</summary><p>เมื่อ T ใหญ่กว่า register (struct, buffer) เพื่อเลี่ยงการ copy ส่วน int, float, pointer ส่งค่าตรง ๆ เร็วกว่าและอ่านง่ายกว่า</p></details><details><summary>constexpr ต่างจาก const อย่างไร?</summary><p>const = ห้ามแก้ แต่อาจรู้ค่าตอน runtime ส่วน constexpr = ต้องรู้ค่าตอน compile จึงใช้เป็นขนาด array หรือ template argument ได้</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>"ทำไมไม่ใช้ #define?" ตอบ: ไม่มี type checking, ไม่เคารพ namespace/scope, debugger มองไม่เห็นชื่อ และอาจเกิด side effect จาก macro expansion</p></aside>
+<label class="done"><input type="checkbox" id="done-l02" data-l="l02"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l03">
+<header class="lh"><span class="big m">03</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>namespace, overloading, enum class</h2><p class="meta">20 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> จัดระเบียบชื่อและเข้าใจว่าทำไม C++ ต้องมี name mangling</p><div class="vs"><div><span class="tag">C</span><p>ชื่อฟังก์ชันซ้ำไม่ได้ ต้องตั้ง <code class="il">log_int</code>, <code class="il">log_float</code> และ <code class="il">enum</code> ปนกับ int ได้ทุกที่</p></div><div><span class="tag t2">C++</span><p>overload ชื่อเดียวหลายพารามิเตอร์ได้ <code class="il">namespace</code> กันชื่อชน <code class="il">enum class</code> ไม่แปลงเป็น int เอง กำหนดขนาด <code class="il">: uint8_t</code> ได้</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<text x="10" y="18" class="sub">ซอร์ส C++ (namespace logx)</text><text x="220" y="18" class="sub">ชื่อ symbol ใน .o / .elf</text>
+<rect x="6" y="28" width="190" height="34" rx="6" class="b"/><text x="14" y="49" class="tt m sm">info(const char*)</text><line x1="198" y1="45" x2="212" y2="45" class="ln" marker-end="url(#ah)"/><rect x="216" y="28" width="178" height="34" rx="6" class="ba"/><text x="224" y="49" class="tt m sm">_ZN4logx4infoEPKc</text>
+<rect x="6" y="70" width="190" height="34" rx="6" class="b"/><text x="14" y="91" class="tt m sm">info(const char*, int)</text><line x1="198" y1="87" x2="212" y2="87" class="ln" marker-end="url(#ah)"/><rect x="216" y="70" width="178" height="34" rx="6" class="ba"/><text x="224" y="91" class="tt m sm">_ZN4logx4infoEPKci</text>
+<rect x="6" y="112" width="190" height="34" rx="6" class="b"/><text x="14" y="133" class="tt m sm">info(const char*,float,int)</text><line x1="198" y1="129" x2="212" y2="129" class="ln" marker-end="url(#ah)"/><rect x="216" y="112" width="178" height="34" rx="6" class="ba"/><text x="224" y="133" class="tt m sm">_ZN4logx4infoEPKcfi</text>
+<rect x="6" y="164" width="190" height="34" rx="6" class="b"/><text x="14" y="185" class="tt m sm">extern &quot;C&quot; void foo()</text><line x1="198" y1="181" x2="212" y2="181" class="ln" marker-end="url(#ah)"/><rect x="216" y="164" width="178" height="34" rx="6" class="b"/><text x="224" y="185" class="tt m sm">foo</text>
+<text x="10" y="158" class="sub">ถ้าต้องเรียกจาก C หรือ ASM ใช้ extern "C" ปิด mangling</text>
+</svg></div><figcaption>compiler ฝังชนิดพารามิเตอร์ลงในชื่อ symbol จึง overload ได้</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">logx.ino</div><pre><code>namespace logx {
+void info(const char* msg) {
+  Serial.print(&quot;[I] &quot;); Serial.println(msg);
+}
+void info(const char* key, int value) {
+  Serial.print(&quot;[I] &quot;); Serial.print(key); Serial.print(&#x27;=&#x27;); Serial.println(value);
+}
+void info(const char* key, float value, int digits = 2) {   // default argument
+  Serial.print(&quot;[I] &quot;); Serial.print(key); Serial.print(&#x27;=&#x27;); Serial.println(value, digits);
+}
+}  // namespace logx
+
+enum class Mode : uint8_t { Off, Slow, Fast };
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+  logx::info(&quot;boot&quot;);
+  logx::info(&quot;uptime_ms&quot;, (int)millis());
+  logx::info(&quot;vbat&quot;, 3.71f);
+  logx::info(&quot;pi&quot;, 3.14159f, 4);
+  Mode m = Mode::Slow;
+  logx::info(&quot;mode&quot;, static_cast&lt;int&gt;(m));   // ต้อง cast เอง
+  // int bad = m;   // ลองเปิดบรรทัดนี้: compile error
+}
+
+void loop() {}</code></pre></div><h3>เช็กความเข้าใจ</h3><details><summary>ถ้า library เขียนด้วย C ต้อง include อย่างไร?</summary><p>ครอบ header ด้วย extern "C" { … } เพื่อให้ linker หา symbol ชื่อแบบ C เจอ ถ้าไม่ครอบจะ error undefined reference</p></details><details><summary>ทำไม enum class ปลอดภัยกว่า enum?</summary><p>ไม่แปลงเป็น int เอง ชื่อ enumerator ไม่หลุดออกมาใน scope ภายนอก และกำหนด underlying type ได้ จึงคุมขนาดในหน่วยความจำได้</p></details>
+<label class="done"><input type="checkbox" id="done-l03" data-l="l03"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l04">
+<header class="lh"><span class="big m">04</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>class: encapsulation และ constructor</h2><p class="meta">30 นาที · ฮาร์ดแวร์: LED + R 1 kΩ</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เขียน class Led ที่ซ่อนเรื่อง active-LOW ไว้ข้างใน</p><div class="vs"><div><span class="tag">C</span><p>struct เก็บข้อมูล + ฟังก์ชัน <code class="il">led_on(&amp;led)</code> แยกกัน ใครก็แก้ field ได้</p></div><div><span class="tag t2">C++</span><p>ข้อมูล (private) และพฤติกรรม (public) อยู่ด้วยกัน คอมไพล์แล้วได้โค้ดขนาดใกล้เคียงกัน เพราะ <code class="il">this</code> ก็คือ pointer ที่ส่งเข้าไปแบบซ่อน</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 160" role="img">
+<rect x="8" y="50" width="78" height="50" rx="8" class="bm"/><text x="47" y="72" text-anchor="middle" class="tt m">XIAO</text><text x="47" y="89" text-anchor="middle" class="sub m">D2</text>
+<line x1="86" y1="75" x2="126" y2="75" class="w"/>
+<polyline points="126,75 132,63 144,87 156,63 168,87 180,63 186,75" class="w acc"/>
+<text x="156" y="52" text-anchor="middle" class="tt m acc">1 kΩ</text>
+<line x1="186" y1="75" x2="226" y2="75" class="w"/>
+<polygon points="226,60 226,90 254,75" class="ba"/><line x1="256" y1="60" x2="256" y2="90" class="w"/>
+<line x1="246" y1="56" x2="256" y2="46" class="ln" marker-end="url(#ah)"/><line x1="236" y1="54" x2="246" y2="44" class="ln" marker-end="url(#ah)"/>
+<text x="240" y="112" text-anchor="middle" class="sub">LED (ขายาว = +)</text>
+<line x1="256" y1="75" x2="320" y2="75" class="w"/><line x1="320" y1="75" x2="320" y2="104" class="w"/>
+<line x1="304" y1="104" x2="336" y2="104" class="w"/><line x1="309" y1="111" x2="331" y2="111" class="w"/><line x1="314" y1="118" x2="326" y2="118" class="w"/>
+<text x="344" y="114" class="tt m">GND</text>
+<text x="8" y="148" class="sub">I ≈ (3.3 − 2.0) V / 1 kΩ ≈ 1.3 mA — พอเห็นชัด และไม่เกิน standard drive ของ GPIO</text>
+</svg></div><figcaption>ต่อ LED ภายนอกที่ D2 ผ่าน R 1 kΩ ลง GND (active-HIGH)</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">led_class.ino</div><pre><code>class Led {
+public:
+  Led(uint8_t pin, bool activeLow) : pin_(pin), activeLow_(activeLow) {}
+
+  void begin() { pinMode(pin_, OUTPUT); off(); }
+  void on()     { write(true); }
+  void off()    { write(false); }
+  void toggle() { write(!isOn_); }
+  bool isOn() const { return isOn_; }   // const method: ไม่แก้ state
+
+private:
+  void write(bool on) {
+    isOn_ = on;
+    digitalWrite(pin_, (on != activeLow_) ? HIGH : LOW);
+  }
+  uint8_t pin_;
+  bool activeLow_;
+  bool isOn_ = false;
+};
+
+Led red(LED_RED, true);   // บนบอร์ด: active-LOW
+Led ext(D2, false);       // ภายนอก: active-HIGH
+
+void setup() {
+  red.begin();
+  ext.begin();
+}
+
+void loop() {
+  red.toggle();
+  ext.toggle();
+  delay(300);
+}</code></pre></div>
+<p class="note">ทำไมมี <code class="il">begin()</code> แยก ไม่เรียก <code class="il">pinMode</code> ใน constructor? เพราะ object global ถูกสร้างก่อน <code class="il">main()</code> และก่อน <code class="il">init()</code> ฮาร์ดแวร์อาจยังไม่พร้อม เป็น pattern มาตรฐานของ embedded C++</p>
+<p>ทดลอง: ย้ายโค้ดไปไว้ที่ <code class="il">src/Led.h</code> (สร้างโฟลเดอร์ src ในโฟลเดอร์ sketch, บรรทัดแรกใส่ <code class="il">#pragma once</code> และ <code class="il">#include &lt;Arduino.h&gt;</code>) แล้ว <code class="il">#include "src/Led.h"</code> จะใช้ต่อในบท 11</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>member initializer list (: pin_(pin)) ดีกว่ากำหนดค่าใน body อย่างไร?</summary><p>สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้อง default-construct แล้วค่อย assign และจำเป็นสำหรับ member ที่เป็น const หรือ reference</p></details><details><summary>object Led ใช้ RAM กี่ byte โดยประมาณ?</summary><p>ราว 3–4 byte (pin_, activeLow_, isOn_ + padding) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>"Static initialization order fiasco" คือคำถามระดับกลาง: ลำดับการสร้าง global object ข้ามไฟล์ไม่ถูกกำหนด ทางแก้คือ begin() หรือ function-local static</p></aside>
+<label class="done"><input type="checkbox" id="done-l04" data-l="l04"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l05">
+<header class="lh"><span class="big m">05</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>RAII และ destructor</h2><p class="meta">25 นาที · ฮาร์ดแวร์: Pot 10 kΩ ที่ A0</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> ใช้ scope ควบคุม resource อัตโนมัติ: จับเวลา, ปิด/เปิด interrupt</p>
+<p>RAII (Resource Acquisition Is Initialization): ขอ resource ใน constructor คืนใน destructor แล้ว compiler จะเรียก destructor ให้เมื่อออกจาก scope เสมอ จึงไม่มีทางลืม <code class="il">unlock</code> หรือ <code class="il">enable_irq</code> แม้จะ <code class="il">return</code> กลางทาง C ไม่มีกลไกนี้</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
+<path d="M26 26 H16 V174 H26" class="la"/>
+<text x="36" y="32" class="tt m">{</text>
+<text x="52" y="62" class="tt m sm">ScopedTimer t("read");</text>
+<rect x="210" y="46" width="184" height="26" rx="6" class="bm"/><text x="218" y="63" class="sub m">ctor: start_ = micros()</text>
+<text x="52" y="104" class="tt m sm">// ... งานที่จับเวลา ...</text>
+<text x="36" y="150" class="tt m">}  // ออกจาก scope</text>
+<rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
+<text x="36" y="192" class="sub">compiler รับประกันว่า destructor ถูกเรียกเสมอ ไม่ว่าออกด้วย return ทางไหน</text>
+</svg></div><figcaption>อายุของ object ผูกกับวงเล็บปีกกา</figcaption></figure>
+<h3>Hands-on</h3><p>ต่อ potentiometer: ขาข้าง 3V3 กับ GND, ขากลางเข้า A0</p><div class="code"><div class="cl">raii.ino</div><pre><code>class ScopedTimer {
+public:
+  explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
+  ~ScopedTimer() {
+    uint32_t us = micros() - start_;
+    Serial.print(label_); Serial.print(&quot;: &quot;); Serial.print(us); Serial.println(&quot; us&quot;);
+  }
+  ScopedTimer(const ScopedTimer&amp;) = delete;             // ห้าม copy
+  ScopedTimer&amp; operator=(const ScopedTimer&amp;) = delete;
+private:
+  const char* label_;
+  uint32_t start_;
+};
+
+// ปิด interrupt แบบซ้อนได้: เก็บสถานะเดิมแล้วคืนค่าเดิม
+class CriticalSection {
+public:
+  CriticalSection() : primask_(__get_PRIMASK()) { __disable_irq(); }
+  ~CriticalSection() { __set_PRIMASK(primask_); }
+private:
+  uint32_t primask_;
+};
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  long sum = 0;
+  {
+    ScopedTimer t(&quot;analogRead x100&quot;);
+    for (int i = 0; i &lt; 100; ++i) sum += analogRead(A0);
+  }                                   // destructor ทำงานตรงนี้
+  Serial.print(&quot;avg = &quot;); Serial.println(sum / 100);
+  delay(1000);
+}</code></pre></div><h3>เช็กความเข้าใจ</h3><details><summary>ทำไมต้อง = delete copy constructor?</summary><p>ถ้า copy ได้ จะมี 2 object ที่ destructor ทำงานซ้ำ เช่น เปิด interrupt 2 ครั้ง หรือพิมพ์เวลาซ้ำ resource ที่มีเจ้าของคนเดียวควรห้าม copy</p></details><details><summary>CriticalSection ใช้กับ BLE (SoftDevice) ได้ไหม?</summary><p>ใช้ได้แค่ช่วงสั้นมาก ไม่กี่ไมโครวินาที ถ้าปิดนาน SoftDevice จะพลาด timing ของวิทยุ ในงานจริงใช้ sd_nvic_critical_region_enter แทน</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>ถ้าถูกถาม "ข้อดีที่สุดของ C++ เหนือ C ใน embedded" RAII คือคำตอบที่ดี เพราะไม่มี runtime overhead และกำจัดบั๊ก resource leak ทั้งกลุ่ม</p></aside>
+<label class="done"><input type="checkbox" id="done-l05" data-l="l05"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l06">
+<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>ปุ่มกด, debounce และ state machine</h2><p class="meta">30 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เขียน debounce แบบ non-blocking เป็น class ที่ไม่พึ่ง Arduino (จะ test ได้ในบท 15)</p>
+<p>ต่อปุ่มระหว่าง D1 กับ GND แล้วใช้ <code class="il">INPUT_PULLUP</code> ปล่อย = HIGH, กด = LOW หน้าสัมผัสจะเด้งหลายครั้งในไม่กี่มิลลิวินาที ถ้าไม่ debounce กดครั้งเดียวจะนับได้หลายครั้ง</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<text x="10" y="20" class="sub">ขา D1 (raw) — HIGH = ปล่อย, LOW = กด</text>
+<path d="M10 40 H120 V80 H126 V40 H132 V80 H140 V48 H146 V80 H390" class="w acc"/>
+<text x="133" y="98" text-anchor="middle" class="sub">bounce 1–5 ms</text>
+<text x="10" y="124" class="sub">หลัง Debouncer (stableMs = 20)</text>
+<path d="M10 140 H210 V176 H390" class="w"/>
+<line x1="146" y1="84" x2="146" y2="186" class="ln dash"/><line x1="210" y1="84" x2="210" y2="186" class="ln dash"/>
+<line x1="148" y1="194" x2="208" y2="194" class="ln" marker-end="url(#ah)"/><text x="178" y="207" text-anchor="middle" class="sub m">20 ms</text>
+<text x="218" y="160" class="tt acc">Event::Pressed</text>
+</svg></div><figcaption>Debouncer รอให้สัญญาณนิ่งครบ 20 ms ก่อนยืนยัน</figcaption></figure>
+<h3>Hands-on</h3><p>สร้างไฟล์ <code class="il">src/Debouncer.h</code> ในโฟลเดอร์ sketch</p><div class="code"><div class="cl">src/Debouncer.h</div><pre><code>#pragma once
+#include &lt;stdint.h&gt;
+
+// Pure logic: ไม่เรียก Arduino API เลย จึง test บน PC ได้
+class Debouncer {
+public:
+  enum class Event : uint8_t { None, Pressed, Released };
+
+  explicit Debouncer(uint32_t stableMs = 20) : stableMs_(stableMs) {}
+
+  // raw: true = กดอยู่ (แปลง active-LOW มาแล้ว), nowMs: เวลาปัจจุบัน
+  Event update(bool raw, uint32_t nowMs) {
+    if (raw != lastRaw_) {  // ยังเด้งอยู่ → เริ่มจับเวลาใหม่
+      lastRaw_ = raw;
+      changedAt_ = nowMs;
+      return Event::None;
+    }
+    if (raw != stable_ &amp;&amp; (nowMs - changedAt_) &gt;= stableMs_) {
+      stable_ = raw;
+      return stable_ ? Event::Pressed : Event::Released;
+    }
+    return Event::None;
+  }
+
+  bool isPressed() const { return stable_; }
+
+private:
+  uint32_t stableMs_;
+  uint32_t changedAt_ = 0;
+  bool lastRaw_ = false;
+  bool stable_ = false;
+};</code></pre></div><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+
+constexpr uint8_t kButtonPin = D1;
+enum class Mode : uint8_t { Off, Slow, Fast };
+
+Debouncer button;
+Mode mode = Mode::Off;
+uint32_t lastToggle = 0;
+bool ledOn = false;
+
+Mode next(Mode m) {
+  switch (m) {
+    case Mode::Off:  return Mode::Slow;
+    case Mode::Slow: return Mode::Fast;
+    case Mode::Fast: return Mode::Off;
+  }
+  return Mode::Off;
+}
+
+uint32_t periodMs(Mode m) { return m == Mode::Slow ? 500 : 100; }
+
+void setup() {
+  pinMode(kButtonPin, INPUT_PULLUP);
+  pinMode(LED_GREEN, OUTPUT);
+  digitalWrite(LED_GREEN, HIGH);
+}
+
+void loop() {
+  uint32_t now = millis();
+  bool pressed = (digitalRead(kButtonPin) == LOW);
+  if (button.update(pressed, now) == Debouncer::Event::Pressed) {
+    mode = next(mode);
+  }
+  if (mode == Mode::Off) {
+    digitalWrite(LED_GREEN, HIGH);
+  } else if (now - lastToggle &gt;= periodMs(mode)) {
+    lastToggle = now;
+    ledOn = !ledOn;
+    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
+  }
+}</code></pre></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 130" role="img">
+<rect x="14" y="40" width="88" height="40" rx="20" class="b"/><text x="58" y="65" text-anchor="middle" class="tt m">Off</text>
+<rect x="156" y="40" width="88" height="40" rx="20" class="bm"/><text x="200" y="65" text-anchor="middle" class="tt m">Slow</text>
+<rect x="298" y="40" width="88" height="40" rx="20" class="ba"/><text x="342" y="65" text-anchor="middle" class="tt m">Fast</text>
+<line x1="104" y1="60" x2="152" y2="60" class="ln" marker-end="url(#ah)"/><line x1="246" y1="60" x2="294" y2="60" class="ln" marker-end="url(#ah)"/>
+<path d="M342 82 C342 122 58 122 58 84" class="ln" marker-end="url(#ah)"/>
+<text x="128" y="32" text-anchor="middle" class="sub">กด</text><text x="270" y="32" text-anchor="middle" class="sub">กด</text><text x="200" y="124" text-anchor="middle" class="sub">กด</text>
+<text x="200" y="98" text-anchor="middle" class="sub m">500 ms   ·   100 ms</text>
+</svg></div><figcaption>state machine 3 สถานะ เปลี่ยนเมื่อได้ Event::Pressed</figcaption></figure><h3>เช็กความเข้าใจ</h3><details><summary>ทำไม now - lastToggle ยังถูกต้องแม้ millis() overflow (ราว 49.7 วัน)?</summary><p>การลบ unsigned 32-bit เป็น modulo 2³² ผลต่างจึงถูกเสมอตราบใดที่ช่วงเวลาไม่เกิน 49.7 วัน ห้ามเขียนแบบ now > lastToggle + period เพราะพังตอน overflow</p></details><details><summary>ทำไม switch มี return Mode::Off ท้ายฟังก์ชันอีก?</summary><p>บาง compiler เตือนว่า control reaches end of non-void function แม้จะครอบทุก case แล้ว ใส่ไว้เพื่อความปลอดภัยและ warning-free</p></details>
+<label class="done"><input type="checkbox" id="done-l06" data-l="l06"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l07">
+<header class="lh"><span class="big m">07</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>Inheritance, virtual และ interface</h2><p class="meta">25 นาที · ฮาร์ดแวร์: Pot ที่ A0</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> ออกแบบ interface ISensor ให้สลับเซนเซอร์จริงกับเซนเซอร์ปลอมได้ และรู้ต้นทุนของ virtual</p>
+<p>ใน C ทำ polymorphism ด้วย struct ของ function pointer เอง ใน C++ ใช้ <code class="il">virtual</code> แล้ว compiler สร้างตาราง (vtable) ให้ ประโยชน์หลักใน embedded คือสลับ implementation ได้ เช่น ใช้ FakeSensor ตอน test โดยไม่ต้องแก้โค้ดที่เรียกใช้</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
+<text x="10" y="18" class="sub">object: pot</text>
+<rect x="10" y="26" width="118" height="34" rx="6" class="ba"/><text x="20" y="48" class="tt m sm">vptr (4 B)</text>
+<rect x="10" y="60" width="118" height="34" rx="6" class="b"/><text x="20" y="82" class="tt m sm">pin_ = A0</text>
+<text x="150" y="18" class="sub">vtable ของ PotSensor (flash)</text>
+<rect x="150" y="26" width="110" height="30" rx="0" class="bm"/><text x="160" y="46" class="tt m sm">[0] ~dtor</text>
+<rect x="150" y="56" width="110" height="30" rx="0" class="bm"/><text x="160" y="76" class="tt m sm">[1] name</text>
+<rect x="150" y="86" width="110" height="30" rx="0" class="bm"/><text x="160" y="106" class="tt m sm">[2] read</text>
+<line x1="128" y1="43" x2="146" y2="43" class="la" marker-end="url(#aha)"/>
+<line x1="260" y1="71" x2="280" y2="71" class="ln" marker-end="url(#ah)"/><text x="284" y="75" class="tt m sm">Pot::name()</text>
+<line x1="260" y1="101" x2="280" y2="101" class="ln" marker-end="url(#ah)"/><text x="284" y="105" class="tt m sm">Pot::read()</text>
+<text x="10" y="146" class="sub">s-&gt;read() = อ่าน vptr → อ่าน entry [2] → กระโดดไปเรียก</text>
+<text x="10" y="166" class="sub">ต้นทุน: RAM +4 B ต่อ object, flash 1 ตารางต่อ class, call ทางอ้อม 1 ครั้ง</text>
+<text x="10" y="186" class="sub">FakeSensor มี vtable ของตัวเอง ชี้ไปฟังก์ชันของมัน</text>
+</svg></div><figcaption>กลไกของ virtual call</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>class ISensor {
+public:
+  virtual ~ISensor() = default;
+  virtual const char* name() const = 0;   // pure virtual = ต้อง override
+  virtual float read() = 0;
+};
+
+class PotSensor : public ISensor {
+public:
+  explicit PotSensor(uint8_t pin) : pin_(pin) {}
+  const char* name() const override { return &quot;pot&quot;; }
+  float read() override { return analogRead(pin_) * (100.0f / 1023.0f); }  // %
+private:
+  uint8_t pin_;
+};
+
+class FakeSensor : public ISensor {
+public:
+  const char* name() const override { return &quot;fake&quot;; }
+  float read() override { t_ += 0.1f; return 50.0f + 40.0f * sinf(t_); }
+private:
+  float t_ = 0;
+};
+
+PotSensor pot(A0);
+FakeSensor fake;
+ISensor* sensors[] = {&amp;pot, &amp;fake};
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  for (ISensor* s : sensors) {
+    Serial.print(s-&gt;name()); Serial.print(&#x27;:&#x27;);
+    Serial.print(s-&gt;read()); Serial.print(&#x27; &#x27;);
+  }
+  Serial.println();
+  delay(50);
+}</code></pre></div><p>เปิด Tools → Serial Plotter จะเห็นกราฟ 2 เส้น หมุน pot เทียบกับคลื่น sine</p><h3>เช็กความเข้าใจ</h3><details><summary>ทำไม base class ต้องมี virtual destructor?</summary><p>ถ้า delete object ผ่าน pointer ของ base แล้ว destructor ไม่ virtual destructor ของ derived จะไม่ถูกเรียก resource รั่ว</p></details><details><summary>ถ้าไม่อยากจ่ายต้นทุน virtual มีทางเลือกอะไร?</summary><p>ใช้ template (static polymorphism / CRTP) ให้ compiler รู้ชนิดตอน compile แล้ว inline ได้ แลกกับ code size ที่อาจเพิ่มขึ้น</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>คำถามคลาสสิก: "virtual ช้าไหม?" ตอบเป็นตัวเลข: เพิ่ม load 2 ครั้ง + indirect branch ต่อ call บน Cortex-M4 ราวไม่กี่ cycle ปัญหาจริงคือ inline ไม่ได้ ไม่ใช่ความช้าโดยตรง</p></aside>
+<label class="done"><input type="checkbox" id="done-l07" data-l="l07"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l08">
+<header class="lh"><span class="big m">08</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>Template: RingBuffer&lt;T, N&gt;</h2><p class="meta">30 นาที · ฮาร์ดแวร์: Pot ที่ A0</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เขียน container ขนาดคงที่ใช้ซ้ำได้ทุกชนิด โดยไม่ใช้ heap</p><div class="vs"><div><span class="tag">C</span><p>ทำ buffer สำหรับ int, float แยกกัน หรือใช้ <code class="il">void*</code> + macro ซึ่งไม่มี type safety</p></div><div><span class="tag t2">C++</span><p>template ให้ compiler สร้างโค้ดเฉพาะชนิดให้ ขนาด N เป็นค่าตอน compile ตรวจได้ด้วย <code class="il">static_assert</code></p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<rect x="18" y="58" width="40" height="40" rx="6" class="b"/><text x="38" y="83" text-anchor="middle" class="tt m sm"></text><text x="38" y="112" text-anchor="middle" class="sub m">0</text><rect x="64" y="58" width="40" height="40" rx="6" class="b"/><text x="84" y="83" text-anchor="middle" class="tt m sm"></text><text x="84" y="112" text-anchor="middle" class="sub m">1</text><rect x="110" y="58" width="40" height="40" rx="6" class="ba"/><text x="130" y="83" text-anchor="middle" class="tt m sm">611</text><text x="130" y="112" text-anchor="middle" class="sub m">2</text><rect x="156" y="58" width="40" height="40" rx="6" class="ba"/><text x="176" y="83" text-anchor="middle" class="tt m sm">608</text><text x="176" y="112" text-anchor="middle" class="sub m">3</text><rect x="202" y="58" width="40" height="40" rx="6" class="ba"/><text x="222" y="83" text-anchor="middle" class="tt m sm">615</text><text x="222" y="112" text-anchor="middle" class="sub m">4</text><rect x="248" y="58" width="40" height="40" rx="6" class="ba"/><text x="268" y="83" text-anchor="middle" class="tt m sm">603</text><text x="268" y="112" text-anchor="middle" class="sub m">5</text><rect x="294" y="58" width="40" height="40" rx="6" class="b"/><text x="314" y="83" text-anchor="middle" class="tt m sm"></text><text x="314" y="112" text-anchor="middle" class="sub m">6</text><rect x="340" y="58" width="40" height="40" rx="6" class="b"/><text x="360" y="83" text-anchor="middle" class="tt m sm"></text><text x="360" y="112" text-anchor="middle" class="sub m">7</text>
+<text x="130" y="22" text-anchor="middle" class="tt acc">tail → pop()</text><line x1="130" y1="28" x2="130" y2="54" class="la" marker-end="url(#aha)"/>
+<text x="314" y="22" text-anchor="middle" class="tt">head → push()</text><line x1="314" y1="28" x2="314" y2="54" class="ln" marker-end="url(#ah)"/>
+<path d="M360 118 C360 156 38 156 38 120" class="ln dash" marker-end="url(#ah)"/>
+<text x="200" y="166" text-anchor="middle" class="sub">index = (index + 1) % N → วนกลับต้น buffer ไม่ต้องเลื่อนข้อมูล</text>
+</svg></div><figcaption>ring buffer: head เขียน tail อ่าน วนรอบด้วย modulo</figcaption></figure>
+<h3>Hands-on</h3><p>สร้าง <code class="il">src/RingBuffer.h</code></p><div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
+#include &lt;stddef.h&gt;
+
+// FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile
+template &lt;typename T, size_t N&gt;
+class RingBuffer {
+  static_assert(N &gt; 0, &quot;N must be &gt; 0&quot;);
+
+public:
+  bool push(const T&amp; v) {
+    if (count_ == N) return false;  // เต็ม
+    buf_[head_] = v;
+    head_ = (head_ + 1) % N;
+    ++count_;
+    return true;
+  }
+
+  bool pop(T&amp; out) {
+    if (count_ == 0) return false;  // ว่าง
+    out = buf_[tail_];
+    tail_ = (tail_ + 1) % N;
+    --count_;
+    return true;
+  }
+
+  // เต็มแล้วให้ทิ้งตัวเก่าสุด (เหมาะกับ moving average)
+  void pushOverwrite(const T&amp; v) {
+    if (count_ == N) {
+      T dropped;
+      pop(dropped);
+    }
+    push(v);
+  }
+
+  size_t size() const { return count_; }
+  bool full() const { return count_ == N; }
+  const T&amp; at(size_t i) const { return buf_[(tail_ + i) % N]; }  // 0 = เก่าสุด
+
+private:
+  T buf_[N]{};
+  size_t head_ = 0, tail_ = 0, count_ = 0;
+};
+
+template &lt;typename T, size_t N&gt;
+float average(const RingBuffer&lt;T, N&gt;&amp; rb) {
+  if (rb.size() == 0) return 0.0f;
+  float sum = 0;
+  for (size_t i = 0; i &lt; rb.size(); ++i) sum += rb.at(i);
+  return sum / rb.size();
+}</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &quot;src/RingBuffer.h&quot;
+
+RingBuffer&lt;uint16_t, 16&gt; samples;   // 16 ค่าล่าสุด
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  uint16_t raw = analogRead(A0);
+  samples.pushOverwrite(raw);
+  Serial.print(&quot;raw:&quot;); Serial.print(raw);
+  Serial.print(&quot; avg:&quot;); Serial.println(average(samples));
+  delay(20);
+}</code></pre></div><p>เปิด Serial Plotter เทียบเส้น raw กับ avg ลองเปลี่ยน N เป็น 4 และ 64 สังเกตความหน่วงและความเรียบ (moving average N จุด = delay ราว N/2 sample)</p><h3>เช็กความเข้าใจ</h3><details><summary>ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?</summary><p>compiler สร้างโค้ด 2 ชุด (template instantiation) flash เพิ่มขึ้น ถ้ามีหลายชนิดเกินไปเรียกว่า code bloat</p></details><details><summary>ถ้า ISR เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?</summary><p>ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ต้องครอบด้วย CriticalSection หรือออกแบบ SPSC ที่ฝั่ง producer แก้แค่ head ฝั่ง consumer แก้แค่ tail</p></details>
+<label class="done"><input type="checkbox" id="done-l08" data-l="l08"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l09">
+<header class="lh"><span class="big m">09</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>หน่วยความจำใน embedded</h2><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> รู้ว่าตัวแปรแต่ละแบบไปอยู่ส่วนไหน และกฎที่ทีม firmware ใช้จริง</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 350" role="img">
+<text x="100" y="20" text-anchor="middle" class="tt">Flash 1 MB</text><text x="100" y="35" text-anchor="middle" class="sub">ไม่หายเมื่อไฟดับ</text>
+<text x="300" y="20" text-anchor="middle" class="tt">RAM 256 KB</text><text x="300" y="35" text-anchor="middle" class="sub">หายเมื่อไฟดับ</text>
+<rect x="20" y="44" width="160" height="34" class="b"/><text x="100" y="65.0" text-anchor="middle" class="tt sm">Bootloader (UF2)</text>
+<rect x="20" y="78" width="160" height="52" class="b dash"/><text x="100" y="108.0" text-anchor="middle" class="tt sm">ว่าง</text>
+<rect x="20" y="130" width="160" height="24" class="bm"/><text x="100" y="146.0" text-anchor="middle" class="tt sm">.data ค่าเริ่มต้น</text>
+<rect x="20" y="154" width="160" height="80" class="ba"/><text x="100" y="194.0" text-anchor="middle" class="tt sm">.text โค้ด</text><text x="100" y="209.0" text-anchor="middle" class="sub m">+ .rodata (const)</text>
+<rect x="20" y="234" width="160" height="66" class="b"/><text x="100" y="267.0" text-anchor="middle" class="tt sm">SoftDevice + MBR</text><text x="100" y="282.0" text-anchor="middle" class="sub m">~150 KB (BLE stack)</text>
+<rect x="220" y="44" width="160" height="52" class="ba"/><text x="300" y="70.0" text-anchor="middle" class="tt sm">↓ stack</text><text x="300" y="85.0" text-anchor="middle" class="sub m">ตัวแปร local, ISR</text>
+<rect x="220" y="96" width="160" height="52" class="b dash"/><text x="300" y="126.0" text-anchor="middle" class="tt sm">ว่าง</text>
+<rect x="220" y="148" width="160" height="34" class="b"/><text x="300" y="169.0" text-anchor="middle" class="tt sm">↑ heap (new/malloc)</text>
+<rect x="220" y="182" width="160" height="34" class="bm"/><text x="300" y="203.0" text-anchor="middle" class="tt sm">.bss (static = 0)</text>
+<rect x="220" y="216" width="160" height="34" class="bm"/><text x="300" y="237.0" text-anchor="middle" class="tt sm">.data (static มีค่า)</text>
+<rect x="220" y="250" width="160" height="50" class="b"/><text x="300" y="279.0" text-anchor="middle" class="tt sm">SoftDevice RAM</text>
+<path d="M180 142 C200 142 200 233 216 233" class="la" marker-end="url(#aha)"/>
+<text x="20" y="316" class="sub m">0x0000_0000 (ล่าง)</text><text x="220" y="316" class="sub m">0x2000_0000 (ล่าง)</text>
+<text x="20" y="336" class="sub">ลูกศรส้ม: startup code copy .data จาก flash ไป RAM ก่อน setup()</text>
+</svg></div><figcaption>memory map แบบย่อของ nRF52840 (ตัวเลขประมาณ ขึ้นกับ SoftDevice และ bootloader)</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>uint8_t bigStatic[8192];        // .bss  → นับใน &quot;Global variables use&quot;
+const char kMsg[] = &quot;hello&quot;;    // .rodata → อยู่ใน flash
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+  uint8_t onStack[256];         // stack → ไม่อยู่ในตัวเลขตอน compile
+  onStack[0] = 1;
+  bigStatic[0] = onStack[0];
+  Serial.print(&quot;flash  : 0x&quot;); Serial.println((uintptr_t)kMsg, HEX);
+  Serial.print(&quot;static : 0x&quot;); Serial.println((uintptr_t)bigStatic, HEX);
+  Serial.print(&quot;stack  : 0x&quot;); Serial.println((uintptr_t)onStack, HEX);
+}
+
+void loop() {}</code></pre></div>
+<p>ดูว่า address ขึ้นต้น 0x000… (flash) หรือ 0x2000… (RAM) ตามรูปไหม จากนั้นเปลี่ยน <code class="il">bigStatic</code> เป็น 32768 แล้วดูตัวเลข RAM ตอน compile เปลี่ยน</p>
+<h3>กฎที่ใช้ในทีมจริง</h3>
+<ul>
+<li>จอง memory ตอน init เท่านั้น หลังจากนั้นห้าม <code class="il">new</code>/<code class="il">malloc</code> ใน loop เพราะ heap fragment แล้วพังหลังรันหลายวัน</li>
+<li>เลี่ยง <code class="il">String</code> ของ Arduino ใช้ <code class="il">char buf[32]</code> + <code class="il">snprintf</code> แทน</li>
+<li>ใช้ <code class="il">std::array</code> / buffer ขนาดคงที่ หลีกเลี่ยง <code class="il">std::vector</code>, <code class="il">std::function</code> ที่อาจจอง heap เอง</li>
+<li>embedded มักปิด exceptions และ RTTI (<code class="il">-fno-exceptions -fno-rtti</code>) จึงจัดการ error ด้วยค่าที่ return</li>
+</ul>
+<h3>เช็กความเข้าใจ</h3><details><summary>ตัวแปร static ภายในฟังก์ชันอยู่ส่วนไหน?</summary><p>.data หรือ .bss เหมือน global แต่ scope จำกัดในฟังก์ชัน จึงคงค่าระหว่างการเรียก</p></details><details><summary>stack overflow บน MCU ไม่มี OS แสดงอาการอย่างไร?</summary><p>stack โตลงไปทับ heap หรือ .bss ทำให้ค่าตัวแปรเพี้ยนแบบสุ่มหรือ HardFault วิธีตรวจคือ stack painting (เติม pattern แล้วดูว่าถูกเขียนลึกแค่ไหน) หรือเปิด MPU guard</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>เตรียมอธิบาย .text / .data / .bss / heap / stack ด้วยรูปนี้ได้ภายใน 1 นาที เป็นคำถามที่เจอเกือบทุกที่</p></aside>
+<label class="done"><input type="checkbox" id="done-l09" data-l="l09"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l10">
+<header class="lh"><span class="big m">10</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>Interrupt, volatile และ lambda</h2><p class="meta">25 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เขียน ISR ที่ถูกต้อง และแชร์ข้อมูลระหว่าง ISR กับ loop อย่างปลอดภัย</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
+<text x="10" y="30" class="sub m">loop()</text><text x="10" y="112" class="sub m">ISR</text>
+<rect x="60" y="16" width="120" height="26" rx="5" class="bm"/><text x="120" y="33" text-anchor="middle" class="sub m">อ่าน pressCount</text>
+<rect x="222" y="16" width="160" height="26" rx="5" class="bm"/><text x="302" y="33" text-anchor="middle" class="sub m">ทำงานต่อจากเดิม</text>
+<line x1="180" y1="42" x2="186" y2="92" class="la" marker-end="url(#aha)"/>
+<rect x="186" y="96" width="44" height="26" rx="5" class="ba"/><text x="208" y="113" text-anchor="middle" class="sub m">+1</text>
+<line x1="230" y1="96" x2="234" y2="46" class="ln" marker-end="url(#ah)"/>
+<path d="M10 160 H180 V140 H190 V160 H390" class="w acc"/>
+<text x="120" y="180" text-anchor="middle" class="sub">ขอบ FALLING ที่ D1 → CPU กระโดดเข้า ISR ทันที</text>
+<text x="300" y="134" text-anchor="middle" class="sub">ISR: สั้น · ไม่ delay · ไม่ Serial</text>
+</svg></div><figcaption>ISR แทรกกลาง loop ได้ทุกเมื่อ</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">isr_count.ino</div><pre><code>constexpr uint8_t kButtonPin = D1;
+volatile uint32_t pressCount = 0;   // volatile: ค่าเปลี่ยนนอก flow ปกติ ห้าม cache
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+  // lambda ที่ไม่ capture อะไร แปลงเป็น function pointer ได้
+  attachInterrupt(digitalPinToInterrupt(kButtonPin), [] {
+    pressCount = pressCount + 1;
+  }, FALLING);
+}
+
+void loop() {
+  uint32_t count;
+  noInterrupts();          // copy ออกมาแบบ atomic
+  count = pressCount;
+  interrupts();
+  Serial.println(count);
+  delay(500);
+}</code></pre></div>
+<p>กดปุ่ม 1 ครั้ง ตัวเลขมักเพิ่มมากกว่า 1 นั่นคือ bounce ที่เห็นในบท 6 ข้อสรุป: ISR บนปุ่มกลไกต้อง debounce ด้วยเวลา (เช่นเช็ก <code class="il">millis()</code> ใน ISR หรือส่ง event ให้ loop จัดการ)</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>volatile ทำให้ pressCount++ เป็น atomic ไหม?</summary><p>ไม่ volatile แค่บังคับให้อ่าน/เขียน memory จริงทุกครั้ง แต่ ++ คือ load-add-store 3 คำสั่ง ถูกแทรกกลางได้ ต้องใช้ critical section หรือ std::atomic</p></details><details><summary>อะไรห้ามทำใน ISR?</summary><p>delay(), Serial.print(), malloc/new, ทำงานนาน และเรียกฟังก์ชันที่ไม่ reentrant ให้ ISR ตั้ง flag หรือ push ลง buffer แล้วกลับเร็วที่สุด</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>volatile คือคำถามที่ถูกถามบ่อยที่สุดในสาย embedded ตอบให้ครบ 3 กรณี: ตัวแปรที่ ISR แก้, memory-mapped register, ตัวแปรที่แชร์ระหว่าง thread (และบอกว่ามันไม่ใช่ synchronization)</p></aside>
+<label class="done"><input type="checkbox" id="done-l10" data-l="l10"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l11">
+<header class="lh"><span class="big m">11</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h2>Mini project: cooperative scheduler</h2><p class="meta">30 นาที · ฮาร์ดแวร์: LED + ปุ่ม + Pot</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> รวมทุกอย่างเป็น firmware ที่ไม่มี delay() เลย โครงสร้างแบบนี้ใช้จริงก่อนจะขึ้น RTOS</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 294" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">loop()</text><text x="200" y="49" text-anchor="middle" class="sub">วนเร็วที่สุด ไม่มี delay()</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">now = millis()</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">ทุก task: now − lastRun ≥ period ?</text><text x="200" y="193" text-anchor="middle" class="sub">ใช่ → lastRun = now; run()</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><text x="212" y="223" class="sub m">แล้ววนกลับ</text><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">handleSerial()</text><text x="200" y="273" text-anchor="middle" class="sub">อ่านคำสั่งทีละตัวอักษร ไม่ block</text></svg></div><figcaption>แต่ละ task มีรอบของตัวเอง loop แค่ตรวจว่าถึงเวลาหรือยัง</figcaption></figure>
+<h3>Hands-on</h3><p>ตั้งชื่อโฟลเดอร์ <code class="il">firmware/</code> และไฟล์ <code class="il">firmware.ino</code> (Arduino บังคับให้ชื่อตรงกัน) ใน <code class="il">src/</code> มี Led.h, Debouncer.h, RingBuffer.h จากบทก่อน</p><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &quot;src/Led.h&quot;
+#include &quot;src/Debouncer.h&quot;
+#include &quot;src/RingBuffer.h&quot;
+
+#if __has_include(&quot;src/version.h&quot;)
+#include &quot;src/version.h&quot;          // CI สร้างไฟล์นี้ (บท 17)
+#else
+#define FW_VERSION &quot;dev&quot;
+#endif
+
+constexpr uint8_t kButtonPin = D1;
+constexpr uint8_t kPotPin    = A0;
+
+Led status(LED_GREEN, true);
+Led ext(D2, false);
+Debouncer button;
+RingBuffer&lt;uint16_t, 16&gt; samples;
+bool paused = false;
+
+struct Task {
+  uint32_t periodMs;
+  uint32_t lastRunMs;
+  void (*run)();
+};
+
+void blinkTask() { if (!paused) status.toggle(); }
+
+void buttonTask() {
+  bool pressed = digitalRead(kButtonPin) == LOW;
+  if (button.update(pressed, millis()) == Debouncer::Event::Pressed) {
+    paused = !paused;
+    ext.toggle();
+  }
+}
+
+void sensorTask() { samples.pushOverwrite(analogRead(kPotPin)); }
+
+void reportTask() {
+  Serial.print(&quot;avg:&quot;);     Serial.print(average(samples));
+  Serial.print(&quot; paused:&quot;); Serial.println(paused ? 1 : 0);
+}
+
+Task tasks[] = {
+  {500, 0, blinkTask},
+  {5,   0, buttonTask},
+  {20,  0, sensorTask},
+  {200, 0, reportTask},
+};
+
+// พิมพ์ตัวเลข 50–5000 แล้ว Enter เพื่อเปลี่ยนรอบกระพริบ
+void handleSerial() {
+  static char buf[16];
+  static size_t len = 0;
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == &#x27;\n&#x27; || c == &#x27;\r&#x27;) {
+      if (len &gt; 0) {
+        buf[len] = &#x27;\0&#x27;;
+        long ms = atol(buf);
+        if (ms &gt;= 50 &amp;&amp; ms &lt;= 5000) tasks[0].periodMs = ms;
+        len = 0;
+      }
+    } else if (len &lt; sizeof(buf) - 1) {
+      buf[len++] = c;
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+  status.begin();
+  ext.begin();
+  Serial.print(&quot;fw &quot;); Serial.println(FW_VERSION);
+}
+
+void loop() {
+  uint32_t now = millis();
+  for (Task&amp; t : tasks) {
+    if (now - t.lastRunMs &gt;= t.periodMs) {
+      t.lastRunMs = now;
+      t.run();
+    }
+  }
+  handleSerial();
+}</code></pre></div>
+<p>ทดสอบ: กดปุ่ม → LED เขียวหยุด LED ภายนอกติด, หมุน pot ดู avg ใน Plotter, พิมพ์ 100 ใน Serial Monitor → กระพริบเร็วขึ้น ทั้งหมดทำงานพร้อมกันโดยไม่มี delay()</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ถ้า reportTask ใช้เวลา 30 ms จะเกิดอะไรกับ buttonTask?</summary><p>buttonTask ถูกเลื่อนไปจน reportTask จบ เพราะเป็น cooperative (ไม่มี preemption) ทุก task ต้องสั้น ถ้าทำไม่ได้คือสัญญาณว่าถึงเวลาใช้ RTOS</p></details><details><summary>ทำไม Task ใช้ function pointer ไม่ใช้ std::function?</summary><p>function pointer ขนาด 4 byte ไม่จอง heap และคาดเดาได้ std::function อาจจอง heap เมื่อ capture ข้อมูล</p></details>
+<label class="done"><input type="checkbox" id="done-l11" data-l="l11"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l12">
+<header class="lh"><span class="big m">12</span><div class="lhm"><p class="mod">โมดูล B · Git และ GitHub</p><h2>Git พื้นฐาน: add, commit, log</h2><p class="meta">25 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> เก็บงานทั้งหมดที่ทำมาลง Git พร้อม commit message ที่อ่านแล้วรู้เรื่อง</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 310" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">Working directory</text><text x="200" y="49" text-anchor="middle" class="sub">ไฟล์ที่คุณแก้อยู่จริงในเครื่อง</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><text x="212" y="79" class="sub m">git add</text><rect x="40" y="90" width="320" height="50" rx="8" class="bm"/><text x="200" y="111" text-anchor="middle" class="tt">Staging area (index)</text><text x="200" y="129" text-anchor="middle" class="sub">รายการที่จะเข้า commit ถัดไป</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><text x="212" y="159" class="sub m">git commit</text><rect x="40" y="170" width="320" height="50" rx="8" class="ba"/><text x="200" y="191" text-anchor="middle" class="tt">Local repository (.git)</text><text x="200" y="209" text-anchor="middle" class="sub">ประวัติ commit ทั้งหมดในเครื่อง</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><text x="212" y="239" class="sub m">git push</text><rect x="40" y="250" width="320" height="50" rx="8" class="b"/><text x="200" y="271" text-anchor="middle" class="tt">Remote (GitHub)</text><text x="200" y="289" text-anchor="middle" class="sub">สำเนาบนเซิร์ฟเวอร์ แชร์กับทีม / CI</text></svg></div><figcaption>ไฟล์เดินทางผ่าน 3 พื้นที่ในเครื่องก่อนขึ้น GitHub</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">terminal</div><pre><code>git config --global user.name &quot;Your Name&quot;
+git config --global user.email &quot;you@example.com&quot;
+git config --global init.defaultBranch main
+
+mkdir xiao-embedded-cpp &amp;&amp; cd xiao-embedded-cpp
+git init
+# ย้ายโฟลเดอร์ firmware/ จากบท 11 มาไว้ที่นี่ และสร้าง .gitignore
+git status
+git add .gitignore firmware/
+git commit -m &quot;feat: led, debouncer, ring buffer and task scheduler&quot;
+git log --oneline
+
+# แก้ไฟล์แล้วลอง:
+git diff              # สิ่งที่แก้ แต่ยังไม่ add
+git add -p            # เลือก add ทีละก้อน
+git restore &lt;file&gt;    # ทิ้งการแก้ไขที่ยังไม่ add</code></pre></div><div class="code"><div class="cl">.gitignore</div><pre><code>build/
+*.hex
+*.zip
+*.uf2
+firmware/src/version.h
+.vscode/</code></pre></div>
+<p>รูปแบบ commit message ที่ทีมนิยม (Conventional Commits): <code class="il">feat:</code> ฟีเจอร์ใหม่, <code class="il">fix:</code> แก้บั๊ก, <code class="il">docs:</code>, <code class="il">test:</code>, <code class="il">ci:</code>, <code class="il">refactor:</code> หนึ่ง commit = หนึ่งเรื่อง</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ทำไมไม่ควร commit ไฟล์ .hex?</summary><p>เป็นผลลัพธ์ที่สร้างซ้ำได้จาก source เปลี่ยนทุก build ทำให้ repo บวมและ diff อ่านไม่ได้ ไฟล์ binary ควรอยู่ใน GitHub Release (บท 17)</p></details><details><summary>git add . กับ git add -p ต่างกันอย่างไร?</summary><p>add . เอาทุกการเปลี่ยนแปลง -p ให้เลือกทีละ hunk ช่วยแยก commit ตามเรื่องได้ แม้แก้หลายเรื่องในไฟล์เดียว</p></details>
+<label class="done"><input type="checkbox" id="done-l12" data-l="l12"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l13">
+<header class="lh"><span class="big m">13</span><div class="lhm"><p class="mod">โมดูล B · Git และ GitHub</p><h2>Branch, merge และแก้ conflict</h2><p class="meta">25 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<line x1="30" y1="50" x2="370" y2="50" class="w"/>
+<path d="M150 50 C170 50 170 112 196 112 H270 C296 112 296 50 314 50" class="w acc"/>
+<circle cx="40" cy="50" r="9" class="pn"/><circle cx="95" cy="50" r="9" class="pn"/><circle cx="150" cy="50" r="9" class="pn"/>
+<circle cx="230" cy="50" r="9" class="pn"/><circle cx="318" cy="50" r="11" class="pm"/>
+<circle cx="206" cy="112" r="9" class="pa"/><circle cx="262" cy="112" r="9" class="pa"/>
+<text x="374" y="54" class="tt m sm">main</text>
+<text x="230" y="148" text-anchor="middle" class="tt m sm acc">feature/fast-blink</text>
+<text x="230" y="28" text-anchor="middle" class="sub">แก้บรรทัดเดียวกัน</text><text x="318" y="28" text-anchor="middle" class="sub">merge</text>
+<text x="10" y="166" class="sub">ถ้า 2 branch แก้บรรทัดเดียวกัน git จะหยุดให้คุณเลือก = merge conflict</text>
+</svg></div><figcaption>feature branch แตกจาก main แล้ว merge กลับ</figcaption></figure>
+<h3>Hands-on: สร้าง conflict เองแล้วแก้</h3><div class="code"><div class="cl">terminal</div><pre><code>git switch -c feature/fast-blink
+# ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}
+git commit -am &quot;feat: faster default blink&quot;
+
+git switch main
+# แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}
+git commit -am &quot;chore: slower default blink&quot;
+
+git merge feature/fast-blink      # → CONFLICT</code></pre></div><div class="code"><div class="cl">firmware.ino ตอน conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+  {1000, 0, blinkTask},
+=======
+  {250, 0, blinkTask},
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code># แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย &lt;&lt;&lt; === &gt;&gt;&gt; ออก
+git add firmware/firmware.ino
+git commit                         # ปิด merge
+git log --oneline --graph --all
+git branch -d feature/fast-blink</code></pre></div>
+<p class="note">merge เก็บประวัติตามจริง (มี merge commit) ส่วน <code class="il">git rebase main</code> ย้าย commit ของ branch ไปต่อท้าย main ทำให้ประวัติเป็นเส้นตรง กฎ: ห้าม rebase branch ที่คนอื่นดึงไปแล้ว</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ถ้าแก้ conflict ผิดแล้วอยากเริ่มใหม่ทำอย่างไร?</summary><p>git merge --abort ก่อน commit จะกลับไปสถานะก่อน merge</p></details><details><summary>ทำไมทีมไม่ commit ตรงเข้า main?</summary><p>main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย</p></details>
+<label class="done"><input type="checkbox" id="done-l13" data-l="l13"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l14">
+<header class="lh"><span class="big m">14</span><div class="lhm"><p class="mod">โมดูล B · Git และ GitHub</p><h2>GitHub: push และ Pull Request</h2><p class="meta">25 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> มี repo สาธารณะเป็น portfolio และทำงานผ่าน PR แบบทีมจริง</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git switch -c feature/x</text><text x="200" y="49" text-anchor="middle" class="sub">แตก branch จาก main</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">commit + git push</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">Pull Request</text><text x="200" y="193" text-anchor="middle" class="sub">คำอธิบาย + diff ให้คน review</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">CI ตรวจอัตโนมัติ</text><text x="200" y="273" text-anchor="middle" class="sub">test + build ต้องผ่าน</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">Review → Squash merge</text><text x="200" y="353" text-anchor="middle" class="sub">ลบ branch · main สะอาด</text></svg></div><figcaption>GitHub flow ที่บริษัทส่วนใหญ่ใช้</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">terminal</div><pre><code># ติดตั้ง GitHub CLI (gh) แล้ว login ครั้งเดียว
+gh auth login
+
+# สร้าง repo บน GitHub จากโฟลเดอร์นี้ แล้ว push
+gh repo create xiao-embedded-cpp --public --source=. --remote=origin --push
+
+# งานใหม่ผ่าน PR
+git switch -c docs/readme
+# เขียน README.md: รูป wiring, วิธี build, ขาที่ใช้
+git add README.md
+git commit -m &quot;docs: add README with wiring and build steps&quot;
+git push -u origin docs/readme
+gh pr create --fill
+# เปิดดู PR บนเว็บ ลอง comment โค้ดตัวเอง 1 จุด
+gh pr merge --squash --delete-branch
+git switch main &amp;&amp; git pull</code></pre></div>
+<p>ตั้งค่าเพิ่มบนเว็บ: Settings → Branches → เพิ่ม rule ให้ <code class="il">main</code> ต้องผ่าน PR (เปิด required status checks หลังบท 16)</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>fetch กับ pull ต่างกันอย่างไร?</summary><p>fetch ดึงข้อมูล remote มาเก็บไว้ (origin/main) แต่ยังไม่แตะ branch ของเรา pull = fetch + merge (หรือ rebase) เข้ามา</p></details><details><summary>squash merge ดีอย่างไร?</summary><p>รวม commit ย่อยใน PR เป็น commit เดียวบน main ประวัติอ่านง่าย 1 commit = 1 ฟีเจอร์ ย้อน (revert) ง่าย</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>ผู้สัมภาษณ์มักเปิด GitHub ของผู้สมัครดูจริง README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด สร้างความน่าเชื่อถือได้มากกว่า resume</p></aside>
+<label class="done"><input type="checkbox" id="done-l14" data-l="l14"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l15">
+<header class="lh"><span class="big m">15</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h2>แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC</h2><p class="meta">30 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> รัน test ของ Debouncer และ RingBuffer บน PC ได้ในไม่กี่วินาที โดยไม่ต้องเสียบบอร์ด</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 270" role="img">
+<rect x="10" y="14" width="270" height="48" rx="8" class="b"/><text x="22" y="34" class="tt m sm">firmware.ino</text><text x="22" y="52" class="sub">ประกอบชิ้นส่วน · scheduler · wiring</text>
+<rect x="10" y="72" width="270" height="56" rx="8" class="ba"/><text x="22" y="94" class="tt m sm">Pure logic</text><text x="22" y="114" class="sub">Debouncer, RingBuffer, filter — ไม่รู้จัก Arduino</text>
+<rect x="10" y="138" width="270" height="48" rx="8" class="bm"/><text x="22" y="158" class="tt m sm">HAL / Arduino API</text><text x="22" y="176" class="sub">digitalRead, millis, analogRead, Serial</text>
+<rect x="10" y="196" width="270" height="48" rx="8" class="b"/><text x="22" y="216" class="tt m sm">Hardware</text><text x="22" y="234" class="sub">nRF52840 GPIO, SAADC, USB</text>
+<path d="M290 76 H300 V124 H290" class="la"/><text x="306" y="96" class="tt sm acc">test บน PC</text><text x="306" y="112" class="sub">g++ · วินาที · ใน CI</text>
+<path d="M290 18 H300 V240 H290" class="ln"/><text x="306" y="200" class="tt sm">test บนบอร์ด</text><text x="306" y="216" class="sub">ช้ากว่า · ต้องมือ</text>
+<text x="10" y="264" class="sub">กฎ: logic ที่ซับซ้อนควรอยู่ชั้นส้ม เพราะ test อัตโนมัติได้</text>
+</svg></div><figcaption>ยิ่ง logic อยู่ชั้นที่ไม่รู้จักฮาร์ดแวร์มาก ยิ่ง test อัตโนมัติได้มาก</figcaption></figure>
+<p>Debouncer รับเวลาเป็นพารามิเตอร์ (<code class="il">nowMs</code>) แทนการเรียก <code class="il">millis()</code> เอง นี่คือเทคนิค dependency injection แบบง่ายที่สุด ทำให้ test ควบคุมเวลาได้ทุกมิลลิวินาที</p>
+<h3>Hands-on</h3><div class="code"><div class="cl">test/test_main.cpp</div><pre><code>#include &lt;cstdio&gt;
+#include &lt;cstdlib&gt;
+#include &quot;RingBuffer.h&quot;
+#include &quot;Debouncer.h&quot;
+
+static int failures = 0;
+#define CHECK(cond)                                                    \
+  do {                                                                 \
+    if (!(cond)) {                                                     \
+      std::printf(&quot;FAIL %s:%d  %s\n&quot;, __FILE__, __LINE__, #cond);      \
+      ++failures;                                                      \
+    }                                                                  \
+  } while (0)
+
+static void test_ringbuffer() {
+  RingBuffer&lt;int, 3&gt; rb;
+  CHECK(rb.size() == 0);
+  CHECK(rb.push(1) &amp;&amp; rb.push(2) &amp;&amp; rb.push(3));
+  CHECK(!rb.push(4));          // เต็มแล้ว
+  int v = 0;
+  CHECK(rb.pop(v) &amp;&amp; v == 1);  // FIFO: ออกตัวแรกก่อน
+  rb.pushOverwrite(4);
+  rb.pushOverwrite(5);         // เต็ม → ทิ้ง 2
+  CHECK(rb.at(0) == 3 &amp;&amp; rb.at(2) == 5);
+  CHECK(average(rb) == 4.0f);
+}
+
+static void test_debouncer() {
+  using E = Debouncer::Event;
+  Debouncer d(20);
+  CHECK(d.update(true, 0) == E::None);   // เริ่มกด
+  CHECK(d.update(false, 5) == E::None);  // เด้ง
+  CHECK(d.update(true, 8) == E::None);   // เด้ง
+  CHECK(d.update(true, 20) == E::None);  // นิ่งมาแค่ 12 ms
+  CHECK(d.update(true, 28) == E::Pressed);
+  CHECK(d.isPressed());
+  CHECK(d.update(true, 40) == E::None);  // กดค้าง ไม่ยิงซ้ำ
+}
+
+int main() {
+  test_ringbuffer();
+  test_debouncer();
+  if (failures == 0) std::puts(&quot;ALL TESTS PASSED&quot;);
+  return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+}</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code># Linux / macOS / WSL (Windows: ติดตั้ง g++ ผ่าน MSYS2 หรือใช้ WSL)
+g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_runner
+./test_runner
+# ALL TESTS PASSED</code></pre></div>
+<p>ทดลองทำให้ test แดง: แก้ <code class="il">&gt;= stableMs_</code> ใน Debouncer.h เป็น <code class="il">&gt;</code> แล้วรันใหม่ ดูว่าบรรทัดไหน FAIL จากนั้นแก้กลับ แล้ว commit ด้วย <code class="il">test: add host unit tests</code></p>
+<p class="note">ในงานจริงใช้ framework เช่น GoogleTest, Catch2 หรือ Unity (สำหรับ C) แต่หลักการเหมือนกัน: CHECK เงื่อนไข, รายงานบรรทัดที่พัง, exit code ≠ 0 เมื่อ fail เพื่อให้ CI รู้</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ทำไม exit code สำคัญ?</summary><p>CI ตัดสินผ่าน/ไม่ผ่านจาก exit code ของคำสั่ง 0 = ผ่าน อย่างอื่น = fail และหยุด pipeline</p></details><details><summary>จะ test โค้ดที่เรียก digitalRead() ได้อย่างไร?</summary><p>ซ่อนการเข้าถึงฮาร์ดแวร์ไว้หลัง interface (เช่น ISensor บท 7) แล้วใส่ fake/mock ตอน test หรือส่งค่าที่อ่านได้เข้าฟังก์ชันแทนให้ฟังก์ชันไปอ่านเอง</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>"คุณ test firmware อย่างไร" ตอบเป็นชั้น: unit test บน host สำหรับ logic, HIL test บนบอร์ดจริงสำหรับ driver, system test สำหรับฟีเจอร์ แล้วบอกว่าชั้นแรกรันใน CI ทุก commit</p></aside>
+<label class="done"><input type="checkbox" id="done-l15" data-l="l15"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l16">
+<header class="lh"><span class="big m">16</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h2>CI ด้วย GitHub Actions</h2><p class="meta">30 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> ทุก push และทุก PR ถูก test และ compile firmware อัตโนมัติ</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 310" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">push / pull_request</text><text x="200" y="49" text-anchor="middle" class="sub">event ที่ trigger workflow</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><text x="212" y="79" class="sub m">ubuntu runner</text><rect x="40" y="90" width="320" height="50" rx="8" class="ba"/><text x="200" y="111" text-anchor="middle" class="tt">job: host-tests</text><text x="200" y="129" text-anchor="middle" class="sub">g++ → ./test_runner → cppcheck</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><text x="212" y="159" class="sub m">ผ่านแล้วค่อยรัน</text><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">job: build-firmware</text><text x="200" y="209" text-anchor="middle" class="sub">arduino-cli compile (needs: host-tests)</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="b"/><text x="200" y="271" text-anchor="middle" class="tt">artifact: firmware</text><text x="200" y="289" text-anchor="middle" class="sub">.hex / .zip ดาวน์โหลดได้จากหน้า Actions</text></svg></div><figcaption>workflow 2 job: test ก่อน ผ่านแล้วค่อย build</figcaption></figure>
+<h3>Hands-on</h3><p>สร้างไฟล์ตาม path นี้ใน repo</p><div class="code"><div class="cl">.github/workflows/ci.yml</div><pre><code>name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  BOARD_URL: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+  FQBN: Seeeduino:nrf52:xiaonRF52840Sense   # ใช้ค่าที่ได้จาก board listall
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build tests
+        run: g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_runner
+      - name: Run tests
+        run: ./test_runner
+      - name: Static analysis
+        run: |
+          sudo apt-get update &amp;&amp; sudo apt-get install -y cppcheck
+          cppcheck --error-exitcode=1 --enable=warning,performance --std=c++17 -Ifirmware/src test/test_main.cpp
+
+  build-firmware:
+    needs: host-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: &#x27;3.11&#x27;
+      - run: pip install adafruit-nrfutil   # core ใช้ตอนแพ็ก .zip บน Linux
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install board core
+        run: |
+          arduino-cli core update-index --additional-urls &quot;$BOARD_URL&quot;
+          arduino-cli core install Seeeduino:nrf52 --additional-urls &quot;$BOARD_URL&quot;
+      - name: Compile
+        run: arduino-cli compile --fqbn &quot;$FQBN&quot; --additional-urls &quot;$BOARD_URL&quot; --output-dir out firmware
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: out/</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code>git switch -c ci/github-actions
+git add .github/ test/
+git commit -m &quot;ci: run host tests and compile firmware&quot;
+git push -u origin ci/github-actions
+gh pr create --fill
+gh pr checks --watch        # ดูสถานะ job แบบ live</code></pre></div>
+<ol>
+<li>เปิดแท็บ Actions บน GitHub ดู log ของแต่ละ step เมื่อเขียวแล้ว ดาวน์โหลด artifact <i>firmware</i> ดูว่ามี .hex</li>
+<li>ทำ PR อีกอันที่ตั้งใจให้ test fail ดูว่า PR ขึ้นกากบาทแดงและบอกบรรทัดที่พัง</li>
+<li>ไปที่ Settings → Branches เปิด required status checks ให้ <code class="il">host-tests</code> และ <code class="il">build-firmware</code></li>
+<li>ใส่ badge ใน README: <code class="il">![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></li>
+</ol>
+<p class="note">ความเสี่ยงที่ควรรู้: ถ้า compile ใน CI ล้มที่ขั้น packaging ให้ดูว่าติดตั้ง adafruit-nrfutil แล้ว และ FQBN ตรงกับที่ <code class="il">arduino-cli board listall xiao</code> แสดง เวอร์ชัน core ควร pin ด้วย <code class="il">Seeeduino:nrf52@x.y.z</code> เพื่อให้ build ซ้ำได้เหมือนเดิม</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>needs: host-tests มีไว้ทำไม?</summary><p>ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน</p></details><details><summary>ทำไมต้อง pin เวอร์ชัน core / action?</summary><p>ให้ build reproducible ถ้า core อัปเดตเอง firmware อาจเปลี่ยนพฤติกรรมโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับ BOM lock ในฮาร์ดแวร์</p></details><aside class="iv"><b>มุมสัมภาษณ์</b><p>อธิบายความต่าง CI กับ CD ให้ชัด: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป)</p></aside>
+<label class="done"><input type="checkbox" id="done-l16" data-l="l16"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l17">
+<header class="lh"><span class="big m">17</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h2>CD: release firmware อัตโนมัติด้วย tag</h2><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ด + คอมพิวเตอร์</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> push tag แล้วได้ GitHub Release ที่มีไฟล์ firmware และเลขเวอร์ชันฝังในตัว</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git tag -a v0.1.0</text><text x="200" y="49" text-anchor="middle" class="sub">ติดเวอร์ชันแบบ SemVer</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">git push origin v0.1.0</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">release.yml</text><text x="200" y="193" text-anchor="middle" class="sub">สร้าง version.h → compile</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">GitHub Release</text><text x="200" y="273" text-anchor="middle" class="sub">แนบ .hex / .zip + release notes</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">ทีม / QA ดาวน์โหลดไปแฟลช</text><text x="200" y="353" text-anchor="middle" class="sub">ทุกเวอร์ชันย้อนกลับได้</text></svg></div><figcaption>จาก tag ถึงไฟล์ที่ QA ดาวน์โหลดไปแฟลช</figcaption></figure>
+<h3>Hands-on</h3><div class="code"><div class="cl">.github/workflows/release.yml</div><pre><code>name: Release
+
+on:
+  push:
+    tags: [&#x27;v*.*.*&#x27;]
+
+permissions:
+  contents: write
+
+env:
+  BOARD_URL: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+  FQBN: Seeeduino:nrf52:xiaonRF52840Sense
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: &#x27;3.11&#x27;
+      - run: pip install adafruit-nrfutil
+      - uses: arduino/setup-arduino-cli@v2
+      - run: |
+          arduino-cli core update-index --additional-urls &quot;$BOARD_URL&quot;
+          arduino-cli core install Seeeduino:nrf52 --additional-urls &quot;$BOARD_URL&quot;
+      - name: Stamp version
+        run: echo &quot;#define FW_VERSION \&quot;${GITHUB_REF_NAME}\&quot;&quot; &gt; firmware/src/version.h
+      - name: Compile
+        run: arduino-cli compile --fqbn &quot;$FQBN&quot; --additional-urls &quot;$BOARD_URL&quot; --output-dir out firmware
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.hex
+            out/*.zip
+          generate_release_notes: true</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code>git add .github/workflows/release.yml
+git commit -m &quot;ci: release firmware on version tag&quot;
+git push
+
+git tag -a v0.1.0 -m &quot;first release: scheduler, debounce, moving average&quot;
+git push origin v0.1.0</code></pre></div>
+<p>เปิดหน้า Releases ดาวน์โหลด .hex แฟลชลงบอร์ด เปิด Serial Monitor ต้องเห็น <code class="il">fw v0.1.0</code> (ถ้า build ในเครื่องจะเห็น <code class="il">fw dev</code>) นี่คือ traceability: รู้เสมอว่าบอร์ดตัวไหนรัน firmware commit ไหน</p>
+<p class="note">SemVer: MAJOR.MINOR.PATCH — แก้บั๊ก +PATCH, ฟีเจอร์ใหม่ที่เข้ากันได้ +MINOR, เปลี่ยนแบบเข้ากันไม่ได้ (เช่น protocol) +MAJOR ถ้าต้องการไฟล์ .uf2 สำหรับลากวางตอน double-tap reset ให้แปลงจาก .hex ด้วย uf2conv.py (family 0xADA52840)</p>
+<h3>เช็กความเข้าใจ</h3><details><summary>ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?</summary><p>ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release</p></details><details><summary>permissions: contents: write จำเป็นไหม?</summary><p>จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release</p></details>
+<label class="done"><input type="checkbox" id="done-l17" data-l="l17"> เรียนบทนี้จบแล้ว</label>
+</section><section class="lesson" id="l18">
+<header class="lh"><span class="big m">18</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h2>Capstone และเตรียมสัมภาษณ์</h2><p class="meta">30 นาที · ฮาร์ดแวร์: ทั้งหมด</p></div></header>
+<p class="goal"><b>เป้าหมาย</b> ปิด repo ให้พร้อมเป็น portfolio และซ้อมตอบคำถามที่เจอบ่อย</p>
+<h3>Checklist ของ repo</h3>
+<ul class="check">
+<li>README: รูป wiring, ตารางขา, วิธี build ในเครื่อง, วิธีรัน test, badge CI</li>
+<li>โครงสร้าง <code class="il">firmware/</code>, <code class="il">firmware/src/</code>, <code class="il">test/</code>, <code class="il">.github/workflows/</code></li>
+<li>อย่างน้อย 1 release (v0.1.0) และประวัติ commit ที่ใช้ Conventional Commits</li>
+<li>เพิ่ม test ของคุณเอง 1 ชุด เช่น ทดสอบ <code class="il">average()</code> ตอน buffer ว่าง</li>
+<li>ฟีเจอร์ต่อยอด 1 อย่าง: กดค้าง 1 วินาที = reset ค่า (เพิ่ม Event::LongPress ใน Debouncer พร้อม test)</li>
+</ul>
+<h3>คำถามที่ควรตอบได้ภายใน 1 นาที</h3>
+<details><summary>C++ ต่างจาก C ในงาน embedded อย่างไร มีต้นทุนอะไรบ้าง?</summary><p>ได้ class, RAII, reference, template, constexpr, enum class, namespace ที่ส่วนใหญ่ไม่มี runtime cost ส่วนที่มีต้นทุนคือ virtual (vtable), exceptions, RTTI, heap ผ่าน STL บางตัว จึงเลือกใช้เป็น subset</p></details><details><summary>volatile ใช้เมื่อไหร่ และไม่ได้ช่วยอะไร?</summary><p>ตัวแปรที่ ISR แก้, register ของ peripheral, ข้อมูลที่แชร์ระหว่าง context ไม่ได้ทำให้ atomic และไม่ใช่ memory barrier</p></details><details><summary>ISR ที่ดีเป็นอย่างไร?</summary><p>สั้น, ไม่ block, ไม่จอง memory, ตั้ง flag หรือ push ลง ring buffer แล้วให้ main/task ประมวลผล ข้อมูลที่แชร์ต้องป้องกันด้วย critical section</p></details><details><summary>ทำไมเลี่ยง dynamic allocation หลัง init?</summary><p>fragmentation, เวลาไม่แน่นอน, และ fail ได้ตอนรันไปนาน ๆ ระบบที่ต้องทำงานต่อเนื่องจึงจองทุกอย่างแบบ static</p></details><details><summary>อธิบาย RAII พร้อมตัวอย่าง</summary><p>ผูกอายุ resource กับ object: CriticalSection ปิด interrupt ใน ctor คืนค่าใน dtor ออกจาก scope ทางไหนก็คืนเสมอ</p></details><details><summary>debounce มีกี่วิธี?</summary><p>ฮาร์ดแวร์ (RC + Schmitt trigger) และซอฟต์แวร์ (รอให้นิ่งตามเวลา หรือ sample หลายครั้ง) เลือกตามต้นทุน BOM กับ CPU</p></details><details><summary>merge กับ rebase เลือกอย่างไร?</summary><p>merge เก็บประวัติจริงและปลอดภัยกับ branch ที่แชร์ rebase ทำประวัติเส้นตรง ใช้กับ branch ส่วนตัวก่อนเปิด PR</p></details><details><summary>pipeline CI/CD ของ firmware ควรมีอะไร?</summary><p>build ทุก target, unit test บน host, static analysis, เก็บ artifact, release ตาม tag พร้อมเวอร์ชันฝังใน binary, ขั้นต่อไปคือ HIL test บน runner ที่ต่อบอร์ดจริง</p></details><figure class="dg"><div class="sv"><svg viewBox="0 0 400 390" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="ba"/><text x="200" y="31" text-anchor="middle" class="tt">คอร์สนี้</text><text x="200" y="49" text-anchor="middle" class="sub">C++ · RAII · ISR · test · CI/CD</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="50" rx="8" class="b"/><text x="200" y="111" text-anchor="middle" class="tt">I²C + IMU บนบอร์ด (Sense)</text><text x="200" y="129" text-anchor="middle" class="sub">driver class ของ LSM6DS3</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><rect x="40" y="170" width="320" height="50" rx="8" class="b"/><text x="200" y="191" text-anchor="middle" class="tt">BLE peripheral</text><text x="200" y="209" text-anchor="middle" class="sub">ส่งค่าเซนเซอร์เข้ามือถือ</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="bm"/><text x="200" y="271" text-anchor="middle" class="tt">Zephyr / nRF Connect SDK</text><text x="200" y="289" text-anchor="middle" class="sub">RTOS · devicetree · ใช้จริงในอุตสาหกรรม</text><line x1="200" y1="302" x2="200" y2="326" class="ln" marker-end="url(#ah)"/><rect x="40" y="330" width="320" height="50" rx="8" class="b"/><text x="200" y="351" text-anchor="middle" class="tt">Custom board + production test</text><text x="200" y="369" text-anchor="middle" class="sub">สิ่งที่คุณทำงานอยู่แล้ว ต่อยอดได้</text></svg></div><figcaption>เส้นทางต่อหลังจบคอร์ส</figcaption></figure><aside class="iv"><b>มุมสัมภาษณ์</b><p>ประสบการณ์ PCB, failure analysis และ V&amp;V ที่มีอยู่คือจุดแข็งที่คนสาย firmware ล้วนไม่มี ใน portfolio ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร</p></aside>
+<label class="done"><input type="checkbox" id="done-l18" data-l="l18"> เรียนบทนี้จบแล้ว</label>
+</section>
+<section class="author" id="author">
+<p class="mod">ผู้จัดทำ</p>
+<h2>Wiputpong Klinsukon (Ake)</h2>
+<p>Hardware &amp; firmware engineer ประสบการณ์กว่า 13 ปีในงานออกแบบวงจร, PCB, firmware C/C++, การทดสอบ V&amp;V และ failure analysis ของอุปกรณ์ wearable และ IoT เขียนคอร์สนี้จากการเรียนจริงบนบอร์ด XIAO nRF52840 เพื่อแบ่งปันให้คนที่อยากเริ่มสาย embedded</p>
+<p class="links"><span>GitHub: <a href="https://github.com/wiputpong-k">github.com/wiputpong-k</a></span><span>ข้อเสนอแนะ: <a href="https://github.com/wiputpong-k/embedded-cpp-xiao/issues">เปิด Issue ใน repo ของคอร์ส</a></span></p>
+</section>
+<footer class="ft"><p>ตรวจแล้ว: Debouncer.h, RingBuffer.h และ test_main.cpp คอมไพล์ด้วย g++ 13 (-Wall -Wextra -Werror) และ test ผ่านทั้งหมด ส่วนโค้ดบนบอร์ดและ workflow ให้ยืนยัน FQBN กับเวอร์ชัน core ในเครื่องของคุณ</p></footer>
+</main>
+<script>(function () {
+  var KEY = 'xiao-cpp-done';
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+  var boxes = document.querySelectorAll('.done input');
+  var total = boxes.length;
+  function render() {
+    var n = 0;
+    boxes.forEach(function (b) {
+      var on = !!done[b.dataset.l];
+      b.checked = on;
+      if (on) n++;
+      var d = document.querySelector('.dot[data-for="' + b.dataset.l + '"]');
+      if (d) d.classList.toggle('on', on);
+    });
+    document.getElementById('pf').style.width = (total ? n / total * 100 : 0) + '%';
+    document.getElementById('pc').textContent = n + '/' + total;
+  }
+  boxes.forEach(function (b) {
+    b.addEventListener('change', function () {
+      done[b.dataset.l] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      render();
+    });
+  });
+  var jump = document.getElementById('jump');
+  jump.addEventListener('change', function () {
+    var el = document.getElementById(jump.value);
+    if (el) el.scrollIntoView();
+  });
+  render();
+  if (location.hash) {
+    var t = document.getElementById(location.hash.slice(1));
+    if (t) setTimeout(function () { t.scrollIntoView(); }, 50);
+  }
+})();
+</script>
+</body>
+</html>
