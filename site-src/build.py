@@ -24,6 +24,9 @@ DEB = tr(DEB, {'ไม่เรียก Arduino API เลย จึง test �
 RING = tr(RING, {'FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile': 'Fixed-size FIFO, no heap: N is set at compile time',
                  '// เต็มแล้วให้ทิ้งตัวเก่าสุด (เหมาะกับ moving average)': '// when full, drop the oldest (good for a moving average)',
                  '// เต็ม': '// full', '// ว่าง': '// empty', '// 0 = เก่าสุด': '// 0 = oldest'})
+TEST = tr(TEST, {'// เต็มแล้ว': '// already full', '// FIFO: ออกตัวแรกก่อน': '// FIFO: first in, first out', '// เต็ม → ทิ้ง 2': '// full → drops 2',
+                 '// เริ่มกด': '// press starts', '// เด้ง': '// bounce', '// นิ่งมาแค่ 12 ms': '// stable for only 12 ms',
+                 '// กดค้าง ไม่ยิงซ้ำ': '// held down, no repeat event'})
 
 def code(txt, label='', en=None):
     txt = tr(txt, en)
@@ -212,10 +215,10 @@ SVG_ISR = '''<svg viewBox="0 0 400 190" role="img">
 </svg>'''
 
 SVG_GITAREA = flow([
-    ('Working directory', 'ไฟล์ที่คุณแก้อยู่จริงในเครื่อง', 'b'),
-    ('Staging area (index)', 'รายการที่จะเข้า commit ถัดไป', 'bm'),
-    ('Local repository (.git)', 'ประวัติ commit ทั้งหมดในเครื่อง', 'ba'),
-    ('Remote (GitHub)', 'สำเนาบนเซิร์ฟเวอร์ แชร์กับทีม / CI', 'b'),
+    ('Working directory', T('ไฟล์ที่คุณแก้อยู่จริงในเครื่อง', 'the files you are actually editing'), 'b'),
+    ('Staging area (index)', T('รายการที่จะเข้า commit ถัดไป', 'what goes into the next commit'), 'bm'),
+    ('Local repository (.git)', T('ประวัติ commit ทั้งหมดในเครื่อง', 'full commit history on your machine'), 'ba'),
+    ('Remote (GitHub)', T('สำเนาบนเซิร์ฟเวอร์ แชร์กับทีม / CI', 'server copy, shared with the team / CI'), 'b'),
 ], ['git add', 'git commit', 'git push'])
 
 SVG_BRANCH = '''<svg viewBox="0 0 400 170" role="img">
@@ -257,34 +260,34 @@ SVG_SCHED = flow([
 ], ['', '', T('แล้ววนกลับ', 'and repeat')])
 
 SVG_PR = flow([
-    ('git switch -c feature/x', 'แตก branch จาก main', 'b'),
+    ('git switch -c feature/x', T('แตก branch จาก main', 'branch off main'), 'b'),
     ('commit + git push', '', 'b'),
-    ('Pull Request', 'คำอธิบาย + diff ให้คน review', 'ba'),
-    ('CI ตรวจอัตโนมัติ', 'test + build ต้องผ่าน', 'bm'),
-    ('Review → Squash merge', 'ลบ branch · main สะอาด', 'b'),
+    ('Pull Request', T('คำอธิบาย + diff ให้คน review', 'description + diff for review'), 'ba'),
+    (T('CI ตรวจอัตโนมัติ', 'automatic CI checks'), T('test + build ต้องผ่าน', 'test + build must pass'), 'bm'),
+    ('Review → Squash merge', T('ลบ branch · main สะอาด', 'branch deleted · clean main'), 'b'),
 ])
 
 SVG_CI = flow([
-    ('push / pull_request', 'event ที่ trigger workflow', 'b'),
+    ('push / pull_request', T('event ที่ trigger workflow', 'events that trigger the workflow'), 'b'),
     ('job: host-tests', 'g++ → ./test_runner → cppcheck', 'ba'),
     ('job: build-firmware', 'arduino-cli compile (needs: host-tests)', 'bm'),
-    ('artifact: firmware', '.hex / .zip ดาวน์โหลดได้จากหน้า Actions', 'b'),
-], ['ubuntu runner', 'ผ่านแล้วค่อยรัน', ''])
+    ('artifact: firmware', T('.hex / .zip ดาวน์โหลดได้จากหน้า Actions', '.hex / .zip, downloadable from Actions'), 'b'),
+], ['ubuntu runner', T('ผ่านแล้วค่อยรัน', 'runs only if tests pass'), ''])
 
 SVG_REL = flow([
-    ('git tag -a v0.1.0', 'ติดเวอร์ชันแบบ SemVer', 'b'),
+    ('git tag -a v0.1.0', T('ติดเวอร์ชันแบบ SemVer', 'SemVer version tag'), 'b'),
     ('git push origin v0.1.0', '', 'b'),
-    ('release.yml', 'สร้าง version.h → compile', 'ba'),
-    ('GitHub Release', 'แนบ .hex / .zip + release notes', 'bm'),
-    ('ทีม / QA ดาวน์โหลดไปแฟลช', 'ทุกเวอร์ชันย้อนกลับได้', 'b'),
+    ('release.yml', T('สร้าง version.h → compile', 'write version.h → compile'), 'ba'),
+    ('GitHub Release', T('แนบ .hex / .zip + release notes', 'attach .hex / .zip + release notes'), 'bm'),
+    (T('ทีม / QA ดาวน์โหลดไปแฟลช', 'team / QA download and flash'), T('ทุกเวอร์ชันย้อนกลับได้', 'any version can be restored'), 'b'),
 ])
 
 SVG_ROAD = flow([
-    ('คอร์สนี้', 'C++ · RAII · ISR · test · CI/CD', 'ba'),
-    ('I²C + IMU บนบอร์ด (Sense)', 'driver class ของ LSM6DS3', 'b'),
-    ('BLE peripheral', 'ส่งค่าเซนเซอร์เข้ามือถือ', 'b'),
-    ('Zephyr / nRF Connect SDK', 'RTOS · devicetree · ใช้จริงในอุตสาหกรรม', 'bm'),
-    ('Custom board + production test', 'สิ่งที่คุณทำงานอยู่แล้ว ต่อยอดได้', 'b'),
+    (T('คอร์สนี้', 'This course'), 'C++ · RAII · ISR · test · CI/CD', 'ba'),
+    (T('I²C + IMU บนบอร์ด (Sense)', 'I²C + on-board IMU (Sense)'), T('driver class ของ LSM6DS3', 'LSM6DS3 driver class'), 'b'),
+    ('BLE peripheral', T('ส่งค่าเซนเซอร์เข้ามือถือ', 'stream sensor data to a phone'), 'b'),
+    ('Zephyr / nRF Connect SDK', T('RTOS · devicetree · ใช้จริงในอุตสาหกรรม', 'RTOS · devicetree · used across industry'), 'bm'),
+    ('Custom board + production test', T('สิ่งที่คุณทำงานอยู่แล้ว ต่อยอดได้', 'builds on the work you already do'), 'b'),
 ])
 
 # English labels for hand-drawn diagrams (keep each line inside its viewBox)
@@ -306,6 +309,12 @@ SVG_MEM = tr(SVG_MEM, {'>ไม่หายเมื่อไฟดับ<': '>k
                        '.data ค่าเริ่มต้น': '.data initial values', '.text โค้ด': '.text code', 'ตัวแปร local, ISR': 'locals, ISR frames',
                        '.data (static มีค่า)': '.data (initialized)', '(ล่าง)': '(bottom)',
                        'ลูกศรส้ม: startup code copy .data จาก flash ไป RAM ก่อน setup()': 'Orange arrow: startup copies .data flash → RAM before setup()'})
+SVG_BRANCH = tr(SVG_BRANCH, {'ถ้า 2 branch แก้บรรทัดเดียวกัน git จะหยุดให้คุณเลือก = merge conflict': 'Same line changed on both branches → git stops = merge conflict',
+                             '>แก้บรรทัดเดียวกัน<': '>same line edited<'})
+SVG_LAYERS = tr(SVG_LAYERS, {'ประกอบชิ้นส่วน · scheduler · wiring': 'glue code · scheduler · wiring', '— ไม่รู้จัก Arduino': ': no Arduino',
+                             'test บน PC': 'test on PC', 'g++ · วินาที · ใน CI': 'g++ · secs · CI', 'test บนบอร์ด': 'test on board',
+                             'ช้ากว่า · ต้องมือ': 'slower · manual',
+                             'กฎ: logic ที่ซับซ้อนควรอยู่ชั้นส้ม เพราะ test อัตโนมัติได้': 'Rule: complex logic goes in the orange layer, which CI can test'})
 SVG_ISR = tr(SVG_ISR, {'อ่าน pressCount': 'read pressCount', 'ทำงานต่อจากเดิม': 'resume where it was',
                        'ขอบ FALLING ที่ D1 → CPU กระโดดเข้า ISR ทันที': 'FALLING edge on D1 → CPU jumps to the ISR',
                        'ISR: สั้น · ไม่ delay · ไม่ Serial': 'ISR: short · no delay · no Serial'})
@@ -877,7 +886,10 @@ void loop() {
           (T('ทำไม Task ใช้ function pointer ไม่ใช้ std::function?', 'Why does Task use a function pointer instead of std::function?'),
            T('function pointer ขนาด 4 byte ไม่จอง heap และคาดเดาได้ std::function อาจจอง heap เมื่อ capture ข้อมูล', 'A function pointer is 4 bytes, never allocates and is predictable. std::function may allocate on the heap when it captures data.'))]))
 
-lesson('12', 'B', 'Git พื้นฐาน: add, commit, log', 25, 'คอมพิวเตอร์', goal('เก็บงานทั้งหมดที่ทำมาลง Git พร้อม commit message ที่อ่านแล้วรู้เรื่อง') + fig(SVG_GITAREA, 'ไฟล์เดินทางผ่าน 3 พื้นที่ในเครื่องก่อนขึ้น GitHub') + '''
+PC = T('คอมพิวเตอร์', 'Computer')
+
+lesson('12', 'B', T('Git พื้นฐาน: add, commit, log', 'Git basics: add, commit, log'), 25, PC, goal(T('เก็บงานทั้งหมดที่ทำมาลง Git พร้อม commit message ที่อ่านแล้วรู้เรื่อง', 'Put all your work so far into Git, with commit messages that make sense'))
+   + fig(SVG_GITAREA, T('ไฟล์เดินทางผ่าน 3 พื้นที่ในเครื่องก่อนขึ้น GitHub', 'Files pass through three local areas before reaching GitHub')) + '''
 <h3>Hands-on</h3>''' + code('''git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 git config --global init.defaultBranch main
@@ -893,18 +905,26 @@ git log --oneline
 # แก้ไฟล์แล้วลอง:
 git diff              # สิ่งที่แก้ แต่ยังไม่ add
 git add -p            # เลือก add ทีละก้อน
-git restore <file>    # ทิ้งการแก้ไขที่ยังไม่ add''', 'terminal') + code('''build/
+git restore <file>    # ทิ้งการแก้ไขที่ยังไม่ add''', 'terminal', en={'# ย้ายโฟลเดอร์ firmware/ จากบท 11 มาไว้ที่นี่ และสร้าง .gitignore': '# move the firmware/ folder from lesson 11 here and create .gitignore',
+                                                    '# แก้ไฟล์แล้วลอง:': '# edit a file, then try:', '# สิ่งที่แก้ แต่ยังไม่ add': '# changes not yet added',
+                                                    '# เลือก add ทีละก้อน': '# add chunk by chunk', '# ทิ้งการแก้ไขที่ยังไม่ add': '# discard changes not yet added'}) + code('''build/
 *.hex
 *.zip
 *.uf2
 firmware/src/version.h
-.vscode/''', '.gitignore') + '''
+.vscode/''', '.gitignore') + T('''
 <p>รูปแบบ commit message ที่ทีมนิยม (Conventional Commits): <code class="il">feat:</code> ฟีเจอร์ใหม่, <code class="il">fix:</code> แก้บั๊ก, <code class="il">docs:</code>, <code class="il">test:</code>, <code class="il">ci:</code>, <code class="il">refactor:</code> หนึ่ง commit = หนึ่งเรื่อง</p>
-''' + qa([('ทำไมไม่ควร commit ไฟล์ .hex?', 'เป็นผลลัพธ์ที่สร้างซ้ำได้จาก source เปลี่ยนทุก build ทำให้ repo บวมและ diff อ่านไม่ได้ ไฟล์ binary ควรอยู่ใน GitHub Release (บท 17)'),
-          ('git add . กับ git add -p ต่างกันอย่างไร?', 'add . เอาทุกการเปลี่ยนแปลง -p ให้เลือกทีละ hunk ช่วยแยก commit ตามเรื่องได้ แม้แก้หลายเรื่องในไฟล์เดียว')]))
+''', '''
+<p>The commit message style most teams use (Conventional Commits): <code class="il">feat:</code> new feature, <code class="il">fix:</code> bug fix, <code class="il">docs:</code>, <code class="il">test:</code>, <code class="il">ci:</code>, <code class="il">refactor:</code>. One commit = one topic.</p>
+''') + qa([(T('ทำไมไม่ควร commit ไฟล์ .hex?', 'Why should you not commit .hex files?'),
+           T('เป็นผลลัพธ์ที่สร้างซ้ำได้จาก source เปลี่ยนทุก build ทำให้ repo บวมและ diff อ่านไม่ได้ ไฟล์ binary ควรอยู่ใน GitHub Release (บท 17)', 'They are build output you can regenerate from source. They change on every build, bloat the repo and make diffs unreadable. Binaries belong in a GitHub Release (lesson 17).')),
+          (T('git add . กับ git add -p ต่างกันอย่างไร?', 'How do git add . and git add -p differ?'),
+           T('add . เอาทุกการเปลี่ยนแปลง -p ให้เลือกทีละ hunk ช่วยแยก commit ตามเรื่องได้ แม้แก้หลายเรื่องในไฟล์เดียว', 'add . takes every change; -p lets you pick hunk by hunk, so you can split commits by topic even when one file has several changes.'))]))
 
-lesson('13', 'B', 'Branch, merge และแก้ conflict', 25, 'คอมพิวเตอร์', goal('แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก') + fig(SVG_BRANCH, 'feature branch แตกจาก main แล้ว merge กลับ') + '''
-<h3>Hands-on: สร้าง conflict เองแล้วแก้</h3>''' + code('''git switch -c feature/fast-blink
+lesson('13', 'B', T('Branch, merge และแก้ conflict', 'Branch, merge and resolve conflicts'), 25, PC, goal(T('แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก', 'Split work into branches, and resolve merge conflicts without panic'))
+   + fig(SVG_BRANCH, T('feature branch แตกจาก main แล้ว merge กลับ', 'A feature branch splits off main, then merges back')) + T('''
+<h3>Hands-on: สร้าง conflict เองแล้วแก้</h3>''', '''
+<h3>Hands-on: create a conflict, then resolve it</h3>''') + code('''git switch -c feature/fast-blink
 # ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}
 git commit -am "feat: faster default blink"
 
@@ -912,20 +932,27 @@ git switch main
 # แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}
 git commit -am "chore: slower default blink"
 
-git merge feature/fast-blink      # → CONFLICT''', 'terminal') + code('''<<<<<<< HEAD
+git merge feature/fast-blink      # → CONFLICT''', 'terminal', en={'# ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}': '# in firmware.ino change {500, 0, blinkTask} to {250, 0, blinkTask}',
+                                                       '# แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}': '# change the same line to {1000, 0, blinkTask}'}) + code('''<<<<<<< HEAD
   {1000, 0, blinkTask},
 =======
   {250, 0, blinkTask},
->>>>>>> feature/fast-blink''', 'firmware.ino ตอน conflict') + code('''# แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย <<< === >>> ออก
+>>>>>>> feature/fast-blink''', T('firmware.ino ตอน conflict', 'firmware.ino during the conflict')) + code('''# แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย <<< === >>> ออก
 git add firmware/firmware.ino
 git commit                         # ปิด merge
 git log --oneline --graph --all
-git branch -d feature/fast-blink''', 'terminal') + '''
+git branch -d feature/fast-blink''', 'terminal', en={'# แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย <<< === >>> ออก': '# keep the line you want and delete the <<< === >>> markers',
+                                                     '# ปิด merge': '# completes the merge'}) + T('''
 <p class="note">merge เก็บประวัติตามจริง (มี merge commit) ส่วน <code class="il">git rebase main</code> ย้าย commit ของ branch ไปต่อท้าย main ทำให้ประวัติเป็นเส้นตรง กฎ: ห้าม rebase branch ที่คนอื่นดึงไปแล้ว</p>
-''' + qa([('ถ้าแก้ conflict ผิดแล้วอยากเริ่มใหม่ทำอย่างไร?', 'git merge --abort ก่อน commit จะกลับไปสถานะก่อน merge'),
-          ('ทำไมทีมไม่ commit ตรงเข้า main?', 'main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย')]))
+''', '''
+<p class="note">merge keeps the real history (with a merge commit), while <code class="il">git rebase main</code> replays the branch's commits on top of main for a straight-line history. Rule: never rebase a branch someone else has already pulled.</p>
+''') + qa([(T('ถ้าแก้ conflict ผิดแล้วอยากเริ่มใหม่ทำอย่างไร?', 'You resolved a conflict wrongly and want to start over. What do you do?'),
+           T('git merge --abort ก่อน commit จะกลับไปสถานะก่อน merge', 'git merge --abort before you commit takes you back to the state before the merge.')),
+          (T('ทำไมทีมไม่ commit ตรงเข้า main?', 'Why do teams not commit straight to main?'),
+           T('main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย', 'main should always build and pass its tests. Going through a branch + PR lets CI and teammates check first, and makes changes easy to revert.'))]))
 
-lesson('14', 'B', 'GitHub: push และ Pull Request', 25, 'คอมพิวเตอร์', goal('มี repo สาธารณะเป็น portfolio และทำงานผ่าน PR แบบทีมจริง') + fig(SVG_PR, 'GitHub flow ที่บริษัทส่วนใหญ่ใช้') + '''
+lesson('14', 'B', T('GitHub: push และ Pull Request', 'GitHub: push and Pull Requests'), 25, PC, goal(T('มี repo สาธารณะเป็น portfolio และทำงานผ่าน PR แบบทีมจริง', 'Have a public repo as your portfolio, and work through PRs like a real team'))
+   + fig(SVG_PR, T('GitHub flow ที่บริษัทส่วนใหญ่ใช้', 'The GitHub flow most companies use')) + '''
 <h3>Hands-on</h3>''' + code('''# ติดตั้ง GitHub CLI (gh) แล้ว login ครั้งเดียว
 gh auth login
 
@@ -941,21 +968,41 @@ git push -u origin docs/readme
 gh pr create --fill
 # เปิดดู PR บนเว็บ ลอง comment โค้ดตัวเอง 1 จุด
 gh pr merge --squash --delete-branch
-git switch main && git pull''', 'terminal') + '''
+git switch main && git pull''', 'terminal', en={'# ติดตั้ง GitHub CLI (gh) แล้ว login ครั้งเดียว': '# install the GitHub CLI (gh) and log in once',
+                                               '# สร้าง repo บน GitHub จากโฟลเดอร์นี้ แล้ว push': '# create a GitHub repo from this folder and push',
+                                               '# งานใหม่ผ่าน PR': '# new work goes through a PR',
+                                               '# เขียน README.md: รูป wiring, วิธี build, ขาที่ใช้': '# write README.md: wiring photo, build steps, pins used',
+                                               '# เปิดดู PR บนเว็บ ลอง comment โค้ดตัวเอง 1 จุด': '# open the PR on the web and leave one review comment on your own code'}) + T('''
 <p>ตั้งค่าเพิ่มบนเว็บ: Settings → Branches → เพิ่ม rule ให้ <code class="il">main</code> ต้องผ่าน PR (เปิด required status checks หลังบท 16)</p>
-''' + qa([('fetch กับ pull ต่างกันอย่างไร?', 'fetch ดึงข้อมูล remote มาเก็บไว้ (origin/main) แต่ยังไม่แตะ branch ของเรา pull = fetch + merge (หรือ rebase) เข้ามา'),
-          ('squash merge ดีอย่างไร?', 'รวม commit ย่อยใน PR เป็น commit เดียวบน main ประวัติอ่านง่าย 1 commit = 1 ฟีเจอร์ ย้อน (revert) ง่าย')]) + iv('ผู้สัมภาษณ์มักเปิด GitHub ของผู้สมัครดูจริง README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด สร้างความน่าเชื่อถือได้มากกว่า resume'))
+''', '''
+<p>One more setting on the web: Settings → Branches → add a rule so <code class="il">main</code> only changes through PRs (turn on required status checks after lesson 16).</p>
+''') + qa([(T('fetch กับ pull ต่างกันอย่างไร?', 'How do fetch and pull differ?'),
+           T('fetch ดึงข้อมูล remote มาเก็บไว้ (origin/main) แต่ยังไม่แตะ branch ของเรา pull = fetch + merge (หรือ rebase) เข้ามา', 'fetch downloads the remote state (origin/main) without touching your branch. pull = fetch + merge (or rebase) into your branch.')),
+          (T('squash merge ดีอย่างไร?', 'What is good about a squash merge?'),
+           T('รวม commit ย่อยใน PR เป็น commit เดียวบน main ประวัติอ่านง่าย 1 commit = 1 ฟีเจอร์ ย้อน (revert) ง่าย', 'It combines the PR\'s small commits into one commit on main: readable history, 1 commit = 1 feature, easy to revert.'))])
+   + iv(T('ผู้สัมภาษณ์มักเปิด GitHub ของผู้สมัครดูจริง README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด สร้างความน่าเชื่อถือได้มากกว่า resume',
+          'Interviewers often open a candidate\'s GitHub. A README with a wiring photo, a green CI badge and a clean commit history builds more trust than a resume.')))
 
-lesson('15', 'C', 'แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC', 30, 'คอมพิวเตอร์', goal('รัน test ของ Debouncer และ RingBuffer บน PC ได้ในไม่กี่วินาที โดยไม่ต้องเสียบบอร์ด') + fig(SVG_LAYERS, 'ยิ่ง logic อยู่ชั้นที่ไม่รู้จักฮาร์ดแวร์มาก ยิ่ง test อัตโนมัติได้มาก') + '''
+lesson('15', 'C', T('แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC', 'Separate logic from hardware + unit tests on a PC'), 30, PC, goal(T('รัน test ของ Debouncer และ RingBuffer บน PC ได้ในไม่กี่วินาที โดยไม่ต้องเสียบบอร์ด', 'Run the Debouncer and RingBuffer tests on a PC in seconds, with no board plugged in'))
+   + fig(SVG_LAYERS, T('ยิ่ง logic อยู่ชั้นที่ไม่รู้จักฮาร์ดแวร์มาก ยิ่ง test อัตโนมัติได้มาก', 'The more logic lives in layers that know nothing about hardware, the more you can test automatically')) + T('''
 <p>Debouncer รับเวลาเป็นพารามิเตอร์ (<code class="il">nowMs</code>) แทนการเรียก <code class="il">millis()</code> เอง นี่คือเทคนิค dependency injection แบบง่ายที่สุด ทำให้ test ควบคุมเวลาได้ทุกมิลลิวินาที</p>
-<h3>Hands-on</h3>''' + code(TEST, 'test/test_main.cpp') + code('''# Linux / macOS / WSL (Windows: ติดตั้ง g++ ผ่าน MSYS2 หรือใช้ WSL)
+''', '''
+<p>The Debouncer takes the time as a parameter (<code class="il">nowMs</code>) instead of calling <code class="il">millis()</code> itself. This is the simplest form of dependency injection, and it lets a test control time down to the millisecond.</p>
+''') + '''<h3>Hands-on</h3>''' + code(TEST, 'test/test_main.cpp') + code('''# Linux / macOS / WSL (Windows: ติดตั้ง g++ ผ่าน MSYS2 หรือใช้ WSL)
 g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_runner
 ./test_runner
-# ALL TESTS PASSED''', 'terminal') + '''
+# ALL TESTS PASSED''', 'terminal', en={'ติดตั้ง g++ ผ่าน MSYS2 หรือใช้ WSL': 'install g++ via MSYS2, or use WSL'}) + T('''
 <p>ทดลองทำให้ test แดง: แก้ <code class="il">&gt;= stableMs_</code> ใน Debouncer.h เป็น <code class="il">&gt;</code> แล้วรันใหม่ ดูว่าบรรทัดไหน FAIL จากนั้นแก้กลับ แล้ว commit ด้วย <code class="il">test: add host unit tests</code></p>
 <p class="note">ในงานจริงใช้ framework เช่น GoogleTest, Catch2 หรือ Unity (สำหรับ C) แต่หลักการเหมือนกัน: CHECK เงื่อนไข, รายงานบรรทัดที่พัง, exit code ≠ 0 เมื่อ fail เพื่อให้ CI รู้</p>
-''' + qa([('ทำไม exit code สำคัญ?', 'CI ตัดสินผ่าน/ไม่ผ่านจาก exit code ของคำสั่ง 0 = ผ่าน อย่างอื่น = fail และหยุด pipeline'),
-          ('จะ test โค้ดที่เรียก digitalRead() ได้อย่างไร?', 'ซ่อนการเข้าถึงฮาร์ดแวร์ไว้หลัง interface (เช่น ISensor บท 7) แล้วใส่ fake/mock ตอน test หรือส่งค่าที่อ่านได้เข้าฟังก์ชันแทนให้ฟังก์ชันไปอ่านเอง')]) + iv('"คุณ test firmware อย่างไร" ตอบเป็นชั้น: unit test บน host สำหรับ logic, HIL test บนบอร์ดจริงสำหรับ driver, system test สำหรับฟีเจอร์ แล้วบอกว่าชั้นแรกรันใน CI ทุก commit'))
+''', '''
+<p>Make a test fail on purpose: change <code class="il">&gt;= stableMs_</code> in Debouncer.h to <code class="il">&gt;</code>, run again and see which line FAILs. Then change it back and commit with <code class="il">test: add host unit tests</code>.</p>
+<p class="note">Real projects use a framework such as GoogleTest, Catch2 or Unity (for C), but the idea is the same: CHECK a condition, report the failing line, and exit with a non-zero code on failure so CI knows.</p>
+''') + qa([(T('ทำไม exit code สำคัญ?', 'Why does the exit code matter?'),
+           T('CI ตัดสินผ่าน/ไม่ผ่านจาก exit code ของคำสั่ง 0 = ผ่าน อย่างอื่น = fail และหยุด pipeline', 'CI decides pass/fail from each command\'s exit code: 0 = pass, anything else = fail, which stops the pipeline.')),
+          (T('จะ test โค้ดที่เรียก digitalRead() ได้อย่างไร?', 'How do you test code that calls digitalRead()?'),
+           T('ซ่อนการเข้าถึงฮาร์ดแวร์ไว้หลัง interface (เช่น ISensor บท 7) แล้วใส่ fake/mock ตอน test หรือส่งค่าที่อ่านได้เข้าฟังก์ชันแทนให้ฟังก์ชันไปอ่านเอง', 'Hide hardware access behind an interface (like ISensor in lesson 7) and plug in a fake/mock for tests, or pass the value in instead of letting the function read it.'))])
+   + iv(T('"คุณ test firmware อย่างไร" ตอบเป็นชั้น: unit test บน host สำหรับ logic, HIL test บนบอร์ดจริงสำหรับ driver, system test สำหรับฟีเจอร์ แล้วบอกว่าชั้นแรกรันใน CI ทุก commit',
+          '"How do you test firmware?" Answer in layers: host unit tests for logic, HIL tests on real boards for drivers, system tests for features, and say that the first layer runs in CI on every commit.')))
 
 CI_YML = '''name: CI
 
@@ -1003,13 +1050,15 @@ jobs:
           name: firmware
           path: out/'''
 
-lesson('16', 'C', 'CI ด้วย GitHub Actions', 30, 'คอมพิวเตอร์', goal('ทุก push และทุก PR ถูก test และ compile firmware อัตโนมัติ') + fig(SVG_CI, 'workflow 2 job: test ก่อน ผ่านแล้วค่อย build') + '''
-<h3>Hands-on</h3><p>สร้างไฟล์ตาม path นี้ใน repo</p>''' + code(CI_YML, '.github/workflows/ci.yml') + code('''git switch -c ci/github-actions
+lesson('16', 'C', T('CI ด้วย GitHub Actions', 'CI with GitHub Actions'), 30, PC, goal(T('ทุก push และทุก PR ถูก test และ compile firmware อัตโนมัติ', 'Every push and every PR is tested and the firmware compiled automatically'))
+   + fig(SVG_CI, T('workflow 2 job: test ก่อน ผ่านแล้วค่อย build', 'A 2-job workflow: test first, build only after the tests pass')) + '''
+<h3>Hands-on</h3>''' + T('<p>สร้างไฟล์ตาม path นี้ใน repo</p>', '<p>Create this file at this path in the repo.</p>')
+   + code(CI_YML, '.github/workflows/ci.yml', en={'# ใช้ค่าที่ได้จาก board listall': '# use the value from board listall', '# core ใช้ตอนแพ็ก .zip บน Linux': '# the core needs it to package the .zip on Linux'}) + code('''git switch -c ci/github-actions
 git add .github/ test/
 git commit -m "ci: run host tests and compile firmware"
 git push -u origin ci/github-actions
 gh pr create --fill
-gh pr checks --watch        # ดูสถานะ job แบบ live''', 'terminal') + '''
+gh pr checks --watch        # ดูสถานะ job แบบ live''', 'terminal', en={'# ดูสถานะ job แบบ live': '# watch job status live'}) + T('''
 <ol>
 <li>เปิดแท็บ Actions บน GitHub ดู log ของแต่ละ step เมื่อเขียวแล้ว ดาวน์โหลด artifact <i>firmware</i> ดูว่ามี .hex</li>
 <li>ทำ PR อีกอันที่ตั้งใจให้ test fail ดูว่า PR ขึ้นกากบาทแดงและบอกบรรทัดที่พัง</li>
@@ -1017,8 +1066,20 @@ gh pr checks --watch        # ดูสถานะ job แบบ live''', 'term
 <li>ใส่ badge ใน README: <code class="il">![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></li>
 </ol>
 <p class="note">ความเสี่ยงที่ควรรู้: ถ้า compile ใน CI ล้มที่ขั้น packaging ให้ดูว่าติดตั้ง adafruit-nrfutil แล้ว และ FQBN ตรงกับที่ <code class="il">arduino-cli board listall xiao</code> แสดง เวอร์ชัน core ควร pin ด้วย <code class="il">Seeeduino:nrf52@x.y.z</code> เพื่อให้ build ซ้ำได้เหมือนเดิม</p>
-''' + qa([('needs: host-tests มีไว้ทำไม?', 'ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน'),
-          ('ทำไมต้อง pin เวอร์ชัน core / action?', 'ให้ build reproducible ถ้า core อัปเดตเอง firmware อาจเปลี่ยนพฤติกรรมโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับ BOM lock ในฮาร์ดแวร์')]) + iv('อธิบายความต่าง CI กับ CD ให้ชัด: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป)'))
+''', '''
+<ol>
+<li>Open the Actions tab on GitHub and read each step's log. When it is green, download the <i>firmware</i> artifact and check that it contains a .hex.</li>
+<li>Open another PR with a test that fails on purpose, and see the PR get a red cross that points to the failing line.</li>
+<li>Go to Settings → Branches and turn on required status checks for <code class="il">host-tests</code> and <code class="il">build-firmware</code>.</li>
+<li>Add a badge to the README: <code class="il">![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></li>
+</ol>
+<p class="note">Known risk: if the CI compile fails at the packaging step, check that adafruit-nrfutil is installed and that the FQBN matches what <code class="il">arduino-cli board listall xiao</code> shows. Pin the core version with <code class="il">Seeeduino:nrf52@x.y.z</code> so builds are reproducible.</p>
+''') + qa([(T('needs: host-tests มีไว้ทำไม?', 'What is needs: host-tests for?'),
+           T('ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน', 'build-firmware runs only after the tests pass, which saves time and makes the order of priority clear. Without it, the two jobs run in parallel.')),
+          (T('ทำไมต้อง pin เวอร์ชัน core / action?', 'Why pin the core and action versions?'),
+           T('ให้ build reproducible ถ้า core อัปเดตเอง firmware อาจเปลี่ยนพฤติกรรมโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับ BOM lock ในฮาร์ดแวร์', 'For reproducible builds. If the core updates itself, the firmware may change behavior without anyone touching the code. It is the same idea as a locked BOM in hardware.'))])
+   + iv(T('อธิบายความต่าง CI กับ CD ให้ชัด: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป)',
+          'Be clear about CI vs CD: CI = integrate code often and check it automatically every time; CD = deliver ready-to-use artifacts automatically (next lesson).')))
 
 REL_YML = '''name: Release
 
@@ -1057,19 +1118,25 @@ jobs:
             out/*.zip
           generate_release_notes: true'''
 
-lesson('17', 'C', 'CD: release firmware อัตโนมัติด้วย tag', 25, 'บอร์ด + คอมพิวเตอร์', goal('push tag แล้วได้ GitHub Release ที่มีไฟล์ firmware และเลขเวอร์ชันฝังในตัว') + fig(SVG_REL, 'จาก tag ถึงไฟล์ที่ QA ดาวน์โหลดไปแฟลช') + '''
+lesson('17', 'C', T('CD: release firmware อัตโนมัติด้วย tag', 'CD: automatic firmware releases from tags'), 25, T('บอร์ด + คอมพิวเตอร์', 'Board + computer'), goal(T('push tag แล้วได้ GitHub Release ที่มีไฟล์ firmware และเลขเวอร์ชันฝังในตัว', 'Push a tag and get a GitHub Release with the firmware files and the version number built in'))
+   + fig(SVG_REL, T('จาก tag ถึงไฟล์ที่ QA ดาวน์โหลดไปแฟลช', 'From a tag to the file QA downloads and flashes')) + '''
 <h3>Hands-on</h3>''' + code(REL_YML, '.github/workflows/release.yml') + code('''git add .github/workflows/release.yml
 git commit -m "ci: release firmware on version tag"
 git push
 
 git tag -a v0.1.0 -m "first release: scheduler, debounce, moving average"
-git push origin v0.1.0''', 'terminal') + '''
+git push origin v0.1.0''', 'terminal') + T('''
 <p>เปิดหน้า Releases ดาวน์โหลด .hex แฟลชลงบอร์ด เปิด Serial Monitor ต้องเห็น <code class="il">fw v0.1.0</code> (ถ้า build ในเครื่องจะเห็น <code class="il">fw dev</code>) นี่คือ traceability: รู้เสมอว่าบอร์ดตัวไหนรัน firmware commit ไหน</p>
 <p class="note">SemVer: MAJOR.MINOR.PATCH — แก้บั๊ก +PATCH, ฟีเจอร์ใหม่ที่เข้ากันได้ +MINOR, เปลี่ยนแบบเข้ากันไม่ได้ (เช่น protocol) +MAJOR ถ้าต้องการไฟล์ .uf2 สำหรับลากวางตอน double-tap reset ให้แปลงจาก .hex ด้วย uf2conv.py (family 0xADA52840)</p>
-''' + qa([('ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?', 'ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release'),
-          ('permissions: contents: write จำเป็นไหม?', 'จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release')]))
+''', '''
+<p>Open the Releases page, download the .hex and flash it. Serial Monitor must show <code class="il">fw v0.1.0</code> (a local build shows <code class="il">fw dev</code>). This is traceability: you always know which firmware commit each board runs.</p>
+<p class="note">SemVer: MAJOR.MINOR.PATCH. Bug fix → +PATCH, backward-compatible feature → +MINOR, breaking change (e.g. a protocol) → +MAJOR. If you want a .uf2 to drag and drop after a double-tap reset, convert the .hex with uf2conv.py (family 0xADA52840).</p>
+''') + qa([(T('ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?', 'Why generate version.h in CI instead of writing the version in the code?'),
+           T('ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release', 'The tag becomes the single source of truth, so you cannot forget to bump the number, and local builds say "dev", clearly not a release.')),
+          (T('permissions: contents: write จำเป็นไหม?', 'Is permissions: contents: write required?'),
+           T('จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release', 'Yes. In many repos the default GITHUB_TOKEN is read-only, and creating a Release needs write access.'))]))
 
-lesson('18', 'C', 'Capstone และเตรียมสัมภาษณ์', 30, 'ทั้งหมด', goal('ปิด repo ให้พร้อมเป็น portfolio และซ้อมตอบคำถามที่เจอบ่อย') + '''
+lesson('18', 'C', T('Capstone และเตรียมสัมภาษณ์', 'Capstone and interview prep'), 30, T('ทั้งหมด', 'Everything'), goal(T('ปิด repo ให้พร้อมเป็น portfolio และซ้อมตอบคำถามที่เจอบ่อย', 'Finish the repo as a portfolio piece, and practice the questions that come up most')) + T('''
 <h3>Checklist ของ repo</h3>
 <ul class="check">
 <li>README: รูป wiring, ตารางขา, วิธี build ในเครื่อง, วิธีรัน test, badge CI</li>
@@ -1079,16 +1146,36 @@ lesson('18', 'C', 'Capstone และเตรียมสัมภาษณ์'
 <li>ฟีเจอร์ต่อยอด 1 อย่าง: กดค้าง 1 วินาที = reset ค่า (เพิ่ม Event::LongPress ใน Debouncer พร้อม test)</li>
 </ul>
 <h3>คำถามที่ควรตอบได้ภายใน 1 นาที</h3>
-''' + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in [
- ('C++ ต่างจาก C ในงาน embedded อย่างไร มีต้นทุนอะไรบ้าง?', 'ได้ class, RAII, reference, template, constexpr, enum class, namespace ที่ส่วนใหญ่ไม่มี runtime cost ส่วนที่มีต้นทุนคือ virtual (vtable), exceptions, RTTI, heap ผ่าน STL บางตัว จึงเลือกใช้เป็น subset'),
- ('volatile ใช้เมื่อไหร่ และไม่ได้ช่วยอะไร?', 'ตัวแปรที่ ISR แก้, register ของ peripheral, ข้อมูลที่แชร์ระหว่าง context ไม่ได้ทำให้ atomic และไม่ใช่ memory barrier'),
- ('ISR ที่ดีเป็นอย่างไร?', 'สั้น, ไม่ block, ไม่จอง memory, ตั้ง flag หรือ push ลง ring buffer แล้วให้ main/task ประมวลผล ข้อมูลที่แชร์ต้องป้องกันด้วย critical section'),
- ('ทำไมเลี่ยง dynamic allocation หลัง init?', 'fragmentation, เวลาไม่แน่นอน, และ fail ได้ตอนรันไปนาน ๆ ระบบที่ต้องทำงานต่อเนื่องจึงจองทุกอย่างแบบ static'),
- ('อธิบาย RAII พร้อมตัวอย่าง', 'ผูกอายุ resource กับ object: CriticalSection ปิด interrupt ใน ctor คืนค่าใน dtor ออกจาก scope ทางไหนก็คืนเสมอ'),
- ('debounce มีกี่วิธี?', 'ฮาร์ดแวร์ (RC + Schmitt trigger) และซอฟต์แวร์ (รอให้นิ่งตามเวลา หรือ sample หลายครั้ง) เลือกตามต้นทุน BOM กับ CPU'),
- ('merge กับ rebase เลือกอย่างไร?', 'merge เก็บประวัติจริงและปลอดภัยกับ branch ที่แชร์ rebase ทำประวัติเส้นตรง ใช้กับ branch ส่วนตัวก่อนเปิด PR'),
- ('pipeline CI/CD ของ firmware ควรมีอะไร?', 'build ทุก target, unit test บน host, static analysis, เก็บ artifact, release ตาม tag พร้อมเวอร์ชันฝังใน binary, ขั้นต่อไปคือ HIL test บน runner ที่ต่อบอร์ดจริง'),
-]) + fig(SVG_ROAD, 'เส้นทางต่อหลังจบคอร์ส') + iv('ประสบการณ์ PCB, failure analysis และ V&amp;V ที่มีอยู่คือจุดแข็งที่คนสาย firmware ล้วนไม่มี ใน portfolio ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร'))
+''', '''
+<h3>Repo checklist</h3>
+<ul class="check">
+<li>README: wiring photo, pin table, how to build locally, how to run the tests, CI badge</li>
+<li>Layout: <code class="il">firmware/</code>, <code class="il">firmware/src/</code>, <code class="il">test/</code>, <code class="il">.github/workflows/</code></li>
+<li>At least one release (v0.1.0) and a commit history that uses Conventional Commits</li>
+<li>One test suite of your own, e.g. testing <code class="il">average()</code> on an empty buffer</li>
+<li>One extra feature: hold for 1 second = reset (add Event::LongPress to the Debouncer, with tests)</li>
+</ul>
+<h3>Questions you should answer in under a minute</h3>
+''') + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in [
+ (T('C++ ต่างจาก C ในงาน embedded อย่างไร มีต้นทุนอะไรบ้าง?', 'How does C++ differ from C in embedded work, and what does it cost?'),
+  T('ได้ class, RAII, reference, template, constexpr, enum class, namespace ที่ส่วนใหญ่ไม่มี runtime cost ส่วนที่มีต้นทุนคือ virtual (vtable), exceptions, RTTI, heap ผ่าน STL บางตัว จึงเลือกใช้เป็น subset', 'You get classes, RAII, references, templates, constexpr, enum class and namespaces, mostly with no runtime cost. The costly parts are virtual (vtables), exceptions, RTTI and heap use through some STL types, so teams use a subset.')),
+ (T('volatile ใช้เมื่อไหร่ และไม่ได้ช่วยอะไร?', 'When do you use volatile, and what does it not do?'),
+  T('ตัวแปรที่ ISR แก้, register ของ peripheral, ข้อมูลที่แชร์ระหว่าง context ไม่ได้ทำให้ atomic และไม่ใช่ memory barrier', 'For variables changed by an ISR, peripheral registers and data shared between contexts. It does not make anything atomic and it is not a memory barrier.')),
+ (T('ISR ที่ดีเป็นอย่างไร?', 'What makes a good ISR?'),
+  T('สั้น, ไม่ block, ไม่จอง memory, ตั้ง flag หรือ push ลง ring buffer แล้วให้ main/task ประมวลผล ข้อมูลที่แชร์ต้องป้องกันด้วย critical section', 'Short, non-blocking, no allocation. It sets a flag or pushes into a ring buffer and leaves the processing to main or a task. Shared data must be protected with a critical section.')),
+ (T('ทำไมเลี่ยง dynamic allocation หลัง init?', 'Why avoid dynamic allocation after init?'),
+  T('fragmentation, เวลาไม่แน่นอน, และ fail ได้ตอนรันไปนาน ๆ ระบบที่ต้องทำงานต่อเนื่องจึงจองทุกอย่างแบบ static', 'Fragmentation, unpredictable timing, and failures after long run times. Systems that must run continuously allocate everything statically.')),
+ (T('อธิบาย RAII พร้อมตัวอย่าง', 'Explain RAII with an example'),
+  T('ผูกอายุ resource กับ object: CriticalSection ปิด interrupt ใน ctor คืนค่าใน dtor ออกจาก scope ทางไหนก็คืนเสมอ', 'Tie a resource\'s lifetime to an object: CriticalSection disables interrupts in its ctor and restores them in its dtor, however you leave the scope.')),
+ (T('debounce มีกี่วิธี?', 'What are the ways to debounce?'),
+  T('ฮาร์ดแวร์ (RC + Schmitt trigger) และซอฟต์แวร์ (รอให้นิ่งตามเวลา หรือ sample หลายครั้ง) เลือกตามต้นทุน BOM กับ CPU', 'Hardware (RC + Schmitt trigger) and software (wait until stable for a set time, or sample several times). Choose based on BOM cost versus CPU time.')),
+ (T('merge กับ rebase เลือกอย่างไร?', 'How do you choose between merge and rebase?'),
+  T('merge เก็บประวัติจริงและปลอดภัยกับ branch ที่แชร์ rebase ทำประวัติเส้นตรง ใช้กับ branch ส่วนตัวก่อนเปิด PR', 'merge keeps the real history and is safe on shared branches. rebase gives a straight-line history; use it on private branches before opening a PR.')),
+ (T('pipeline CI/CD ของ firmware ควรมีอะไร?', 'What should a firmware CI/CD pipeline include?'),
+  T('build ทุก target, unit test บน host, static analysis, เก็บ artifact, release ตาม tag พร้อมเวอร์ชันฝังใน binary, ขั้นต่อไปคือ HIL test บน runner ที่ต่อบอร์ดจริง', 'Builds for every target, host unit tests, static analysis, stored artifacts, and tag-based releases with the version built into the binary. The next step is HIL tests on a runner wired to real boards.')),
+]) + fig(SVG_ROAD, T('เส้นทางต่อหลังจบคอร์ส', 'Where to go after this course'))
+   + iv(T('ประสบการณ์ PCB, failure analysis และ V&amp;V ที่มีอยู่คือจุดแข็งที่คนสาย firmware ล้วนไม่มี ใน portfolio ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร',
+          'Your existing PCB, failure analysis and V&amp;V experience is a strength that pure firmware people do not have. Connect both sides in your portfolio, e.g. explain how you chose the LED resistor and the debounce time.')))
 
 # ---------------- page ----------------
 WK = T('สัปดาห์', 'Week')
@@ -1134,7 +1221,6 @@ page = f'''<title>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</title
 <h1>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</h1>
 <p class="lede">{T('ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้ repo ที่ใช้เป็น portfolio ตอนสมัครงานสาย firmware',
  'C++ foundations for people who already write C, learned hands-on with a real board, followed by Git, GitHub and CI/CD, ending with a repo you can use as a portfolio when applying for firmware jobs.')}</p>
-{T('', '<p class="note">The English translation is in progress. Lessons that are not translated yet are shown in Thai.</p>')}
 </header>
 <section class="ov">
 <div class="ovg">
