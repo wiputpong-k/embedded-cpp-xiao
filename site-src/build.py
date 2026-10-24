@@ -340,26 +340,121 @@ BOARD = T('บอร์ดอย่างเดียว', 'Board only')
 POT = T('Pot ที่ A0', 'Pot on A0')
 BTN = T('ปุ่มกดที่ D1', 'Button on D1')
 
-lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink แรก', 'Install the tools + first Blink'), 30, BOARD, goal(T('IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW', 'The IDE compiles and flashes the board, and you know the on-board LED is active-LOW')) + T('''
-<h3>ติดตั้ง</h3>
+SEEED_URL = 'https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json'
+
+lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink แรก', 'Install the tools + first Blink'), 45, BOARD, goal(T('IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW', 'The IDE compiles and flashes the board, and you know the on-board LED is active-LOW')) + T('''
+<p>บทนี้เป็นบทติดตั้ง จึงใช้เวลานานกว่าบทอื่น ทำตามทีละขั้นจากบนลงล่าง ท้ายแต่ละขั้นมีวิธีเช็กว่าทำสำเร็จแล้ว ตัวอย่างเขียนสำหรับ Windows ถ้าใช้ macOS ให้ดูหมายเหตุในขั้นนั้น</p>
+<h3>ขั้นที่ 1: ติดตั้ง Arduino IDE 2</h3>
+<p>Arduino IDE คือโปรแกรมที่ใช้เขียนโค้ด compile และอัปโหลดลงบอร์ด</p>
 <ol>
-<li>ติดตั้ง <b>Arduino IDE 2</b> และ <b>Git</b> (Windows: Git for Windows, เลือก editor เป็น VS Code)</li>
-<li>File → Preferences → Additional boards manager URLs ใส่<br><code class="il">https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></li>
-<li>Boards Manager ค้น <b>Seeed nRF52 Boards</b> (ตัวที่ไม่มีคำว่า mbed) แล้วติดตั้ง → เลือกบอร์ด <b>Seeed XIAO nRF52840 Sense</b></li>
-<li>ติดตั้ง <b>arduino-cli</b> ไว้ด้วย จะใช้ในบท CI แล้วรัน <code class="il">arduino-cli board listall xiao</code> จดค่า FQBN ที่ได้</li>
+<li>เปิดหน้า <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
+<li>ในหัวข้อ Arduino IDE 2 เลือกตัวติดตั้งของ Windows (Win 10 and newer) ถ้าหน้าเว็บขอรับบริจาค กด <b>Just Download</b> ได้เลย</li>
+<li>เปิดไฟล์ที่ดาวน์โหลดมา กด Next ตามค่าเริ่มต้นจนจบ ถ้า Windows ถามว่าจะติดตั้ง driver ไหม ให้กด Install</li>
+<li>เปิด Arduino IDE ครั้งแรก โปรแกรมอาจดาวน์โหลดส่วนประกอบเพิ่มสักครู่ ถ้า firewall ถามสิทธิ์ ให้กด Allow</li>
 </ol>
-<p class="note">เลือก core แบบ non-mbed เพราะ build เร็วกว่าและใช้ BLE library ของ Adafruit ได้ ถ้าอัปโหลดไม่ขึ้น ให้กดปุ่ม reset 2 ครั้งเร็ว ๆ เพื่อเข้า bootloader แล้วเลือกพอร์ตใหม่</p>
+<p class="note">เช็ก: เปิดโปรแกรมแล้วเห็นหน้าต่างที่มีโค้ด <code class="il">void setup()</code> และ <code class="il">void loop()</code> ว่าง ๆ</p>
+<h3>ขั้นที่ 2: ติดตั้ง Git</h3>
+<p>Git คือโปรแกรมเก็บประวัติการแก้โค้ด จะเริ่มใช้จริงในบท 12 แต่ติดตั้งไว้ตั้งแต่ตอนนี้</p>
+<ol>
+<li>(ไม่บังคับ) ถ้าอยากใช้ VS Code เป็นโปรแกรมแก้ข้อความ ให้ติดตั้งจาก <a href="https://code.visualstudio.com/">code.visualstudio.com</a> ก่อน เพราะตัวติดตั้ง Git จะถามหาโปรแกรมนี้</li>
+<li>เปิดหน้า <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> แล้วดาวน์โหลดตัวติดตั้ง Git for Windows แบบ 64-bit</li>
+<li>เปิดตัวติดตั้ง แล้วกด Next ตามค่าเริ่มต้น ยกเว้น 2 หน้านี้
+<ul>
+<li><b>Choosing the default editor used by Git:</b> เลือก <i>Use Visual Studio Code as Git's default editor</i> ถ้าติดตั้ง VS Code แล้ว หรือเลือก <i>Use Notepad as Git's default editor</i> ถ้าไม่ได้ติดตั้ง</li>
+<li><b>Adjusting the name of the initial branch:</b> เลือก <i>Override the default branch name</i> แล้วพิมพ์ <code class="il">main</code></li>
+</ul></li>
+<li>กด Install แล้วรอจนเสร็จ</li>
+</ol>
+<p class="note">ทำไมต้องเลือก editor: บางคำสั่งของ Git จะเปิดโปรแกรมแก้ข้อความให้คุณพิมพ์ เช่น <code class="il">git commit</code> ที่ไม่ใส่ <code class="il">-m</code> หรือตอน merge ในบท 13 ค่าเริ่มต้นของ Git คือ Vim ซึ่งคนที่ไม่เคยใช้มักออกจากโปรแกรมไม่เป็น VS Code หรือ Notepad ใช้ง่ายกว่า เลือกตัวไหนก็ได้ ไม่มีผลกับเนื้อหาในคอร์ส</p>
+<p class="note">เช็ก: เปิด PowerShell (กดปุ่ม Windows พิมพ์ <i>PowerShell</i> แล้วกด Enter) พิมพ์ <code class="il">git --version</code> แล้วกด Enter ต้องเห็นข้อความแบบ <code class="il">git version 2.xx.x.windows.1</code> ถ้าขึ้นว่าไม่รู้จักคำสั่ง ให้ปิด PowerShell แล้วเปิดใหม่ (macOS: เปิด Terminal แล้วพิมพ์ <code class="il">git --version</code> ถ้ายังไม่มี Git ระบบจะถามว่าจะติดตั้งไหม ให้กด Install)</p>
+<h3>ขั้นที่ 3: เพิ่มแหล่งดาวน์โหลดบอร์ด Seeed</h3>
+<p>Arduino IDE ไม่มีบอร์ด XIAO มาให้ตั้งแต่แรก ต้องบอก IDE ก่อนว่าจะดาวน์โหลดข้อมูลบอร์ดของ Seeed จากที่ไหน</p>
+<ol>
+<li>ใน Arduino IDE กดเมนู <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>) จะมีหน้าต่าง Preferences เปิดขึ้นมา</li>
+<li>หาช่อง <b>Additional boards manager URLs</b> ซึ่งอยู่ใกล้ด้านล่างของหน้าต่าง</li>
+<li>กดปุ่มคัดลอกที่ URL ข้างล่าง แล้ววางในช่องนั้น ถ้าในช่องมี URL อื่นอยู่แล้ว ให้กดไอคอนทางขวาของช่อง แล้ววางเป็นบรรทัดใหม่</li>
+<li>กด <b>OK</b> เพื่อปิดหน้าต่าง</li>
+</ol>''', '''
+<p>This is the setup lesson, so it takes longer than the others. Work through the steps from top to bottom; each step ends with a way to check that it worked. The instructions are for Windows; macOS notes are given where they differ.</p>
+<h3>Step 1: Install Arduino IDE 2</h3>
+<p>Arduino IDE is the program you use to write code, compile it and upload it to the board.</p>
+<ol>
+<li>Open <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
+<li>Under Arduino IDE 2, pick the Windows installer (Win 10 and newer). If the page asks for a donation, you can click <b>Just Download</b>.</li>
+<li>Run the downloaded file and click Next through the defaults. If Windows asks whether to install a driver, click Install.</li>
+<li>Start Arduino IDE. The first launch may download extra components; if the firewall asks for permission, click Allow.</li>
+</ol>
+<p class="note">Check: the program opens a window with empty <code class="il">void setup()</code> and <code class="il">void loop()</code> functions.</p>
+<h3>Step 2: Install Git</h3>
+<p>Git keeps the history of your code changes. You start using it in lesson 12, but install it now.</p>
+<ol>
+<li>(Optional) If you want VS Code as your text editor, install it first from <a href="https://code.visualstudio.com/">code.visualstudio.com</a>, because the Git installer looks for it.</li>
+<li>Open <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> and download the 64-bit Git for Windows installer.</li>
+<li>Run the installer and click Next through the defaults, except on these two pages:
+<ul>
+<li><b>Choosing the default editor used by Git:</b> pick <i>Use Visual Studio Code as Git's default editor</i> if you installed VS Code, or <i>Use Notepad as Git's default editor</i> if you did not.</li>
+<li><b>Adjusting the name of the initial branch:</b> pick <i>Override the default branch name</i> and type <code class="il">main</code>.</li>
+</ul></li>
+<li>Click Install and wait until it finishes.</li>
+</ol>
+<p class="note">Why choose an editor? Some Git commands open a text editor for you to type in, such as <code class="il">git commit</code> without <code class="il">-m</code>, or a merge in lesson 13. Git's default is Vim, which newcomers often cannot figure out how to exit. VS Code or Notepad is easier. Either one works for this course.</p>
+<p class="note">Check: open PowerShell (press the Windows key, type <i>PowerShell</i>, press Enter), type <code class="il">git --version</code> and press Enter. You should see something like <code class="il">git version 2.xx.x.windows.1</code>. If the command is not recognized, close PowerShell and open it again. (macOS: open Terminal and type <code class="il">git --version</code>. If Git is missing, macOS offers to install it; click Install.)</p>
+<h3>Step 3: Add the Seeed board source</h3>
+<p>Arduino IDE does not include the XIAO board out of the box. First you tell the IDE where to download Seeed's board package from.</p>
+<ol>
+<li>In Arduino IDE, open <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>). The Preferences window opens.</li>
+<li>Find the <b>Additional boards manager URLs</b> field near the bottom of the window.</li>
+<li>Copy the URL below with its copy button and paste it into that field. If the field already has other URLs, click the icon on the right of the field and paste it on a new line.</li>
+<li>Click <b>OK</b> to close the window.</li>
+</ol>''') + code(SEEED_URL, 'Additional boards manager URLs') + T('''
+<h3>ขั้นที่ 4: ติดตั้ง core ของบอร์ด</h3>
+<p>core คือชุดไฟล์ที่ทำให้ IDE รู้จักบอร์ด รวมถึง compiler สำหรับชิป nRF52840</p>
+<ol>
+<li>เปิด <b>Boards Manager</b> โดยกดไอคอนรูปบอร์ดที่แถบซ้ายมือ (ไอคอนที่ 2 จากบน) หรือเมนู <b>Tools → Board → Boards Manager…</b></li>
+<li>พิมพ์ <code class="il">seeed nrf52</code> ในช่องค้นหา จะเจอ 2 รายการ ให้เลือก <b>Seeed nRF52 Boards</b> ไม่ใช่ <i>Seeed nRF52 mbed-enabled Boards</i></li>
+<li>กด <b>Install</b> แล้วรอ อาจใช้เวลาหลายนาทีเพราะต้องดาวน์โหลด compiler ด้วย ถ้ามีหน้าต่างถามเรื่อง driver ให้กด Install หรือ Yes</li>
+</ol>
+<p class="note">เลือก core แบบ non-mbed เพราะ build เร็วกว่าและใช้ BLE library ของ Adafruit ได้ เช็ก: รายการ Seeed nRF52 Boards ขึ้นคำว่า INSTALLED</p>
+<h3>ขั้นที่ 5: ต่อบอร์ด แล้วเลือกบอร์ดกับพอร์ต</h3>
+<ol>
+<li>เสียบบอร์ดเข้าคอมด้วยสาย USB-C ที่ส่งข้อมูลได้ (สายที่มากับที่ชาร์จบางเส้นชาร์จได้อย่างเดียว)</li>
+<li>กดเมนู <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
+<li>กดเมนู <b>Tools → Port</b> แล้วเลือกพอร์ตของบอร์ด (Windows เป็น <code class="il">COM</code> ตามด้วยตัวเลข เช่น COM5 macOS เป็น <code class="il">/dev/cu.usbmodem…</code>)</li>
+</ol>
+<p class="note">เช็ก: ถ้าไม่รู้ว่าพอร์ตไหนคือบอร์ด ให้ถอดสายแล้วเปิดเมนู Port ดูอีกครั้ง พอร์ตที่หายไปคือบอร์ด ถ้าไม่มีพอร์ตขึ้นเลย ให้ลองเปลี่ยนสาย USB</p>
 ''', '''
-<h3>Install</h3>
+<h3>Step 4: Install the board core</h3>
+<p>A core is the set of files that teaches the IDE about a board, including the compiler for the nRF52840 chip.</p>
 <ol>
-<li>Install <b>Arduino IDE 2</b> and <b>Git</b> (Windows: Git for Windows, with VS Code as the editor)</li>
-<li>File → Preferences → Additional boards manager URLs, add<br><code class="il">https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></li>
-<li>In Boards Manager, search <b>Seeed nRF52 Boards</b> (the one without "mbed") and install it → select the board <b>Seeed XIAO nRF52840 Sense</b></li>
-<li>Also install <b>arduino-cli</b> for the CI lessons, then run <code class="il">arduino-cli board listall xiao</code> and note the FQBN it prints</li>
+<li>Open <b>Boards Manager</b>: click the board icon in the left sidebar (second icon from the top), or use <b>Tools → Board → Boards Manager…</b></li>
+<li>Type <code class="il">seeed nrf52</code> in the search box. Two entries appear; pick <b>Seeed nRF52 Boards</b>, not <i>Seeed nRF52 mbed-enabled Boards</i>.</li>
+<li>Click <b>Install</b> and wait. It can take several minutes because it also downloads the compiler. If a window asks about a driver, click Install or Yes.</li>
 </ol>
-<p class="note">We use the non-mbed core because it builds faster and works with Adafruit's BLE library. If upload fails, double-press reset quickly to enter the bootloader, then select the new port.</p>
-''') + fig(SVG_PINOUT, T('XIAO nRF52840 Sense: GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D', 'XIAO nRF52840 Sense: GPIO is 3.3 V. Never feed 5 V into a D pin.')) + '''
-<h3>Hands-on</h3>''' + code('''// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
+<p class="note">We use the non-mbed core because it builds faster and works with Adafruit's BLE library. Check: the Seeed nRF52 Boards entry shows INSTALLED.</p>
+<h3>Step 5: Connect the board and pick the board and port</h3>
+<ol>
+<li>Plug the board into your computer with a USB-C cable that carries data (some charger cables only carry power).</li>
+<li>Open <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
+<li>Open <b>Tools → Port</b> and pick the board's port (on Windows, <code class="il">COM</code> plus a number, e.g. COM5; on macOS, <code class="il">/dev/cu.usbmodem…</code>).</li>
+</ol>
+<p class="note">Check: if you are not sure which port is the board, unplug the cable and open the Port menu again; the port that disappeared is the board. If no port shows up at all, try another USB cable.</p>
+''') + fig(SVG_PINOUT, T('XIAO nRF52840 Sense: GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D', 'XIAO nRF52840 Sense: GPIO is 3.3 V. Never feed 5 V into a D pin.')) + T('''
+<h3>Hands-on: Blink แรก</h3>
+<ol>
+<li>กดเมนู <b>File → New Sketch</b> จะได้หน้าต่างใหม่ที่มีโค้ดตั้งต้น</li>
+<li>ลบโค้ดเดิมทั้งหมด แล้วกดปุ่ม <b>คัดลอก</b> ที่มุมขวาบนของโค้ดข้างล่าง มาวางแทน</li>
+<li>กดเมนู <b>File → Save As…</b> แล้วตั้งชื่อ <code class="il">blink</code></li>
+<li>กดปุ่ม <b>Verify</b> (เครื่องหมายถูกที่มุมซ้ายบน) เพื่อ compile ครั้งแรกอาจนานเป็นนาที รอจนเห็น <i>Done compiling</i> ที่ด้านล่าง</li>
+<li>กดปุ่ม <b>Upload</b> (ลูกศรขวาถัดจาก Verify) แล้วรอจนเห็น <i>Done uploading</i></li>
+</ol>''', '''
+<h3>Hands-on: your first Blink</h3>
+<ol>
+<li>Open <b>File → New Sketch</b>. A new window opens with starter code.</li>
+<li>Delete all of that code, click the <b>Copy</b> button at the top right of the code below, and paste it in.</li>
+<li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>.</li>
+<li>Click <b>Verify</b> (the check mark at the top left) to compile. The first compile can take a minute; wait for <i>Done compiling</i> at the bottom.</li>
+<li>Click <b>Upload</b> (the right arrow next to Verify) and wait for <i>Done uploading</i>.</li>
+</ol>''') + code('''// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
 void setup() {
   pinMode(LED_RED, OUTPUT);
   digitalWrite(LED_RED, HIGH);   // ดับ
@@ -372,9 +467,43 @@ void loop() {
   delay(800);
 }''', 'blink.ino', en={'// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW': '// The on-board LED anode is tied to 3V3, so it lights when you write LOW',
                       '// ดับ': '// off', '// ติด': '// on'}) + T('''
-<p>ลองเปลี่ยนเป็น <code class="il">LED_GREEN</code> / <code class="il">LED_BLUE</code> แล้วเปิด Preferences → Show verbose output during compile เพื่อดูคำสั่ง compiler ที่ IDE เรียกจริง</p>
+<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ</p>
+<p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
+<h3>ลองต่อ</h3>
+<ol>
+<li>เปลี่ยน <code class="il">LED_RED</code> เป็น <code class="il">LED_GREEN</code> หรือ <code class="il">LED_BLUE</code> ให้ครบทั้ง 3 จุด แล้ว Upload ใหม่ สีของ LED ต้องเปลี่ยนตาม</li>
+<li>เปิด <b>File → Preferences…</b> ติ๊กช่อง <b>Show verbose output during: compile</b> กด OK แล้วกด Verify อีกครั้ง หน้าต่าง Output ด้านล่างจะแสดงคำสั่ง compiler ที่ IDE เรียกจริง บท 01 จะอธิบายว่าแต่ละคำสั่งทำอะไร</li>
+</ol>
 ''', '''
-<p>Try <code class="il">LED_GREEN</code> / <code class="il">LED_BLUE</code>, then turn on Preferences → Show verbose output during compile to see the compiler commands the IDE actually runs.</p>
+<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
+<p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
+<h3>Try next</h3>
+<ol>
+<li>Change <code class="il">LED_RED</code> to <code class="il">LED_GREEN</code> or <code class="il">LED_BLUE</code> in all three places and upload again. The LED color should change.</li>
+<li>Open <b>File → Preferences…</b>, tick <b>Show verbose output during: compile</b>, click OK and click Verify again. The Output panel at the bottom shows the compiler commands the IDE actually runs; lesson 01 explains what each one does.</li>
+</ol>
+''') + T('''
+<h3>ขั้นที่ 6 (ทำตอนนี้หรือรอถึงบท 16 ก็ได้): ติดตั้ง arduino-cli</h3>
+<p>arduino-cli คือ Arduino แบบสั่งงานด้วยคำสั่งพิมพ์ ใช้ในบท 16 เพื่อหาค่า FQBN ซึ่งเป็นชื่อเต็มของบอร์ดที่ CI ใช้ตอน compile</p>
+<ol>
+<li>เปิดหน้า <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> แล้วดาวน์โหลดไฟล์ที่ลงท้ายด้วย <code class="il">Windows_64bit.zip</code> ของเวอร์ชันล่าสุด</li>
+<li>แตกไฟล์ zip ไว้ในโฟลเดอร์ที่หาง่าย เช่น <code class="il">C:\\tools\\arduino-cli</code></li>
+<li>เปิดโฟลเดอร์นั้นใน File Explorer คลิกขวาที่พื้นที่ว่าง แล้วเลือก <b>Open in Terminal</b></li>
+<li>คัดลอกคำสั่งข้างล่างไปวาง แล้วกด Enter ทีละบรรทัด</li>
+</ol>''', '''
+<h3>Step 6 (now, or wait until lesson 16): install arduino-cli</h3>
+<p>arduino-cli is Arduino driven by typed commands. Lesson 16 uses it to find the FQBN, the board's full name that CI uses to compile.</p>
+<ol>
+<li>Open <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> and download the file ending in <code class="il">Windows_64bit.zip</code> from the latest release.</li>
+<li>Extract the zip into a folder that is easy to find, e.g. <code class="il">C:\\tools\\arduino-cli</code>.</li>
+<li>Open that folder in File Explorer, right-click an empty area and choose <b>Open in Terminal</b>.</li>
+<li>Copy the commands below and run them one line at a time.</li>
+</ol>''') + code(f'''.\\arduino-cli.exe core update-index --additional-urls {SEEED_URL}
+.\\arduino-cli.exe core install Seeeduino:nrf52 --additional-urls {SEEED_URL}
+.\\arduino-cli.exe board listall xiao''', 'PowerShell') + T('''
+<p>คำสั่งสุดท้ายจะแสดงชื่อบอร์ดพร้อม FQBN เช่น <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code> จดค่านี้ไว้ใช้ในบท 16</p>
+''', '''
+<p>The last command lists the boards with their FQBN, e.g. <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code>. Note it down for lesson 16.</p>
 ''') + qa([(T('ทำไม LED_RED ติดตอนเขียน LOW?', 'Why does LED_RED light when you write LOW?'),
            T('LED ต่อแบบ active-LOW: ขั้วบวกอยู่ที่ 3V3 ขา GPIO ทำหน้าที่ sink กระแส เมื่อขาเป็น LOW จึงมีกระแสไหล', 'The LED is active-LOW: its anode sits at 3V3 and the GPIO pin sinks the current, so current flows when the pin is LOW.')),
           (T('ทำไมต้องใช้ core non-mbed ในคอร์สนี้?', 'Why use the non-mbed core in this course?'),

@@ -91,7 +91,11 @@ h1 { font: 700 clamp(34px, 7vw, 56px)/1.1 var(--display); margin: 0 0 14px; text
 .tag { font: 500 11px var(--mono); letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
 .tag.t2 { color: var(--accent); border-color: var(--accent); }
 
-.code { margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--code); overflow: hidden; }
+.code { position: relative; margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--code); overflow: hidden; }
+.copy { position: absolute; top: 4px; right: 6px; font: 500 12px var(--body); color: var(--mask); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+.copy:hover { border-color: var(--mask); }
+.code:not(:has(.cl)) pre { padding-top: 34px; }
+.code .cl { padding-right: 104px; }
 .cl { font: 12px var(--mono); color: var(--muted); padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .code pre { margin: 0; padding: 12px; overflow-x: auto; }
 .code code { font: 13px/1.6 var(--mono); white-space: pre; }
@@ -172,19 +176,58 @@ details[open] summary { color: var(--accent); }
 <li><b>1</b> potentiometer 10 kΩ</li>
 <li><b>—</b> Git, Arduino IDE 2, arduino-cli, GitHub account</li></ul></div>
 </div>
-<div class="plan"><div class="wk"><h3>Week 1</h3><ol><li><a href="#l00"><span class="pn2 m">00</span><span class="pt">Install the tools + first Blink</span><span class="pm2">30′</span></a><span class="dot" data-for="l00"></span></li><li><a href="#l01"><span class="pn2 m">01</span><span class="pt">.ino is C++, and the path from code to board</span><span class="pm2">20′</span></a><span class="dot" data-for="l01"></span></li><li><a href="#l02"><span class="pn2 m">02</span><span class="pt">Reference, const and constexpr instead of #define</span><span class="pm2">25′</span></a><span class="dot" data-for="l02"></span></li><li><a href="#l03"><span class="pn2 m">03</span><span class="pt">namespace, overloading, enum class</span><span class="pm2">20′</span></a><span class="dot" data-for="l03"></span></li><li><a href="#l04"><span class="pn2 m">04</span><span class="pt">class: encapsulation and constructors</span><span class="pm2">30′</span></a><span class="dot" data-for="l04"></span></li></ol></div><div class="wk"><h3>Week 2</h3><ol><li><a href="#l05"><span class="pn2 m">05</span><span class="pt">RAII and destructors</span><span class="pm2">25′</span></a><span class="dot" data-for="l05"></span></li><li><a href="#l06"><span class="pn2 m">06</span><span class="pt">Buttons, debounce and state machines</span><span class="pm2">30′</span></a><span class="dot" data-for="l06"></span></li><li><a href="#l07"><span class="pn2 m">07</span><span class="pt">Inheritance, virtual and interfaces</span><span class="pm2">25′</span></a><span class="dot" data-for="l07"></span></li><li><a href="#l08"><span class="pn2 m">08</span><span class="pt">Template: RingBuffer&lt;T, N&gt;</span><span class="pm2">30′</span></a><span class="dot" data-for="l08"></span></li><li><a href="#l09"><span class="pn2 m">09</span><span class="pt">Memory in embedded systems</span><span class="pm2">25′</span></a><span class="dot" data-for="l09"></span></li></ol></div><div class="wk"><h3>Week 3</h3><ol><li><a href="#l10"><span class="pn2 m">10</span><span class="pt">Interrupts, volatile and lambdas</span><span class="pm2">25′</span></a><span class="dot" data-for="l10"></span></li><li><a href="#l11"><span class="pn2 m">11</span><span class="pt">Mini project: cooperative scheduler</span><span class="pm2">30′</span></a><span class="dot" data-for="l11"></span></li><li><a href="#l12"><span class="pn2 m">12</span><span class="pt">Git basics: add, commit, log</span><span class="pm2">25′</span></a><span class="dot" data-for="l12"></span></li><li><a href="#l13"><span class="pn2 m">13</span><span class="pt">Branch, merge and resolve conflicts</span><span class="pm2">25′</span></a><span class="dot" data-for="l13"></span></li><li><a href="#l14"><span class="pn2 m">14</span><span class="pt">GitHub: push and Pull Requests</span><span class="pm2">25′</span></a><span class="dot" data-for="l14"></span></li></ol></div><div class="wk"><h3>Week 4</h3><ol><li><a href="#l15"><span class="pn2 m">15</span><span class="pt">Separate logic from hardware + unit tests on a PC</span><span class="pm2">30′</span></a><span class="dot" data-for="l15"></span></li><li><a href="#l16"><span class="pn2 m">16</span><span class="pt">CI with GitHub Actions</span><span class="pm2">30′</span></a><span class="dot" data-for="l16"></span></li><li><a href="#l17"><span class="pn2 m">17</span><span class="pt">CD: automatic firmware releases from tags</span><span class="pm2">25′</span></a><span class="dot" data-for="l17"></span></li><li><a href="#l18"><span class="pn2 m">18</span><span class="pt">Capstone and review</span><span class="pm2">30′</span></a><span class="dot" data-for="l18"></span></li></ol></div></div>
+<div class="plan"><div class="wk"><h3>Week 1</h3><ol><li><a href="#l00"><span class="pn2 m">00</span><span class="pt">Install the tools + first Blink</span><span class="pm2">45′</span></a><span class="dot" data-for="l00"></span></li><li><a href="#l01"><span class="pn2 m">01</span><span class="pt">.ino is C++, and the path from code to board</span><span class="pm2">20′</span></a><span class="dot" data-for="l01"></span></li><li><a href="#l02"><span class="pn2 m">02</span><span class="pt">Reference, const and constexpr instead of #define</span><span class="pm2">25′</span></a><span class="dot" data-for="l02"></span></li><li><a href="#l03"><span class="pn2 m">03</span><span class="pt">namespace, overloading, enum class</span><span class="pm2">20′</span></a><span class="dot" data-for="l03"></span></li><li><a href="#l04"><span class="pn2 m">04</span><span class="pt">class: encapsulation and constructors</span><span class="pm2">30′</span></a><span class="dot" data-for="l04"></span></li></ol></div><div class="wk"><h3>Week 2</h3><ol><li><a href="#l05"><span class="pn2 m">05</span><span class="pt">RAII and destructors</span><span class="pm2">25′</span></a><span class="dot" data-for="l05"></span></li><li><a href="#l06"><span class="pn2 m">06</span><span class="pt">Buttons, debounce and state machines</span><span class="pm2">30′</span></a><span class="dot" data-for="l06"></span></li><li><a href="#l07"><span class="pn2 m">07</span><span class="pt">Inheritance, virtual and interfaces</span><span class="pm2">25′</span></a><span class="dot" data-for="l07"></span></li><li><a href="#l08"><span class="pn2 m">08</span><span class="pt">Template: RingBuffer&lt;T, N&gt;</span><span class="pm2">30′</span></a><span class="dot" data-for="l08"></span></li><li><a href="#l09"><span class="pn2 m">09</span><span class="pt">Memory in embedded systems</span><span class="pm2">25′</span></a><span class="dot" data-for="l09"></span></li></ol></div><div class="wk"><h3>Week 3</h3><ol><li><a href="#l10"><span class="pn2 m">10</span><span class="pt">Interrupts, volatile and lambdas</span><span class="pm2">25′</span></a><span class="dot" data-for="l10"></span></li><li><a href="#l11"><span class="pn2 m">11</span><span class="pt">Mini project: cooperative scheduler</span><span class="pm2">30′</span></a><span class="dot" data-for="l11"></span></li><li><a href="#l12"><span class="pn2 m">12</span><span class="pt">Git basics: add, commit, log</span><span class="pm2">25′</span></a><span class="dot" data-for="l12"></span></li><li><a href="#l13"><span class="pn2 m">13</span><span class="pt">Branch, merge and resolve conflicts</span><span class="pm2">25′</span></a><span class="dot" data-for="l13"></span></li><li><a href="#l14"><span class="pn2 m">14</span><span class="pt">GitHub: push and Pull Requests</span><span class="pm2">25′</span></a><span class="dot" data-for="l14"></span></li></ol></div><div class="wk"><h3>Week 4</h3><ol><li><a href="#l15"><span class="pn2 m">15</span><span class="pt">Separate logic from hardware + unit tests on a PC</span><span class="pm2">30′</span></a><span class="dot" data-for="l15"></span></li><li><a href="#l16"><span class="pn2 m">16</span><span class="pt">CI with GitHub Actions</span><span class="pm2">30′</span></a><span class="dot" data-for="l16"></span></li><li><a href="#l17"><span class="pn2 m">17</span><span class="pt">CD: automatic firmware releases from tags</span><span class="pm2">25′</span></a><span class="dot" data-for="l17"></span></li><li><a href="#l18"><span class="pn2 m">18</span><span class="pt">Capstone and review</span><span class="pm2">30′</span></a><span class="dot" data-for="l18"></span></li></ol></div></div>
 </section>
 <section class="lesson" id="l00">
-<header class="lh"><span class="big m">00</span><div class="lhm"><p class="mod">Module 0 · Setup</p><h2>Install the tools + first Blink</h2><p class="meta">30 min · Hardware: Board only</p></div></header>
+<header class="lh"><span class="big m">00</span><div class="lhm"><p class="mod">Module 0 · Setup</p><h2>Install the tools + first Blink</h2><p class="meta">45 min · Hardware: Board only</p></div></header>
 <p class="goal"><b>Goal</b> The IDE compiles and flashes the board, and you know the on-board LED is active-LOW</p>
-<h3>Install</h3>
+<p>This is the setup lesson, so it takes longer than the others. Work through the steps from top to bottom; each step ends with a way to check that it worked. The instructions are for Windows; macOS notes are given where they differ.</p>
+<h3>Step 1: Install Arduino IDE 2</h3>
+<p>Arduino IDE is the program you use to write code, compile it and upload it to the board.</p>
 <ol>
-<li>Install <b>Arduino IDE 2</b> and <b>Git</b> (Windows: Git for Windows, with VS Code as the editor)</li>
-<li>File → Preferences → Additional boards manager URLs, add<br><code class="il">https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></li>
-<li>In Boards Manager, search <b>Seeed nRF52 Boards</b> (the one without "mbed") and install it → select the board <b>Seeed XIAO nRF52840 Sense</b></li>
-<li>Also install <b>arduino-cli</b> for the CI lessons, then run <code class="il">arduino-cli board listall xiao</code> and note the FQBN it prints</li>
+<li>Open <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
+<li>Under Arduino IDE 2, pick the Windows installer (Win 10 and newer). If the page asks for a donation, you can click <b>Just Download</b>.</li>
+<li>Run the downloaded file and click Next through the defaults. If Windows asks whether to install a driver, click Install.</li>
+<li>Start Arduino IDE. The first launch may download extra components; if the firewall asks for permission, click Allow.</li>
 </ol>
-<p class="note">We use the non-mbed core because it builds faster and works with Adafruit's BLE library. If upload fails, double-press reset quickly to enter the bootloader, then select the new port.</p>
+<p class="note">Check: the program opens a window with empty <code class="il">void setup()</code> and <code class="il">void loop()</code> functions.</p>
+<h3>Step 2: Install Git</h3>
+<p>Git keeps the history of your code changes. You start using it in lesson 12, but install it now.</p>
+<ol>
+<li>(Optional) If you want VS Code as your text editor, install it first from <a href="https://code.visualstudio.com/">code.visualstudio.com</a>, because the Git installer looks for it.</li>
+<li>Open <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> and download the 64-bit Git for Windows installer.</li>
+<li>Run the installer and click Next through the defaults, except on these two pages:
+<ul>
+<li><b>Choosing the default editor used by Git:</b> pick <i>Use Visual Studio Code as Git's default editor</i> if you installed VS Code, or <i>Use Notepad as Git's default editor</i> if you did not.</li>
+<li><b>Adjusting the name of the initial branch:</b> pick <i>Override the default branch name</i> and type <code class="il">main</code>.</li>
+</ul></li>
+<li>Click Install and wait until it finishes.</li>
+</ol>
+<p class="note">Why choose an editor? Some Git commands open a text editor for you to type in, such as <code class="il">git commit</code> without <code class="il">-m</code>, or a merge in lesson 13. Git's default is Vim, which newcomers often cannot figure out how to exit. VS Code or Notepad is easier. Either one works for this course.</p>
+<p class="note">Check: open PowerShell (press the Windows key, type <i>PowerShell</i>, press Enter), type <code class="il">git --version</code> and press Enter. You should see something like <code class="il">git version 2.xx.x.windows.1</code>. If the command is not recognized, close PowerShell and open it again. (macOS: open Terminal and type <code class="il">git --version</code>. If Git is missing, macOS offers to install it; click Install.)</p>
+<h3>Step 3: Add the Seeed board source</h3>
+<p>Arduino IDE does not include the XIAO board out of the box. First you tell the IDE where to download Seeed's board package from.</p>
+<ol>
+<li>In Arduino IDE, open <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>). The Preferences window opens.</li>
+<li>Find the <b>Additional boards manager URLs</b> field near the bottom of the window.</li>
+<li>Copy the URL below with its copy button and paste it into that field. If the field already has other URLs, click the icon on the right of the field and paste it on a new line.</li>
+<li>Click <b>OK</b> to close the window.</li>
+</ol><div class="code"><div class="cl">Additional boards manager URLs</div><pre><code>https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></pre></div>
+<h3>Step 4: Install the board core</h3>
+<p>A core is the set of files that teaches the IDE about a board, including the compiler for the nRF52840 chip.</p>
+<ol>
+<li>Open <b>Boards Manager</b>: click the board icon in the left sidebar (second icon from the top), or use <b>Tools → Board → Boards Manager…</b></li>
+<li>Type <code class="il">seeed nrf52</code> in the search box. Two entries appear; pick <b>Seeed nRF52 Boards</b>, not <i>Seeed nRF52 mbed-enabled Boards</i>.</li>
+<li>Click <b>Install</b> and wait. It can take several minutes because it also downloads the compiler. If a window asks about a driver, click Install or Yes.</li>
+</ol>
+<p class="note">We use the non-mbed core because it builds faster and works with Adafruit's BLE library. Check: the Seeed nRF52 Boards entry shows INSTALLED.</p>
+<h3>Step 5: Connect the board and pick the board and port</h3>
+<ol>
+<li>Plug the board into your computer with a USB-C cable that carries data (some charger cables only carry power).</li>
+<li>Open <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
+<li>Open <b>Tools → Port</b> and pick the board's port (on Windows, <code class="il">COM</code> plus a number, e.g. COM5; on macOS, <code class="il">/dev/cu.usbmodem…</code>).</li>
+</ol>
+<p class="note">Check: if you are not sure which port is the board, unplug the cable and open the Port menu again; the port that disappeared is the board. If no port shows up at all, try another USB cable.</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 300" role="img">
 <rect x="178" y="24" width="44" height="22" rx="5" class="b"/><text x="200" y="39" text-anchor="middle" class="sub m">USB-C</text>
 <rect x="140" y="44" width="120" height="226" rx="12" class="bm"/>
@@ -193,7 +236,14 @@ details[open] summary { color: var(--accent); }
 <circle cx="152" cy="76" r="6" class="pa"/><text x="138" y="80" text-anchor="end" class="tt acc m">D0 / A0</text><circle cx="152" cy="104" r="6" class="pa"/><text x="138" y="108" text-anchor="end" class="tt acc m">D1</text><circle cx="152" cy="132" r="6" class="pa"/><text x="138" y="136" text-anchor="end" class="tt acc m">D2</text><circle cx="152" cy="160" r="6" class="pn"/><text x="138" y="164" text-anchor="end" class="tt m">D3</text><circle cx="152" cy="188" r="6" class="pn"/><text x="138" y="192" text-anchor="end" class="tt m">D4 / SDA</text><circle cx="152" cy="216" r="6" class="pn"/><text x="138" y="220" text-anchor="end" class="tt m">D5 / SCL</text><circle cx="152" cy="244" r="6" class="pn"/><text x="138" y="248" text-anchor="end" class="tt m">D6 / TX</text><circle cx="248" cy="76" r="6" class="pn"/><text x="262" y="80" text-anchor="start" class="tt m">5V</text><circle cx="248" cy="104" r="6" class="pa"/><text x="262" y="108" text-anchor="start" class="tt acc m">GND</text><circle cx="248" cy="132" r="6" class="pa"/><text x="262" y="136" text-anchor="start" class="tt acc m">3V3</text><circle cx="248" cy="160" r="6" class="pn"/><text x="262" y="164" text-anchor="start" class="tt m">D10 / MOSI</text><circle cx="248" cy="188" r="6" class="pn"/><text x="262" y="192" text-anchor="start" class="tt m">D9 / MISO</text><circle cx="248" cy="216" r="6" class="pn"/><text x="262" y="220" text-anchor="start" class="tt m">D8 / SCK</text><circle cx="248" cy="244" r="6" class="pn"/><text x="262" y="248" text-anchor="start" class="tt m">D7 / RX</text>
 <text x="8" y="292" class="sub">Orange = course pins: D0 pot · D1 button · D2 external LED</text>
 </svg></div><figcaption>XIAO nRF52840 Sense: GPIO is 3.3 V. Never feed 5 V into a D pin.</figcaption></figure>
-<h3>Hands-on</h3><div class="code"><div class="cl">blink.ino</div><pre><code>// The on-board LED anode is tied to 3V3, so it lights when you write LOW
+<h3>Hands-on: your first Blink</h3>
+<ol>
+<li>Open <b>File → New Sketch</b>. A new window opens with starter code.</li>
+<li>Delete all of that code, click the <b>Copy</b> button at the top right of the code below, and paste it in.</li>
+<li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>.</li>
+<li>Click <b>Verify</b> (the check mark at the top left) to compile. The first compile can take a minute; wait for <i>Done compiling</i> at the bottom.</li>
+<li>Click <b>Upload</b> (the right arrow next to Verify) and wait for <i>Done uploading</i>.</li>
+</ol><div class="code"><div class="cl">blink.ino</div><pre><code>// The on-board LED anode is tied to 3V3, so it lights when you write LOW
 void setup() {
   pinMode(LED_RED, OUTPUT);
   digitalWrite(LED_RED, HIGH);   // off
@@ -205,7 +255,25 @@ void loop() {
   digitalWrite(LED_RED, HIGH);   // off
   delay(800);
 }</code></pre></div>
-<p>Try <code class="il">LED_GREEN</code> / <code class="il">LED_BLUE</code>, then turn on Preferences → Show verbose output during compile to see the compiler commands the IDE actually runs.</p>
+<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
+<p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
+<h3>Try next</h3>
+<ol>
+<li>Change <code class="il">LED_RED</code> to <code class="il">LED_GREEN</code> or <code class="il">LED_BLUE</code> in all three places and upload again. The LED color should change.</li>
+<li>Open <b>File → Preferences…</b>, tick <b>Show verbose output during: compile</b>, click OK and click Verify again. The Output panel at the bottom shows the compiler commands the IDE actually runs; lesson 01 explains what each one does.</li>
+</ol>
+
+<h3>Step 6 (now, or wait until lesson 16): install arduino-cli</h3>
+<p>arduino-cli is Arduino driven by typed commands. Lesson 16 uses it to find the FQBN, the board's full name that CI uses to compile.</p>
+<ol>
+<li>Open <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> and download the file ending in <code class="il">Windows_64bit.zip</code> from the latest release.</li>
+<li>Extract the zip into a folder that is easy to find, e.g. <code class="il">C:\tools\arduino-cli</code>.</li>
+<li>Open that folder in File Explorer, right-click an empty area and choose <b>Open in Terminal</b>.</li>
+<li>Copy the commands below and run them one line at a time.</li>
+</ol><div class="code"><div class="cl">PowerShell</div><pre><code>.\arduino-cli.exe core update-index --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+.\arduino-cli.exe core install Seeeduino:nrf52 --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+.\arduino-cli.exe board listall xiao</code></pre></div>
+<p>The last command lists the boards with their FQBN, e.g. <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code>. Note it down for lesson 16.</p>
 <h3>Check your understanding</h3><details><summary>Why does LED_RED light when you write LOW?</summary><p>The LED is active-LOW: its anode sits at 3V3 and the GPIO pin sinks the current, so current flows when the pin is LOW.</p></details><details><summary>Why use the non-mbed core in this course?</summary><p>It builds faster, supports Bluefruit BLE and is easy to compile in CI. Both cores run the same C++.</p></details>
 <label class="done"><input type="checkbox" id="done-l00" data-l="l00"> I finished this lesson</label>
 </section><section class="lesson" id="l01">
@@ -1120,6 +1188,37 @@ git push origin v0.1.0</code></pre></div>
     var el = document.getElementById(jump.value);
     if (el) el.scrollIntoView();
   });
+  // Copy button on every code block; label follows the page language.
+  var th = document.documentElement.lang === 'th';
+  var L = th ? { copy: 'คัดลอก', done: 'คัดลอกแล้ว', fail: 'คัดลอกไม่ได้' } : { copy: 'Copy', done: 'Copied', fail: 'Copy failed' };
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (ok, bad) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy') ? ok() : bad(); } catch (e) { bad(e); }
+      document.body.removeChild(ta);
+    });
+  }
+  document.querySelectorAll('.code').forEach(function (box) {
+    var code = box.querySelector('pre code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy';
+    btn.textContent = L.copy;
+    btn.addEventListener('click', function () {
+      copyText(code.textContent).then(function () { btn.textContent = L.done; }, function () { btn.textContent = L.fail; });
+      setTimeout(function () { btn.textContent = L.copy; }, 1800);
+    });
+    box.appendChild(btn);
+  });
+
   // Language switch: carry the lesson currently on screen over to the other page.
   var lang = document.getElementById('lang');
   if (lang) lang.addEventListener('click', function () {

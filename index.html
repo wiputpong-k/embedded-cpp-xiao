@@ -91,7 +91,11 @@ h1 { font: 700 clamp(34px, 7vw, 56px)/1.1 var(--display); margin: 0 0 14px; text
 .tag { font: 500 11px var(--mono); letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
 .tag.t2 { color: var(--accent); border-color: var(--accent); }
 
-.code { margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--code); overflow: hidden; }
+.code { position: relative; margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--code); overflow: hidden; }
+.copy { position: absolute; top: 4px; right: 6px; font: 500 12px var(--body); color: var(--mask); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+.copy:hover { border-color: var(--mask); }
+.code:not(:has(.cl)) pre { padding-top: 34px; }
+.code .cl { padding-right: 104px; }
 .cl { font: 12px var(--mono); color: var(--muted); padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .code pre { margin: 0; padding: 12px; overflow-x: auto; }
 .code code { font: 13px/1.6 var(--mono); white-space: pre; }
@@ -172,19 +176,58 @@ details[open] summary { color: var(--accent); }
 <li><b>1</b> potentiometer 10 kΩ</li>
 <li><b>—</b> Git, Arduino IDE 2, arduino-cli, บัญชี GitHub</li></ul></div>
 </div>
-<div class="plan"><div class="wk"><h3>สัปดาห์ 1</h3><ol><li><a href="#l00"><span class="pn2 m">00</span><span class="pt">ติดตั้งเครื่องมือ + Blink แรก</span><span class="pm2">30′</span></a><span class="dot" data-for="l00"></span></li><li><a href="#l01"><span class="pn2 m">01</span><span class="pt">.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</span><span class="pm2">20′</span></a><span class="dot" data-for="l01"></span></li><li><a href="#l02"><span class="pn2 m">02</span><span class="pt">Reference, const และ constexpr แทน #define</span><span class="pm2">25′</span></a><span class="dot" data-for="l02"></span></li><li><a href="#l03"><span class="pn2 m">03</span><span class="pt">namespace, overloading, enum class</span><span class="pm2">20′</span></a><span class="dot" data-for="l03"></span></li><li><a href="#l04"><span class="pn2 m">04</span><span class="pt">class: encapsulation และ constructor</span><span class="pm2">30′</span></a><span class="dot" data-for="l04"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 2</h3><ol><li><a href="#l05"><span class="pn2 m">05</span><span class="pt">RAII และ destructor</span><span class="pm2">25′</span></a><span class="dot" data-for="l05"></span></li><li><a href="#l06"><span class="pn2 m">06</span><span class="pt">ปุ่มกด, debounce และ state machine</span><span class="pm2">30′</span></a><span class="dot" data-for="l06"></span></li><li><a href="#l07"><span class="pn2 m">07</span><span class="pt">Inheritance, virtual และ interface</span><span class="pm2">25′</span></a><span class="dot" data-for="l07"></span></li><li><a href="#l08"><span class="pn2 m">08</span><span class="pt">Template: RingBuffer&lt;T, N&gt;</span><span class="pm2">30′</span></a><span class="dot" data-for="l08"></span></li><li><a href="#l09"><span class="pn2 m">09</span><span class="pt">หน่วยความจำใน embedded</span><span class="pm2">25′</span></a><span class="dot" data-for="l09"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 3</h3><ol><li><a href="#l10"><span class="pn2 m">10</span><span class="pt">Interrupt, volatile และ lambda</span><span class="pm2">25′</span></a><span class="dot" data-for="l10"></span></li><li><a href="#l11"><span class="pn2 m">11</span><span class="pt">Mini project: cooperative scheduler</span><span class="pm2">30′</span></a><span class="dot" data-for="l11"></span></li><li><a href="#l12"><span class="pn2 m">12</span><span class="pt">Git พื้นฐาน: add, commit, log</span><span class="pm2">25′</span></a><span class="dot" data-for="l12"></span></li><li><a href="#l13"><span class="pn2 m">13</span><span class="pt">Branch, merge และแก้ conflict</span><span class="pm2">25′</span></a><span class="dot" data-for="l13"></span></li><li><a href="#l14"><span class="pn2 m">14</span><span class="pt">GitHub: push และ Pull Request</span><span class="pm2">25′</span></a><span class="dot" data-for="l14"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 4</h3><ol><li><a href="#l15"><span class="pn2 m">15</span><span class="pt">แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC</span><span class="pm2">30′</span></a><span class="dot" data-for="l15"></span></li><li><a href="#l16"><span class="pn2 m">16</span><span class="pt">CI ด้วย GitHub Actions</span><span class="pm2">30′</span></a><span class="dot" data-for="l16"></span></li><li><a href="#l17"><span class="pn2 m">17</span><span class="pt">CD: release firmware อัตโนมัติด้วย tag</span><span class="pm2">25′</span></a><span class="dot" data-for="l17"></span></li><li><a href="#l18"><span class="pn2 m">18</span><span class="pt">Capstone และทบทวน</span><span class="pm2">30′</span></a><span class="dot" data-for="l18"></span></li></ol></div></div>
+<div class="plan"><div class="wk"><h3>สัปดาห์ 1</h3><ol><li><a href="#l00"><span class="pn2 m">00</span><span class="pt">ติดตั้งเครื่องมือ + Blink แรก</span><span class="pm2">45′</span></a><span class="dot" data-for="l00"></span></li><li><a href="#l01"><span class="pn2 m">01</span><span class="pt">.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</span><span class="pm2">20′</span></a><span class="dot" data-for="l01"></span></li><li><a href="#l02"><span class="pn2 m">02</span><span class="pt">Reference, const และ constexpr แทน #define</span><span class="pm2">25′</span></a><span class="dot" data-for="l02"></span></li><li><a href="#l03"><span class="pn2 m">03</span><span class="pt">namespace, overloading, enum class</span><span class="pm2">20′</span></a><span class="dot" data-for="l03"></span></li><li><a href="#l04"><span class="pn2 m">04</span><span class="pt">class: encapsulation และ constructor</span><span class="pm2">30′</span></a><span class="dot" data-for="l04"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 2</h3><ol><li><a href="#l05"><span class="pn2 m">05</span><span class="pt">RAII และ destructor</span><span class="pm2">25′</span></a><span class="dot" data-for="l05"></span></li><li><a href="#l06"><span class="pn2 m">06</span><span class="pt">ปุ่มกด, debounce และ state machine</span><span class="pm2">30′</span></a><span class="dot" data-for="l06"></span></li><li><a href="#l07"><span class="pn2 m">07</span><span class="pt">Inheritance, virtual และ interface</span><span class="pm2">25′</span></a><span class="dot" data-for="l07"></span></li><li><a href="#l08"><span class="pn2 m">08</span><span class="pt">Template: RingBuffer&lt;T, N&gt;</span><span class="pm2">30′</span></a><span class="dot" data-for="l08"></span></li><li><a href="#l09"><span class="pn2 m">09</span><span class="pt">หน่วยความจำใน embedded</span><span class="pm2">25′</span></a><span class="dot" data-for="l09"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 3</h3><ol><li><a href="#l10"><span class="pn2 m">10</span><span class="pt">Interrupt, volatile และ lambda</span><span class="pm2">25′</span></a><span class="dot" data-for="l10"></span></li><li><a href="#l11"><span class="pn2 m">11</span><span class="pt">Mini project: cooperative scheduler</span><span class="pm2">30′</span></a><span class="dot" data-for="l11"></span></li><li><a href="#l12"><span class="pn2 m">12</span><span class="pt">Git พื้นฐาน: add, commit, log</span><span class="pm2">25′</span></a><span class="dot" data-for="l12"></span></li><li><a href="#l13"><span class="pn2 m">13</span><span class="pt">Branch, merge และแก้ conflict</span><span class="pm2">25′</span></a><span class="dot" data-for="l13"></span></li><li><a href="#l14"><span class="pn2 m">14</span><span class="pt">GitHub: push และ Pull Request</span><span class="pm2">25′</span></a><span class="dot" data-for="l14"></span></li></ol></div><div class="wk"><h3>สัปดาห์ 4</h3><ol><li><a href="#l15"><span class="pn2 m">15</span><span class="pt">แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC</span><span class="pm2">30′</span></a><span class="dot" data-for="l15"></span></li><li><a href="#l16"><span class="pn2 m">16</span><span class="pt">CI ด้วย GitHub Actions</span><span class="pm2">30′</span></a><span class="dot" data-for="l16"></span></li><li><a href="#l17"><span class="pn2 m">17</span><span class="pt">CD: release firmware อัตโนมัติด้วย tag</span><span class="pm2">25′</span></a><span class="dot" data-for="l17"></span></li><li><a href="#l18"><span class="pn2 m">18</span><span class="pt">Capstone และทบทวน</span><span class="pm2">30′</span></a><span class="dot" data-for="l18"></span></li></ol></div></div>
 </section>
 <section class="lesson" id="l00">
-<header class="lh"><span class="big m">00</span><div class="lhm"><p class="mod">โมดูล 0 · เตรียมเครื่อง</p><h2>ติดตั้งเครื่องมือ + Blink แรก</h2><p class="meta">30 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<header class="lh"><span class="big m">00</span><div class="lhm"><p class="mod">โมดูล 0 · เตรียมเครื่อง</p><h2>ติดตั้งเครื่องมือ + Blink แรก</h2><p class="meta">45 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
 <p class="goal"><b>เป้าหมาย</b> IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW</p>
-<h3>ติดตั้ง</h3>
+<p>บทนี้เป็นบทติดตั้ง จึงใช้เวลานานกว่าบทอื่น ทำตามทีละขั้นจากบนลงล่าง ท้ายแต่ละขั้นมีวิธีเช็กว่าทำสำเร็จแล้ว ตัวอย่างเขียนสำหรับ Windows ถ้าใช้ macOS ให้ดูหมายเหตุในขั้นนั้น</p>
+<h3>ขั้นที่ 1: ติดตั้ง Arduino IDE 2</h3>
+<p>Arduino IDE คือโปรแกรมที่ใช้เขียนโค้ด compile และอัปโหลดลงบอร์ด</p>
 <ol>
-<li>ติดตั้ง <b>Arduino IDE 2</b> และ <b>Git</b> (Windows: Git for Windows, เลือก editor เป็น VS Code)</li>
-<li>File → Preferences → Additional boards manager URLs ใส่<br><code class="il">https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></li>
-<li>Boards Manager ค้น <b>Seeed nRF52 Boards</b> (ตัวที่ไม่มีคำว่า mbed) แล้วติดตั้ง → เลือกบอร์ด <b>Seeed XIAO nRF52840 Sense</b></li>
-<li>ติดตั้ง <b>arduino-cli</b> ไว้ด้วย จะใช้ในบท CI แล้วรัน <code class="il">arduino-cli board listall xiao</code> จดค่า FQBN ที่ได้</li>
+<li>เปิดหน้า <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
+<li>ในหัวข้อ Arduino IDE 2 เลือกตัวติดตั้งของ Windows (Win 10 and newer) ถ้าหน้าเว็บขอรับบริจาค กด <b>Just Download</b> ได้เลย</li>
+<li>เปิดไฟล์ที่ดาวน์โหลดมา กด Next ตามค่าเริ่มต้นจนจบ ถ้า Windows ถามว่าจะติดตั้ง driver ไหม ให้กด Install</li>
+<li>เปิด Arduino IDE ครั้งแรก โปรแกรมอาจดาวน์โหลดส่วนประกอบเพิ่มสักครู่ ถ้า firewall ถามสิทธิ์ ให้กด Allow</li>
 </ol>
-<p class="note">เลือก core แบบ non-mbed เพราะ build เร็วกว่าและใช้ BLE library ของ Adafruit ได้ ถ้าอัปโหลดไม่ขึ้น ให้กดปุ่ม reset 2 ครั้งเร็ว ๆ เพื่อเข้า bootloader แล้วเลือกพอร์ตใหม่</p>
+<p class="note">เช็ก: เปิดโปรแกรมแล้วเห็นหน้าต่างที่มีโค้ด <code class="il">void setup()</code> และ <code class="il">void loop()</code> ว่าง ๆ</p>
+<h3>ขั้นที่ 2: ติดตั้ง Git</h3>
+<p>Git คือโปรแกรมเก็บประวัติการแก้โค้ด จะเริ่มใช้จริงในบท 12 แต่ติดตั้งไว้ตั้งแต่ตอนนี้</p>
+<ol>
+<li>(ไม่บังคับ) ถ้าอยากใช้ VS Code เป็นโปรแกรมแก้ข้อความ ให้ติดตั้งจาก <a href="https://code.visualstudio.com/">code.visualstudio.com</a> ก่อน เพราะตัวติดตั้ง Git จะถามหาโปรแกรมนี้</li>
+<li>เปิดหน้า <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> แล้วดาวน์โหลดตัวติดตั้ง Git for Windows แบบ 64-bit</li>
+<li>เปิดตัวติดตั้ง แล้วกด Next ตามค่าเริ่มต้น ยกเว้น 2 หน้านี้
+<ul>
+<li><b>Choosing the default editor used by Git:</b> เลือก <i>Use Visual Studio Code as Git's default editor</i> ถ้าติดตั้ง VS Code แล้ว หรือเลือก <i>Use Notepad as Git's default editor</i> ถ้าไม่ได้ติดตั้ง</li>
+<li><b>Adjusting the name of the initial branch:</b> เลือก <i>Override the default branch name</i> แล้วพิมพ์ <code class="il">main</code></li>
+</ul></li>
+<li>กด Install แล้วรอจนเสร็จ</li>
+</ol>
+<p class="note">ทำไมต้องเลือก editor: บางคำสั่งของ Git จะเปิดโปรแกรมแก้ข้อความให้คุณพิมพ์ เช่น <code class="il">git commit</code> ที่ไม่ใส่ <code class="il">-m</code> หรือตอน merge ในบท 13 ค่าเริ่มต้นของ Git คือ Vim ซึ่งคนที่ไม่เคยใช้มักออกจากโปรแกรมไม่เป็น VS Code หรือ Notepad ใช้ง่ายกว่า เลือกตัวไหนก็ได้ ไม่มีผลกับเนื้อหาในคอร์ส</p>
+<p class="note">เช็ก: เปิด PowerShell (กดปุ่ม Windows พิมพ์ <i>PowerShell</i> แล้วกด Enter) พิมพ์ <code class="il">git --version</code> แล้วกด Enter ต้องเห็นข้อความแบบ <code class="il">git version 2.xx.x.windows.1</code> ถ้าขึ้นว่าไม่รู้จักคำสั่ง ให้ปิด PowerShell แล้วเปิดใหม่ (macOS: เปิด Terminal แล้วพิมพ์ <code class="il">git --version</code> ถ้ายังไม่มี Git ระบบจะถามว่าจะติดตั้งไหม ให้กด Install)</p>
+<h3>ขั้นที่ 3: เพิ่มแหล่งดาวน์โหลดบอร์ด Seeed</h3>
+<p>Arduino IDE ไม่มีบอร์ด XIAO มาให้ตั้งแต่แรก ต้องบอก IDE ก่อนว่าจะดาวน์โหลดข้อมูลบอร์ดของ Seeed จากที่ไหน</p>
+<ol>
+<li>ใน Arduino IDE กดเมนู <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>) จะมีหน้าต่าง Preferences เปิดขึ้นมา</li>
+<li>หาช่อง <b>Additional boards manager URLs</b> ซึ่งอยู่ใกล้ด้านล่างของหน้าต่าง</li>
+<li>กดปุ่มคัดลอกที่ URL ข้างล่าง แล้ววางในช่องนั้น ถ้าในช่องมี URL อื่นอยู่แล้ว ให้กดไอคอนทางขวาของช่อง แล้ววางเป็นบรรทัดใหม่</li>
+<li>กด <b>OK</b> เพื่อปิดหน้าต่าง</li>
+</ol><div class="code"><div class="cl">Additional boards manager URLs</div><pre><code>https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></pre></div>
+<h3>ขั้นที่ 4: ติดตั้ง core ของบอร์ด</h3>
+<p>core คือชุดไฟล์ที่ทำให้ IDE รู้จักบอร์ด รวมถึง compiler สำหรับชิป nRF52840</p>
+<ol>
+<li>เปิด <b>Boards Manager</b> โดยกดไอคอนรูปบอร์ดที่แถบซ้ายมือ (ไอคอนที่ 2 จากบน) หรือเมนู <b>Tools → Board → Boards Manager…</b></li>
+<li>พิมพ์ <code class="il">seeed nrf52</code> ในช่องค้นหา จะเจอ 2 รายการ ให้เลือก <b>Seeed nRF52 Boards</b> ไม่ใช่ <i>Seeed nRF52 mbed-enabled Boards</i></li>
+<li>กด <b>Install</b> แล้วรอ อาจใช้เวลาหลายนาทีเพราะต้องดาวน์โหลด compiler ด้วย ถ้ามีหน้าต่างถามเรื่อง driver ให้กด Install หรือ Yes</li>
+</ol>
+<p class="note">เลือก core แบบ non-mbed เพราะ build เร็วกว่าและใช้ BLE library ของ Adafruit ได้ เช็ก: รายการ Seeed nRF52 Boards ขึ้นคำว่า INSTALLED</p>
+<h3>ขั้นที่ 5: ต่อบอร์ด แล้วเลือกบอร์ดกับพอร์ต</h3>
+<ol>
+<li>เสียบบอร์ดเข้าคอมด้วยสาย USB-C ที่ส่งข้อมูลได้ (สายที่มากับที่ชาร์จบางเส้นชาร์จได้อย่างเดียว)</li>
+<li>กดเมนู <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
+<li>กดเมนู <b>Tools → Port</b> แล้วเลือกพอร์ตของบอร์ด (Windows เป็น <code class="il">COM</code> ตามด้วยตัวเลข เช่น COM5 macOS เป็น <code class="il">/dev/cu.usbmodem…</code>)</li>
+</ol>
+<p class="note">เช็ก: ถ้าไม่รู้ว่าพอร์ตไหนคือบอร์ด ให้ถอดสายแล้วเปิดเมนู Port ดูอีกครั้ง พอร์ตที่หายไปคือบอร์ด ถ้าไม่มีพอร์ตขึ้นเลย ให้ลองเปลี่ยนสาย USB</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 300" role="img">
 <rect x="178" y="24" width="44" height="22" rx="5" class="b"/><text x="200" y="39" text-anchor="middle" class="sub m">USB-C</text>
 <rect x="140" y="44" width="120" height="226" rx="12" class="bm"/>
@@ -193,7 +236,14 @@ details[open] summary { color: var(--accent); }
 <circle cx="152" cy="76" r="6" class="pa"/><text x="138" y="80" text-anchor="end" class="tt acc m">D0 / A0</text><circle cx="152" cy="104" r="6" class="pa"/><text x="138" y="108" text-anchor="end" class="tt acc m">D1</text><circle cx="152" cy="132" r="6" class="pa"/><text x="138" y="136" text-anchor="end" class="tt acc m">D2</text><circle cx="152" cy="160" r="6" class="pn"/><text x="138" y="164" text-anchor="end" class="tt m">D3</text><circle cx="152" cy="188" r="6" class="pn"/><text x="138" y="192" text-anchor="end" class="tt m">D4 / SDA</text><circle cx="152" cy="216" r="6" class="pn"/><text x="138" y="220" text-anchor="end" class="tt m">D5 / SCL</text><circle cx="152" cy="244" r="6" class="pn"/><text x="138" y="248" text-anchor="end" class="tt m">D6 / TX</text><circle cx="248" cy="76" r="6" class="pn"/><text x="262" y="80" text-anchor="start" class="tt m">5V</text><circle cx="248" cy="104" r="6" class="pa"/><text x="262" y="108" text-anchor="start" class="tt acc m">GND</text><circle cx="248" cy="132" r="6" class="pa"/><text x="262" y="136" text-anchor="start" class="tt acc m">3V3</text><circle cx="248" cy="160" r="6" class="pn"/><text x="262" y="164" text-anchor="start" class="tt m">D10 / MOSI</text><circle cx="248" cy="188" r="6" class="pn"/><text x="262" y="192" text-anchor="start" class="tt m">D9 / MISO</text><circle cx="248" cy="216" r="6" class="pn"/><text x="262" y="220" text-anchor="start" class="tt m">D8 / SCK</text><circle cx="248" cy="244" r="6" class="pn"/><text x="262" y="248" text-anchor="start" class="tt m">D7 / RX</text>
 <text x="8" y="292" class="sub">สีส้ม = ขาที่ใช้ในคอร์ส: D0 Pot · D1 ปุ่ม · D2 LED ภายนอก</text>
 </svg></div><figcaption>XIAO nRF52840 Sense: GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D</figcaption></figure>
-<h3>Hands-on</h3><div class="code"><div class="cl">blink.ino</div><pre><code>// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
+<h3>Hands-on: Blink แรก</h3>
+<ol>
+<li>กดเมนู <b>File → New Sketch</b> จะได้หน้าต่างใหม่ที่มีโค้ดตั้งต้น</li>
+<li>ลบโค้ดเดิมทั้งหมด แล้วกดปุ่ม <b>คัดลอก</b> ที่มุมขวาบนของโค้ดข้างล่าง มาวางแทน</li>
+<li>กดเมนู <b>File → Save As…</b> แล้วตั้งชื่อ <code class="il">blink</code></li>
+<li>กดปุ่ม <b>Verify</b> (เครื่องหมายถูกที่มุมซ้ายบน) เพื่อ compile ครั้งแรกอาจนานเป็นนาที รอจนเห็น <i>Done compiling</i> ที่ด้านล่าง</li>
+<li>กดปุ่ม <b>Upload</b> (ลูกศรขวาถัดจาก Verify) แล้วรอจนเห็น <i>Done uploading</i></li>
+</ol><div class="code"><div class="cl">blink.ino</div><pre><code>// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
 void setup() {
   pinMode(LED_RED, OUTPUT);
   digitalWrite(LED_RED, HIGH);   // ดับ
@@ -205,7 +255,25 @@ void loop() {
   digitalWrite(LED_RED, HIGH);   // ดับ
   delay(800);
 }</code></pre></div>
-<p>ลองเปลี่ยนเป็น <code class="il">LED_GREEN</code> / <code class="il">LED_BLUE</code> แล้วเปิด Preferences → Show verbose output during compile เพื่อดูคำสั่ง compiler ที่ IDE เรียกจริง</p>
+<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ</p>
+<p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
+<h3>ลองต่อ</h3>
+<ol>
+<li>เปลี่ยน <code class="il">LED_RED</code> เป็น <code class="il">LED_GREEN</code> หรือ <code class="il">LED_BLUE</code> ให้ครบทั้ง 3 จุด แล้ว Upload ใหม่ สีของ LED ต้องเปลี่ยนตาม</li>
+<li>เปิด <b>File → Preferences…</b> ติ๊กช่อง <b>Show verbose output during: compile</b> กด OK แล้วกด Verify อีกครั้ง หน้าต่าง Output ด้านล่างจะแสดงคำสั่ง compiler ที่ IDE เรียกจริง บท 01 จะอธิบายว่าแต่ละคำสั่งทำอะไร</li>
+</ol>
+
+<h3>ขั้นที่ 6 (ทำตอนนี้หรือรอถึงบท 16 ก็ได้): ติดตั้ง arduino-cli</h3>
+<p>arduino-cli คือ Arduino แบบสั่งงานด้วยคำสั่งพิมพ์ ใช้ในบท 16 เพื่อหาค่า FQBN ซึ่งเป็นชื่อเต็มของบอร์ดที่ CI ใช้ตอน compile</p>
+<ol>
+<li>เปิดหน้า <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> แล้วดาวน์โหลดไฟล์ที่ลงท้ายด้วย <code class="il">Windows_64bit.zip</code> ของเวอร์ชันล่าสุด</li>
+<li>แตกไฟล์ zip ไว้ในโฟลเดอร์ที่หาง่าย เช่น <code class="il">C:\tools\arduino-cli</code></li>
+<li>เปิดโฟลเดอร์นั้นใน File Explorer คลิกขวาที่พื้นที่ว่าง แล้วเลือก <b>Open in Terminal</b></li>
+<li>คัดลอกคำสั่งข้างล่างไปวาง แล้วกด Enter ทีละบรรทัด</li>
+</ol><div class="code"><div class="cl">PowerShell</div><pre><code>.\arduino-cli.exe core update-index --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+.\arduino-cli.exe core install Seeeduino:nrf52 --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+.\arduino-cli.exe board listall xiao</code></pre></div>
+<p>คำสั่งสุดท้ายจะแสดงชื่อบอร์ดพร้อม FQBN เช่น <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code> จดค่านี้ไว้ใช้ในบท 16</p>
 <h3>เช็กความเข้าใจ</h3><details><summary>ทำไม LED_RED ติดตอนเขียน LOW?</summary><p>LED ต่อแบบ active-LOW: ขั้วบวกอยู่ที่ 3V3 ขา GPIO ทำหน้าที่ sink กระแส เมื่อขาเป็น LOW จึงมีกระแสไหล</p></details><details><summary>ทำไมต้องใช้ core non-mbed ในคอร์สนี้?</summary><p>build เร็วกว่า ใช้ Bluefruit BLE ได้ และ compile ใน CI ได้ง่าย ทั้งสอง core เขียน C++ ได้เหมือนกัน</p></details>
 <label class="done"><input type="checkbox" id="done-l00" data-l="l00"> เรียนบทนี้จบแล้ว</label>
 </section><section class="lesson" id="l01">
@@ -1120,6 +1188,37 @@ git push origin v0.1.0</code></pre></div>
     var el = document.getElementById(jump.value);
     if (el) el.scrollIntoView();
   });
+  // Copy button on every code block; label follows the page language.
+  var th = document.documentElement.lang === 'th';
+  var L = th ? { copy: 'คัดลอก', done: 'คัดลอกแล้ว', fail: 'คัดลอกไม่ได้' } : { copy: 'Copy', done: 'Copied', fail: 'Copy failed' };
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (ok, bad) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy') ? ok() : bad(); } catch (e) { bad(e); }
+      document.body.removeChild(ta);
+    });
+  }
+  document.querySelectorAll('.code').forEach(function (box) {
+    var code = box.querySelector('pre code');
+    if (!code) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy';
+    btn.textContent = L.copy;
+    btn.addEventListener('click', function () {
+      copyText(code.textContent).then(function () { btn.textContent = L.done; }, function () { btn.textContent = L.fail; });
+      setTimeout(function () { btn.textContent = L.copy; }, 1800);
+    });
+    box.appendChild(btn);
+  });
+
   // Language switch: carry the lesson currently on screen over to the other page.
   var lang = document.getElementById('lang');
   if (lang) lang.addEventListener('click', function () {
