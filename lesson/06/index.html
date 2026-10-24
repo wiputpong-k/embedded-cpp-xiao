@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>06 · RAII และ destructor · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/06/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/06/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">06 / 24</span></nav>
+<article class="lesson" id="l06">
+<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>RAII และ destructor</h1><p class="meta">25 นาที · ฮาร์ดแวร์: Pot 10 kΩ ที่ A0</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> ใช้ scope ควบคุม resource อัตโนมัติ: จับเวลา, ปิด/เปิด interrupt</p>
+<p>RAII (Resource Acquisition Is Initialization): ขอ resource ใน constructor คืนใน destructor แล้ว compiler จะเรียก destructor ให้เมื่อออกจาก scope เสมอ จึงไม่มีทางลืม <code class="il">unlock</code> หรือ <code class="il">enable_irq</code> แม้จะ <code class="il">return</code> กลางทาง C ไม่มีกลไกนี้</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
+<path d="M26 26 H16 V174 H26" class="la"/>
+<text x="36" y="32" class="tt m">{</text>
+<text x="52" y="62" class="tt m sm">ScopedTimer t("read");</text>
+<rect x="210" y="46" width="184" height="26" rx="6" class="bm"/><text x="218" y="63" class="sub m">ctor: start_ = micros()</text>
+<text x="52" y="104" class="tt m sm">// ... งานที่จับเวลา ...</text>
+<text x="36" y="150" class="tt m">}  // ออกจาก scope</text>
+<rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
+<text x="36" y="192" class="sub">compiler รับประกันว่า destructor ถูกเรียกเสมอ ไม่ว่าออกด้วย return ทางไหน</text>
+</svg></div><figcaption>อายุของ object ผูกกับวงเล็บปีกกา</figcaption></figure>
+<h3 id="s1">Hands-on</h3><p>ต่อ potentiometer: ขาข้าง 3V3 กับ GND, ขากลางเข้า A0</p><div class="code"><div class="cl">raii.ino</div><pre><code>class ScopedTimer {
+public:
+  explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
+  ~ScopedTimer() {
+    uint32_t us = micros() - start_;
+    Serial.print(label_); Serial.print(&quot;: &quot;); Serial.print(us); Serial.println(&quot; us&quot;);
+  }
+  ScopedTimer(const ScopedTimer&amp;) = delete;             // ห้าม copy
+  ScopedTimer&amp; operator=(const ScopedTimer&amp;) = delete;
+private:
+  const char* label_;
+  uint32_t start_;
+};
+
+// ปิด interrupt แบบซ้อนได้: เก็บสถานะเดิมแล้วคืนค่าเดิม
+class CriticalSection {
+public:
+  CriticalSection() : primask_(__get_PRIMASK()) { __disable_irq(); }
+  ~CriticalSection() { __set_PRIMASK(primask_); }
+private:
+  uint32_t primask_;
+};
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  long sum = 0;
+  {
+    ScopedTimer t(&quot;analogRead x100&quot;);
+    for (int i = 0; i &lt; 100; ++i) sum += analogRead(A0);
+  }                                   // destructor ทำงานตรงนี้
+  Serial.print(&quot;avg = &quot;); Serial.println(sum / 100);
+  delay(1000);
+}</code></pre></div><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ทำไมต้อง = delete copy constructor?</summary><p>ถ้า copy ได้ จะมี 2 object ที่ destructor ทำงานซ้ำ เช่น เปิด interrupt 2 ครั้ง หรือพิมพ์เวลาซ้ำ resource ที่มีเจ้าของคนเดียวควรห้าม copy</p></details><details><summary>CriticalSection ใช้กับ BLE (SoftDevice) ได้ไหม?</summary><p>ใช้ได้แค่ช่วงสั้นมาก ไม่กี่ไมโครวินาที ถ้าปิดนาน SoftDevice จะพลาด timing ของวิทยุ ในงานจริงใช้ sd_nvic_critical_region_enter แทน</p></details><aside class="iv"><b>มุมงานจริง</b><p>RAII คือเหตุผลหลักที่หลายทีมย้ายจาก C มา C++ ในงาน embedded เพราะไม่มี runtime overhead และกำจัดบั๊ก resource leak ทั้งกลุ่ม เช่น ลืมเปิด interrupt คืนใน error path</p></aside>
+<label class="done"><input type="checkbox" id="done-l06" data-l="l06"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../05/"><small>← บทก่อนหน้า</small><span>05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</span></a><a class="next" href="../07/"><small>บทถัดไป →</small><span>07 · ปุ่มกดและ debounce</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>08 · State machine · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/08/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/08/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">08 / 24</span></nav>
+<article class="lesson" id="l08">
+<header class="lh"><span class="big m">08</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>State machine</h1><p class="meta">25 min · Hardware: Button on D1</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Use the debounced button to switch LED blink modes with a non-blocking state machine</p>
+<p>A state machine keeps the program in exactly one <b>state</b> at a time and changes state only when an <b>event</b> happens. This lesson has 3 states: Off, Slow (blink every 500 ms) and Fast (every 100 ms). The only event is <code class="il">Event::Pressed</code> from the Debouncer in the previous lesson.</p>
+<p>An <code class="il">enum class Mode</code> (lesson 03) holds the state, and the transition rules live in one function, <code class="il">next()</code>, so when you add a mode you know exactly where to change things.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 130" role="img">
+<rect x="14" y="40" width="88" height="40" rx="20" class="b"/><text x="58" y="65" text-anchor="middle" class="tt m">Off</text>
+<rect x="156" y="40" width="88" height="40" rx="20" class="bm"/><text x="200" y="65" text-anchor="middle" class="tt m">Slow</text>
+<rect x="298" y="40" width="88" height="40" rx="20" class="ba"/><text x="342" y="65" text-anchor="middle" class="tt m">Fast</text>
+<line x1="104" y1="60" x2="152" y2="60" class="ln" marker-end="url(#ah)"/><line x1="246" y1="60" x2="294" y2="60" class="ln" marker-end="url(#ah)"/>
+<path d="M342 82 C342 122 58 122 58 84" class="ln" marker-end="url(#ah)"/>
+<text x="128" y="32" text-anchor="middle" class="sub">press</text><text x="270" y="32" text-anchor="middle" class="sub">press</text><text x="200" y="124" text-anchor="middle" class="sub">press</text>
+<text x="200" y="98" text-anchor="middle" class="sub m">500 ms   ·   100 ms</text>
+</svg></div><figcaption>A 3-state machine that advances on Event::Pressed</figcaption></figure>
+<h3 id="s1">Hands-on</h3>
+<ol>
+<li>Create a new sketch named <code class="il">button_modes</code>.</li>
+<li>Copy the <code class="il">src</code> folder from the <code class="il">button_count</code> sketch into the new sketch's folder (use <b>Sketch → Show Sketch Folder</b> to open both folders).</li>
+<li>Paste the code below into <code class="il">button_modes.ino</code> and click <b>Upload</b>.</li>
+<li>Press the button: the green LED should go off → slow blink → fast blink → off, and around again.</li>
+</ol><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+
+constexpr uint8_t kButtonPin = D1;
+enum class Mode : uint8_t { Off, Slow, Fast };
+
+Debouncer button;
+Mode mode = Mode::Off;
+uint32_t lastToggle = 0;
+bool ledOn = false;
+
+Mode next(Mode m) {
+  switch (m) {
+    case Mode::Off:  return Mode::Slow;
+    case Mode::Slow: return Mode::Fast;
+    case Mode::Fast: return Mode::Off;
+  }
+  return Mode::Off;
+}
+
+uint32_t periodMs(Mode m) { return m == Mode::Slow ? 500 : 100; }
+
+void setup() {
+  pinMode(kButtonPin, INPUT_PULLUP);
+  pinMode(LED_GREEN, OUTPUT);
+  digitalWrite(LED_GREEN, HIGH);
+}
+
+void loop() {
+  uint32_t now = millis();
+  bool pressed = (digitalRead(kButtonPin) == LOW);
+  if (button.update(pressed, now) == Debouncer::Event::Pressed) {
+    mode = next(mode);
+  }
+  if (mode == Mode::Off) {
+    digitalWrite(LED_GREEN, HIGH);
+  } else if (now - lastToggle &gt;= periodMs(mode)) {
+    lastToggle = now;
+    ledOn = !ledOn;
+    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
+  }
+}</code></pre></div>
+<p>Notice that the blinking uses <code class="il">now - lastToggle &gt;= periodMs(mode)</code> instead of <code class="il">delay()</code>. loop keeps spinning fast, so the button responds immediately even in Slow mode.</p>
+<h3 id="s2">Check your understanding</h3><details><summary>Why is there another return Mode::Off after the switch?</summary><p>Some compilers warn "control reaches end of non-void function" even when every case is covered. It is there for safety and a warning-free build.</p></details><details><summary>What would you change to add an "always on" mode?</summary><p>Add a name to enum class Mode, add cases in next() to enter and leave the new mode, and add a branch in loop that holds the pin LOW. Nothing else changes.</p></details>
+<label class="done"><input type="checkbox" id="done-l08" data-l="l08"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../07/"><small>← Previous</small><span>07 · Buttons and debounce</span></a><a class="next" href="../09/"><small>Next →</small><span>09 · Inheritance, virtual and interfaces</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

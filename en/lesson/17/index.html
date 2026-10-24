@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>17 · GitHub: create a repo and push · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/17/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/17/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">17 / 24</span></nav>
+<article class="lesson" id="l17">
+<header class="lh"><span class="big m">17</span><div class="lhm"><p class="mod">Module B · Git and GitHub</p><h1>GitHub: create a repo and push</h1><p class="meta">30 min · Hardware: Computer</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Step 1: Create a GitHub account</a></li><li><a href="#s2">Step 2: Install the GitHub CLI</a></li><li><a href="#s3">Step 3: Log in once</a></li><li><a href="#s4">Step 4: Create the repo on GitHub and push</a></li><li><a href="#s5">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Set up the GitHub CLI and push your local repo to GitHub for the first time</p>
+<p>GitHub is a website that hosts Git repos on a server. You use it to share code with a team, and it is where CI (lesson 21) runs. The GitHub CLI (<code class="il">gh</code>) lets you drive GitHub from the terminal, for example creating a repo or opening a Pull Request without clicking around the website.</p>
+<h3 id="s1">Step 1: Create a GitHub account</h3>
+<p>If you do not have an account yet, sign up at <a href="https://github.com/signup">github.com/signup</a> and confirm your email. If you already have one, skip this step.</p>
+<h3 id="s2">Step 2: Install the GitHub CLI</h3>
+<ol>
+<li>Open PowerShell and run the first command below (winget comes with Windows 10/11), or download the installer from <a href="https://cli.github.com/">cli.github.com</a>.</li>
+<li>Close PowerShell, open it again, and run <code class="il">gh --version</code>. You should see a version number.</li>
+</ol><div class="code"><div class="cl">PowerShell</div><pre><code>winget install --id GitHub.cli
+gh --version</code></pre></div>
+<h3 id="s3">Step 3: Log in once</h3>
+<p>Run <code class="il">gh auth login</code> and answer the prompts like this (use the arrow keys, then Enter):</p>
+<ol>
+<li><i>Where do you use GitHub?</i> → <b>GitHub.com</b></li>
+<li><i>What is your preferred protocol for Git operations?</i> → <b>HTTPS</b></li>
+<li><i>Authenticate Git with your GitHub credentials?</i> → <b>Yes</b></li>
+<li><i>How would you like to authenticate GitHub CLI?</i> → <b>Login with a web browser</b></li>
+<li>The terminal shows an 8-character one-time code. Note it and press Enter. Your browser opens a GitHub page; enter the code there and click <b>Authorize</b>.</li>
+</ol>
+<p class="note">Check: run <code class="il">gh auth status</code>. It should say you are logged in to github.com with your account name.</p>
+<div class="code"><div class="cl">PowerShell</div><pre><code>gh auth login
+gh auth status</code></pre></div>
+<h3 id="s4">Step 4: Create the repo on GitHub and push</h3>
+<p>Go into the repo folder from lesson 15 and run the commands below. <code class="il">gh repo create</code> creates a repo of the same name on GitHub, names the remote <code class="il">origin</code>, and pushes all your commits in one go.</p><div class="code"><div class="cl">terminal</div><pre><code>cd ~/xiao-embedded-cpp
+gh repo create xiao-embedded-cpp --public --source=. --remote=origin --push
+gh repo view --web          # open the repo page in your browser</code></pre></div>
+<p class="note">Check: the repo page on GitHub shows the <code class="il">firmware/</code> folder and <code class="il">.gitignore</code>, and the Commits view lists your commits from lessons 15–16. From now on, after you commit locally, run <code class="il">git push</code> to send it to GitHub.</p>
+<h3 id="s5">Check your understanding</h3><details><summary>How do fetch and pull differ?</summary><p>fetch downloads the remote state (origin/main) without touching your branch. pull = fetch + merge (or rebase) into your branch.</p></details><details><summary>What is origin?</summary><p>A short name for the URL of the repo on the server. Any name works, but origin is the convention for the main remote. See it with git remote -v.</p></details>
+<label class="done"><input type="checkbox" id="done-l17" data-l="l17"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../16/"><small>← Previous</small><span>16 · Branch, merge and resolve conflicts</span></a><a class="next" href="../18/"><small>Next →</small><span>18 · Pull Request</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

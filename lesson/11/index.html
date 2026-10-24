@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>11 · หน่วยความจำใน embedded · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/11/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/11/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">11 / 24</span></nav>
+<article class="lesson" id="l11">
+<header class="lh"><span class="big m">11</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>หน่วยความจำใน embedded</h1><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">กฎที่ใช้ในทีมจริง</a></li><li><a href="#s3">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> รู้ว่าตัวแปรแต่ละแบบไปอยู่ส่วนไหน และกฎที่ทีม firmware ใช้จริง</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 350" role="img">
+<text x="100" y="20" text-anchor="middle" class="tt">Flash 1 MB</text><text x="100" y="35" text-anchor="middle" class="sub">ไม่หายเมื่อไฟดับ</text>
+<text x="300" y="20" text-anchor="middle" class="tt">RAM 256 KB</text><text x="300" y="35" text-anchor="middle" class="sub">หายเมื่อไฟดับ</text>
+<rect x="20" y="44" width="160" height="34" class="b"/><text x="100" y="65.0" text-anchor="middle" class="tt sm">Bootloader (UF2)</text>
+<rect x="20" y="78" width="160" height="52" class="b dash"/><text x="100" y="108.0" text-anchor="middle" class="tt sm">ว่าง</text>
+<rect x="20" y="130" width="160" height="24" class="bm"/><text x="100" y="146.0" text-anchor="middle" class="tt sm">.data ค่าเริ่มต้น</text>
+<rect x="20" y="154" width="160" height="80" class="ba"/><text x="100" y="194.0" text-anchor="middle" class="tt sm">.text โค้ด</text><text x="100" y="209.0" text-anchor="middle" class="sub m">+ .rodata (const)</text>
+<rect x="20" y="234" width="160" height="66" class="b"/><text x="100" y="267.0" text-anchor="middle" class="tt sm">SoftDevice + MBR</text><text x="100" y="282.0" text-anchor="middle" class="sub m">~150 KB (BLE stack)</text>
+<rect x="220" y="44" width="160" height="52" class="ba"/><text x="300" y="70.0" text-anchor="middle" class="tt sm">↓ stack</text><text x="300" y="85.0" text-anchor="middle" class="sub m">ตัวแปร local, ISR</text>
+<rect x="220" y="96" width="160" height="52" class="b dash"/><text x="300" y="126.0" text-anchor="middle" class="tt sm">ว่าง</text>
+<rect x="220" y="148" width="160" height="34" class="b"/><text x="300" y="169.0" text-anchor="middle" class="tt sm">↑ heap (new/malloc)</text>
+<rect x="220" y="182" width="160" height="34" class="bm"/><text x="300" y="203.0" text-anchor="middle" class="tt sm">.bss (static = 0)</text>
+<rect x="220" y="216" width="160" height="34" class="bm"/><text x="300" y="237.0" text-anchor="middle" class="tt sm">.data (static มีค่า)</text>
+<rect x="220" y="250" width="160" height="50" class="b"/><text x="300" y="279.0" text-anchor="middle" class="tt sm">SoftDevice RAM</text>
+<path d="M180 142 C200 142 200 233 216 233" class="la" marker-end="url(#aha)"/>
+<text x="20" y="316" class="sub m">0x0000_0000 (ล่าง)</text><text x="220" y="316" class="sub m">0x2000_0000 (ล่าง)</text>
+<text x="20" y="336" class="sub">ลูกศรส้ม: startup code copy .data จาก flash ไป RAM ก่อน setup()</text>
+</svg></div><figcaption>memory map แบบย่อของ nRF52840 (ตัวเลขประมาณ ขึ้นกับ SoftDevice และ bootloader)</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>uint8_t bigStatic[8192];        // .bss  → นับใน &quot;Global variables use&quot;
+const char kMsg[] = &quot;hello&quot;;    // .rodata → อยู่ใน flash
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+  uint8_t onStack[256];         // stack → ไม่อยู่ในตัวเลขตอน compile
+  onStack[0] = 1;
+  bigStatic[0] = onStack[0];
+  Serial.print(&quot;flash  : 0x&quot;); Serial.println((uintptr_t)kMsg, HEX);
+  Serial.print(&quot;static : 0x&quot;); Serial.println((uintptr_t)bigStatic, HEX);
+  Serial.print(&quot;stack  : 0x&quot;); Serial.println((uintptr_t)onStack, HEX);
+}
+
+void loop() {}</code></pre></div>
+<p>ดูว่า address ขึ้นต้น 0x000… (flash) หรือ 0x2000… (RAM) ตามรูปไหม จากนั้นเปลี่ยน <code class="il">bigStatic</code> เป็น 32768 แล้วดูตัวเลข RAM ตอน compile เปลี่ยน</p>
+<h3 id="s2">กฎที่ใช้ในทีมจริง</h3>
+<ul>
+<li>จอง memory ตอน init เท่านั้น หลังจากนั้นห้าม <code class="il">new</code>/<code class="il">malloc</code> ใน loop เพราะ heap fragment แล้วพังหลังรันหลายวัน</li>
+<li>เลี่ยง <code class="il">String</code> ของ Arduino ใช้ <code class="il">char buf[32]</code> + <code class="il">snprintf</code> แทน</li>
+<li>ใช้ <code class="il">std::array</code> / buffer ขนาดคงที่ หลีกเลี่ยง <code class="il">std::vector</code>, <code class="il">std::function</code> ที่อาจจอง heap เอง</li>
+<li>embedded มักปิด exceptions และ RTTI (<code class="il">-fno-exceptions -fno-rtti</code>) จึงจัดการ error ด้วยค่าที่ return</li>
+</ul>
+<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>ตัวแปร static ภายในฟังก์ชันอยู่ส่วนไหน?</summary><p>.data หรือ .bss เหมือน global แต่ scope จำกัดในฟังก์ชัน จึงคงค่าระหว่างการเรียก</p></details><details><summary>stack overflow บน MCU ไม่มี OS แสดงอาการอย่างไร?</summary><p>stack โตลงไปทับ heap หรือ .bss ทำให้ค่าตัวแปรเพี้ยนแบบสุ่มหรือ HardFault วิธีตรวจคือ stack painting (เติม pattern แล้วดูว่าถูกเขียนลึกแค่ไหน) หรือเปิด MPU guard</p></details><aside class="iv"><b>มุมงานจริง</b><p>ใช้ memory map นี้ทุกครั้งที่เจอ HardFault หรือ RAM ไม่พอ: ดูว่า address ที่พังอยู่ใน .text / .data / .bss / heap / stack ส่วนไหน และเปิดไฟล์ .map จาก linker ดูว่าอะไรกินที่มากที่สุด</p></aside>
+<label class="done"><input type="checkbox" id="done-l11" data-l="l11"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../10/"><small>← บทก่อนหน้า</small><span>10 · Template: RingBuffer&lt;T, N&gt;</span></a><a class="next" href="../12/"><small>บทถัดไป →</small><span>12 · Interrupt, volatile และ lambda</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

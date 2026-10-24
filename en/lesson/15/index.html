@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>15 · Install Git and make your first commit · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/15/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/15/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">15 / 24</span></nav>
+<article class="lesson" id="l15">
+<header class="lh"><span class="big m">15</span><div class="lhm"><p class="mod">Module B · Git and GitHub</p><h1>Install Git and make your first commit</h1><p class="meta">30 min · Hardware: Computer</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Step 1: Install Git</a></li><li><a href="#s2">Step 2: Open Git Bash and tell Git who you are</a></li><li><a href="#s3">Step 3: Create the repo and bring in your work from lessons 13–14</a></li><li><a href="#s4">Step 4: Tell Git which files to ignore</a></li><li><a href="#s5">Step 5: Your first commit</a></li><li><a href="#s6">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Install Git, then put all your work so far into a repo, with commit messages that make sense</p>
+<p>Git keeps the history of your code. Every commit is a snapshot of all your files at that moment, which you can always look back at or restore. You use it from this lesson to the end of the course.</p>
+<h3 id="s1">Step 1: Install Git</h3>
+<ol>
+<li>(Optional) If you want VS Code as your text editor, install it first from <a href="https://code.visualstudio.com/">code.visualstudio.com</a>, because the Git installer looks for it.</li>
+<li>Open <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> and download the 64-bit Git for Windows installer.</li>
+<li>Run the installer and click Next through the defaults, except on these two pages:
+<ul>
+<li><b>Choosing the default editor used by Git:</b> pick <i>Use Visual Studio Code as Git's default editor</i> if you installed VS Code, or <i>Use Notepad as Git's default editor</i> if you did not.</li>
+<li><b>Adjusting the name of the initial branch:</b> pick <i>Override the default branch name</i> and type <code class="il">main</code>.</li>
+</ul></li>
+<li>Click Install and wait until it finishes.</li>
+</ol>
+<p class="note">Why choose an editor? Some Git commands open a text editor for you to type in, such as <code class="il">git commit</code> without <code class="il">-m</code>, or a merge in lesson 16. Git's default is Vim, which newcomers often cannot figure out how to exit. VS Code or Notepad is easier. Either one works for this course.</p>
+<h3 id="s2">Step 2: Open Git Bash and tell Git who you are</h3>
+<p>The Git installer includes <b>Git Bash</b>, a terminal that uses the same commands as Linux and macOS. Type every command from this lesson on in Git Bash (press the Windows key, type <i>Git Bash</i>, press Enter). On macOS and Linux, use the normal Terminal.</p>
+<p>Run the first 3 lines of the commands below with your own name and email. They are attached to every commit and become public when you push to GitHub. If you do not want to expose your real email, use the noreply address GitHub gives you (GitHub → Settings → Emails).</p>
+<p class="note">Check: <code class="il">git --version</code> prints something like <code class="il">git version 2.xx.x.windows.1</code>.</p>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git config --global user.name &quot;Your Name&quot;
+git config --global user.email &quot;you@example.com&quot;
+git config --global init.defaultBranch main
+git --version</code></pre></div>
+<h3 id="s3">Step 3: Create the repo and bring in your work from lessons 13–14</h3>
+<ol>
+<li>Run the commands below one line at a time. You get a <code class="il">xiao-embedded-cpp</code> folder in your home folder (<code class="il">~</code>) with an empty Git repo.</li>
+<li>The <code class="il">cp -r</code> line copies the <code class="il">firmware</code> sketch from lessons 13–14 in. If your sketches are not in <code class="il">Documents/Arduino</code>, check the real location in Arduino IDE under <b>File → Preferences → Sketchbook location</b> (with OneDrive it is often <code class="il">~/OneDrive/Documents/Arduino</code>).</li>
+</ol><div class="code"><div class="cl">Git Bash</div><pre><code>cd ~
+mkdir xiao-embedded-cpp
+cd xiao-embedded-cpp
+git init
+cp -r ~/Documents/Arduino/firmware .
+ls firmware firmware/src</code></pre></div>
+<h3 id="s4">Step 4: Tell Git which files to ignore</h3>
+<p>Files that a build can regenerate, such as .hex files or the test program, do not belong in the repo. Run <code class="il">notepad .gitignore</code> (or <code class="il">code .gitignore</code> if you use VS Code). If it asks whether to create a new file, answer Yes, paste the content below, save and close.</p><div class="code"><div class="cl">.gitignore</div><pre><code>build/
+*.hex
+*.zip
+*.uf2
+firmware/src/version.h
+test_runner
+test_runner.exe
+.vscode/</code></pre></div>
+<h3 id="s5">Step 5: Your first commit</h3>
+<p><code class="il">git status</code> shows what changed, <code class="il">git add</code> puts files into the staging area, and <code class="il">git commit</code> stores them as a permanent snapshot.</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 310" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">Working directory</text><text x="200" y="49" text-anchor="middle" class="sub">the files you are actually editing</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><text x="212" y="79" class="sub m">git add</text><rect x="40" y="90" width="320" height="50" rx="8" class="bm"/><text x="200" y="111" text-anchor="middle" class="tt">Staging area (index)</text><text x="200" y="129" text-anchor="middle" class="sub">what goes into the next commit</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><text x="212" y="159" class="sub m">git commit</text><rect x="40" y="170" width="320" height="50" rx="8" class="ba"/><text x="200" y="191" text-anchor="middle" class="tt">Local repository (.git)</text><text x="200" y="209" text-anchor="middle" class="sub">full commit history on your machine</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><text x="212" y="239" class="sub m">git push</text><rect x="40" y="250" width="320" height="50" rx="8" class="b"/><text x="200" y="271" text-anchor="middle" class="tt">Remote (GitHub)</text><text x="200" y="289" text-anchor="middle" class="sub">server copy, shared with the team / CI</text></svg></div><figcaption>Files pass through three local areas before reaching GitHub</figcaption></figure><div class="code"><div class="cl">Git Bash</div><pre><code>git status
+git add .gitignore firmware/
+git commit -m &quot;feat: led, debouncer, ring buffer and task scheduler&quot;
+git log --oneline
+
+# edit a file, then try:
+git diff              # changes not yet added
+git add -p            # add chunk by chunk
+git restore &lt;file&gt;    # discard changes not yet added</code></pre></div>
+<p>Try changing a number in <code class="il">tasks[]</code> in <code class="il">firmware/firmware.ino</code>, run <code class="il">git diff</code> to see the change, then run <code class="il">git restore firmware/firmware.ino</code> to throw it away.</p>
+<p>The commit message style most teams use (Conventional Commits): <code class="il">feat:</code> new feature, <code class="il">fix:</code> bug fix, <code class="il">docs:</code>, <code class="il">test:</code>, <code class="il">ci:</code>, <code class="il">refactor:</code>. One commit = one topic.</p>
+<h3 id="s6">Check your understanding</h3><details><summary>Why should you not commit .hex files?</summary><p>They are build output you can regenerate from source. They change on every build, bloat the repo and make diffs unreadable. Binaries belong in a GitHub Release (lesson 23).</p></details><details><summary>How do git add . and git add -p differ?</summary><p>add . takes every change; -p lets you pick hunk by hunk, so you can split commits by topic even when one file has several changes.</p></details>
+<label class="done"><input type="checkbox" id="done-l15" data-l="l15"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../14/"><small>← Previous</small><span>14 · Mini project 2: commands over Serial</span></a><a class="next" href="../16/"><small>Next →</small><span>16 · Branch, merge and resolve conflicts</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

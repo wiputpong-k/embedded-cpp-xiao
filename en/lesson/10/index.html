@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>10 · Template: RingBuffer · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/10/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/10/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">10 / 24</span></nav>
+<article class="lesson" id="l10">
+<header class="lh"><span class="big m">10</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Template: RingBuffer&lt;T, N&gt;</h1><p class="meta">30 min · Hardware: Pot on A0</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Write a reusable fixed-size container for any type, without the heap</p><div class="vs"><div><span class="tag">C</span><p>Write separate buffers for int and float, or use <code class="il">void*</code> + macros with no type safety.</p></div><div><span class="tag t2">C++</span><p>A template lets the compiler generate code for each type. N is a compile-time value you can check with <code class="il">static_assert</code>.</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<rect x="18" y="58" width="40" height="40" rx="6" class="b"/><text x="38" y="83" text-anchor="middle" class="tt m sm"></text><text x="38" y="112" text-anchor="middle" class="sub m">0</text><rect x="64" y="58" width="40" height="40" rx="6" class="b"/><text x="84" y="83" text-anchor="middle" class="tt m sm"></text><text x="84" y="112" text-anchor="middle" class="sub m">1</text><rect x="110" y="58" width="40" height="40" rx="6" class="ba"/><text x="130" y="83" text-anchor="middle" class="tt m sm">611</text><text x="130" y="112" text-anchor="middle" class="sub m">2</text><rect x="156" y="58" width="40" height="40" rx="6" class="ba"/><text x="176" y="83" text-anchor="middle" class="tt m sm">608</text><text x="176" y="112" text-anchor="middle" class="sub m">3</text><rect x="202" y="58" width="40" height="40" rx="6" class="ba"/><text x="222" y="83" text-anchor="middle" class="tt m sm">615</text><text x="222" y="112" text-anchor="middle" class="sub m">4</text><rect x="248" y="58" width="40" height="40" rx="6" class="ba"/><text x="268" y="83" text-anchor="middle" class="tt m sm">603</text><text x="268" y="112" text-anchor="middle" class="sub m">5</text><rect x="294" y="58" width="40" height="40" rx="6" class="b"/><text x="314" y="83" text-anchor="middle" class="tt m sm"></text><text x="314" y="112" text-anchor="middle" class="sub m">6</text><rect x="340" y="58" width="40" height="40" rx="6" class="b"/><text x="360" y="83" text-anchor="middle" class="tt m sm"></text><text x="360" y="112" text-anchor="middle" class="sub m">7</text>
+<text x="130" y="22" text-anchor="middle" class="tt acc">tail → pop()</text><line x1="130" y1="28" x2="130" y2="54" class="la" marker-end="url(#aha)"/>
+<text x="314" y="22" text-anchor="middle" class="tt">head → push()</text><line x1="314" y1="28" x2="314" y2="54" class="ln" marker-end="url(#ah)"/>
+<path d="M360 118 C360 156 38 156 38 120" class="ln dash" marker-end="url(#ah)"/>
+<text x="200" y="166" text-anchor="middle" class="sub">index = (index + 1) % N → wraps to the start, no data moves</text>
+</svg></div><figcaption>Ring buffer: head writes, tail reads, both wrap around with modulo</figcaption></figure>
+<h3 id="s1">Hands-on</h3><p>Create <code class="il">src/RingBuffer.h</code>.</p><div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
+#include &lt;stddef.h&gt;
+
+// Fixed-size FIFO, no heap: N is set at compile time
+template &lt;typename T, size_t N&gt;
+class RingBuffer {
+  static_assert(N &gt; 0, &quot;N must be &gt; 0&quot;);
+
+public:
+  bool push(const T&amp; v) {
+    if (count_ == N) return false;  // full
+    buf_[head_] = v;
+    head_ = (head_ + 1) % N;
+    ++count_;
+    return true;
+  }
+
+  bool pop(T&amp; out) {
+    if (count_ == 0) return false;  // empty
+    out = buf_[tail_];
+    tail_ = (tail_ + 1) % N;
+    --count_;
+    return true;
+  }
+
+  // when full, drop the oldest (good for a moving average)
+  void pushOverwrite(const T&amp; v) {
+    if (count_ == N) {
+      T dropped;
+      pop(dropped);
+    }
+    push(v);
+  }
+
+  size_t size() const { return count_; }
+  bool full() const { return count_ == N; }
+  const T&amp; at(size_t i) const { return buf_[(tail_ + i) % N]; }  // 0 = oldest
+
+private:
+  T buf_[N]{};
+  size_t head_ = 0, tail_ = 0, count_ = 0;
+};
+
+template &lt;typename T, size_t N&gt;
+float average(const RingBuffer&lt;T, N&gt;&amp; rb) {
+  if (rb.size() == 0) return 0.0f;
+  float sum = 0;
+  for (size_t i = 0; i &lt; rb.size(); ++i) sum += rb.at(i);
+  return sum / rb.size();
+}</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &quot;src/RingBuffer.h&quot;
+
+RingBuffer&lt;uint16_t, 16&gt; samples;   // last 16 values
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  uint16_t raw = analogRead(A0);
+  samples.pushOverwrite(raw);
+  Serial.print(&quot;raw:&quot;); Serial.print(raw);
+  Serial.print(&quot; avg:&quot;); Serial.println(average(samples));
+  delay(20);
+}</code></pre></div><p>Open Serial Plotter and compare the raw and avg lines. Try N = 4 and N = 64 and watch the lag and smoothness (an N-point moving average delays the signal by about N/2 samples).</p><h3 id="s2">Check your understanding</h3><details><summary>What happens to flash if you use RingBuffer&lt;uint16_t,16&gt; and RingBuffer&lt;float,16&gt;?</summary><p>The compiler generates two copies of the code (template instantiation), so flash grows. Too many types leads to code bloat.</p></details><details><summary>Is it safe if an ISR pushes and loop pops?</summary><p>Not yet, because count_ is changed from both sides. Wrap it in a CriticalSection, or design an SPSC buffer where the producer only touches head and the consumer only touches tail.</p></details>
+<label class="done"><input type="checkbox" id="done-l10" data-l="l10"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../09/"><small>← Previous</small><span>09 · Inheritance, virtual and interfaces</span></a><a class="next" href="../11/"><small>Next →</small><span>11 · Memory in embedded systems</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

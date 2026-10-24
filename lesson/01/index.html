@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/01/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/01/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">01 / 24</span></nav>
+<article class="lesson" id="l01">
+<header class="lh"><span class="big m">01</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</h1><p class="meta">20 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> เข้าใจว่า Arduino ซ่อนอะไรไว้ และเห็น toolchain จริง</p>
+<p>ไฟล์ .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ ส่วน <code class="il">main()</code> อยู่ใน core:</p>
+<div class="code"><div class="cl">core/main.cpp (ย่อ)</div><pre><code>int main() {
+  init();          // clock, timer, USB CDC
+  setup();
+  for (;;) {
+    loop();
+  }
+}</code></pre></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 470" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">firmware.ino</text><text x="200" y="49" text-anchor="middle" class="sub">ที่คุณเขียน</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="50" rx="8" class="b"/><text x="200" y="111" text-anchor="middle" class="tt">Arduino preprocessor</text><text x="200" y="129" text-anchor="middle" class="sub">#include &lt;Arduino.h&gt; + สร้าง prototype ให้</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">firmware.ino.cpp</text><text x="200" y="209" text-anchor="middle" class="sub">กลายเป็นไฟล์ C++ ปกติ</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="ba"/><text x="200" y="271" text-anchor="middle" class="tt">arm-none-eabi-g++</text><text x="200" y="289" text-anchor="middle" class="sub">compile → .o (Cortex-M4F)</text><line x1="200" y1="302" x2="200" y2="326" class="ln" marker-end="url(#ah)"/><rect x="40" y="330" width="320" height="50" rx="8" class="b"/><text x="200" y="351" text-anchor="middle" class="tt">linker + linker script</text><text x="200" y="369" text-anchor="middle" class="sub">รวม core.a + libs → .elf</text><line x1="200" y1="382" x2="200" y2="406" class="ln" marker-end="url(#ah)"/><rect x="40" y="410" width="320" height="50" rx="8" class="bm"/><text x="200" y="431" text-anchor="middle" class="tt">objcopy / packager</text><text x="200" y="449" text-anchor="middle" class="sub">.hex · .zip (DFU) · .uf2</text></svg></div><figcaption>pipeline การ build ที่เกิดขึ้นทุกครั้งที่กด Verify</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">whoami.ino</div><pre><code>void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}             // รอ USB CDC พร้อม
+  Serial.print(&quot;__cplusplus = &quot;);  Serial.println(__cplusplus);
+  Serial.print(&quot;sizeof(int) = &quot;);  Serial.println(sizeof(int));
+  Serial.print(&quot;sizeof(void*) = &quot;);Serial.println(sizeof(void*));
+  Serial.print(&quot;sizeof(bool) = &quot;); Serial.println(sizeof(bool));
+}
+
+void loop() {}</code></pre></div>
+<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (เช่น 201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ จากนั้นดูบรรทัดท้ายของ output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = RAM แบบ static</p>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้า __cplusplus ได้ 201103 จะใช้ if constexpr ได้ไหม?</summary><p>ไม่ได้ if constexpr เป็นของ C++17 ต้องเพิ่ม flag -std=gnu++17 หรือเลี่ยงไปใช้ template overload</p></details><details><summary>"Global variables use" นับ stack ด้วยไหม?</summary><p>ไม่นับ นับเฉพาะ .data + .bss ที่รู้ขนาดตอน link ตัวแปร local บน stack ไม่อยู่ในตัวเลขนี้</p></details><aside class="iv"><b>มุมงานจริง</b><p>ในงานจริงเมื่อ build มีปัญหา ให้ไล่ตามลำดับ preprocess → compile → link (linker script กำหนด address) → objcopy → flash จะรู้ว่าพังที่ขั้นไหน และเก็บ .elf ไว้เสมอ เพราะมี debug symbol ที่ debugger ต้องใช้ ส่วน .hex/.bin คือ image ที่ลงชิป</p></aside>
+<label class="done"><input type="checkbox" id="done-l01" data-l="l01"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../00/"><small>← บทก่อนหน้า</small><span>00 · ติดตั้งเครื่องมือ + Blink แรก</span></a><a class="next" href="../02/"><small>บทถัดไป →</small><span>02 · Reference, const และ constexpr แทน #define</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>18 · Pull Request · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/18/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/18/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">18 / 24</span></nav>
+<article class="lesson" id="l18">
+<header class="lh"><span class="big m">18</span><div class="lhm"><p class="mod">โมดูล B · Git และ GitHub</p><h1>Pull Request</h1><p class="meta">25 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on: PR แรก</a></li><li><a href="#s2">ตั้งกฎให้ main</a></li><li><a href="#s3">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> ทำงานผ่าน Pull Request แบบทีมจริง และตั้งกฎให้ main เปลี่ยนได้ผ่าน PR เท่านั้น</p>
+<p>Pull Request (PR) คือคำขอให้รวม branch หนึ่งเข้า <code class="il">main</code> บน GitHub มีหน้าแสดง diff ให้คนอื่นอ่านและ comment ได้ และเป็นจุดที่ CI จะตรวจโค้ดให้อัตโนมัติก่อนรวม แม้ทำงานคนเดียว การผ่าน PR ก็ช่วยให้มีบันทึกว่าแต่ละการเปลี่ยนแปลงทำไปเพื่ออะไร</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git switch -c feature/x</text><text x="200" y="49" text-anchor="middle" class="sub">แตก branch จาก main</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">commit + git push</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">Pull Request</text><text x="200" y="193" text-anchor="middle" class="sub">คำอธิบาย + diff ให้คน review</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">CI ตรวจอัตโนมัติ</text><text x="200" y="273" text-anchor="middle" class="sub">test + build ต้องผ่าน</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">Review → Squash merge</text><text x="200" y="353" text-anchor="middle" class="sub">ลบ branch · main สะอาด</text></svg></div><figcaption>GitHub flow ที่บริษัทส่วนใหญ่ใช้</figcaption></figure>
+<h3 id="s1">Hands-on: PR แรก</h3>
+<ol>
+<li>สร้าง branch ใหม่ แล้วสร้างไฟล์ <code class="il">README.md</code> ในโฟลเดอร์ repo (เปิดด้วย VS Code หรือ Notepad) เขียนสั้น ๆ ว่าโปรเจกต์นี้คืออะไร ต่อขาไหนบ้าง และ build อย่างไร</li>
+<li>commit แล้ว push branch ขึ้น GitHub จากนั้นสร้าง PR ด้วย <code class="il">gh pr create --fill</code> (ใช้ข้อความ commit เป็นชื่อและคำอธิบาย PR)</li>
+<li>รัน <code class="il">gh pr view --web</code> เพื่อเปิด PR บนเว็บ ดูแท็บ <b>Files changed</b> แล้วลอง comment บรรทัดใดบรรทัดหนึ่ง 1 จุด</li>
+<li>รวม PR ด้วย squash merge แล้วกลับมาที่ <code class="il">main</code> ในเครื่องพร้อมดึงของใหม่ลงมา</li>
+</ol><div class="code"><div class="cl">terminal</div><pre><code>git switch -c docs/readme
+# เขียน README.md: รูป wiring, วิธี build, ขาที่ใช้
+git add README.md
+git commit -m &quot;docs: add README with wiring and build steps&quot;
+git push -u origin docs/readme
+gh pr create --fill
+gh pr view --web
+# ลอง comment โค้ดตัวเอง 1 จุดบนเว็บ แล้วกลับมารันต่อ
+gh pr merge --squash --delete-branch
+git switch main
+git pull</code></pre></div>
+<h3 id="s2">ตั้งกฎให้ main</h3>
+<ol>
+<li>เปิดหน้า repo บน GitHub ไปที่ <b>Settings → Branches</b></li>
+<li>เพิ่มกฎสำหรับ branch <code class="il">main</code> (ปุ่ม <i>Add branch ruleset</i> หรือ <i>Add classic branch protection rule</i> ชื่อปุ่มอาจต่างกันเล็กน้อยตามช่วงเวลาที่ GitHub ปรับหน้าเว็บ)</li>
+<li>เปิดตัวเลือก <b>Require a pull request before merging</b> แล้วบันทึก</li>
+</ol>
+<p class="note">ตอนนี้ยังไม่ต้องเปิด required status checks เพราะยังไม่มี CI จะกลับมาเปิดในบท 22 กฎนี้ใช้ได้ฟรีกับ repo แบบ public</p>
+<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>squash merge ดีอย่างไร?</summary><p>รวม commit ย่อยใน PR เป็น commit เดียวบน main ประวัติอ่านง่าย 1 commit = 1 ฟีเจอร์ ย้อน (revert) ง่าย</p></details><details><summary>ทำงานคนเดียว ทำไมยังต้องใช้ PR?</summary><p>PR เป็นจุดที่ CI ตรวจโค้ดก่อนเข้า main และเก็บคำอธิบายว่าเปลี่ยนอะไรเพราะอะไรไว้ในที่เดียว ย้อนกลับไปดูหรือ revert ได้ง่าย</p></details><aside class="iv"><b>มุมงานจริง</b><p>ในทีม README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด ช่วยให้เพื่อนร่วมทีมหรือคนที่มารับงานต่อ setup และเข้าใจโปรเจกต์ได้ในไม่กี่นาที ไม่ต้องมาถามทีละเรื่อง</p></aside>
+<label class="done"><input type="checkbox" id="done-l18" data-l="l18"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../17/"><small>← บทก่อนหน้า</small><span>17 · GitHub: สร้าง repo และ push</span></a><a class="next" href="../19/"><small>บทถัดไป →</small><span>19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

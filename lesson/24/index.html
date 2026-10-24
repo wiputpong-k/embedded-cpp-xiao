@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>24 · Capstone และทบทวน · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/24/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/24/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">24 / 24</span></nav>
+<article class="lesson" id="l24">
+<header class="lh"><span class="big m">24</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h1>Capstone และทบทวน</h1><p class="meta">30 นาที · ฮาร์ดแวร์: ทั้งหมด</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Checklist ของ repo</a></li><li><a href="#s2">คำถามทบทวนก่อนจบคอร์ส</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> ปิด repo ให้สมบูรณ์ และทบทวนแนวคิดหลักของทั้งคอร์ส</p>
+<h3 id="s1">Checklist ของ repo</h3>
+<ul class="check">
+<li>README: รูป wiring, ตารางขา, วิธี build ในเครื่อง, วิธีรัน test, badge CI</li>
+<li>โครงสร้าง <code class="il">firmware/</code>, <code class="il">firmware/src/</code>, <code class="il">test/</code>, <code class="il">.github/workflows/</code></li>
+<li>อย่างน้อย 1 release (v0.1.0) และประวัติ commit ที่ใช้ Conventional Commits</li>
+<li>เพิ่ม test ของคุณเอง 1 ชุด เช่น ทดสอบ <code class="il">pushOverwrite()</code> ตอน buffer ยังไม่เต็ม</li>
+<li>ฟีเจอร์ต่อยอด 1 อย่าง: กดค้าง 1 วินาที = reset ค่า (เพิ่ม Event::LongPress ใน Debouncer พร้อม test)</li>
+</ul>
+<h3 id="s2">คำถามทบทวนก่อนจบคอร์ส</h3>
+<details><summary>C++ ต่างจาก C ในงาน embedded อย่างไร มีต้นทุนอะไรบ้าง?</summary><p>ได้ class, RAII, reference, template, constexpr, enum class, namespace ที่ส่วนใหญ่ไม่มี runtime cost ส่วนที่มีต้นทุนคือ virtual (vtable), exceptions, RTTI, heap ผ่าน STL บางตัว จึงเลือกใช้เป็น subset</p></details><details><summary>volatile ใช้เมื่อไหร่ และไม่ได้ช่วยอะไร?</summary><p>ตัวแปรที่ ISR แก้, register ของ peripheral, ข้อมูลที่แชร์ระหว่าง context ไม่ได้ทำให้ atomic และไม่ใช่ memory barrier</p></details><details><summary>ISR ที่ดีเป็นอย่างไร?</summary><p>สั้น, ไม่ block, ไม่จอง memory, ตั้ง flag หรือ push ลง ring buffer แล้วให้ main/task ประมวลผล ข้อมูลที่แชร์ต้องป้องกันด้วย critical section</p></details><details><summary>ทำไมเลี่ยง dynamic allocation หลัง init?</summary><p>fragmentation, เวลาไม่แน่นอน, และ fail ได้ตอนรันไปนาน ๆ ระบบที่ต้องทำงานต่อเนื่องจึงจองทุกอย่างแบบ static</p></details><details><summary>อธิบาย RAII พร้อมตัวอย่าง</summary><p>ผูกอายุ resource กับ object: CriticalSection ปิด interrupt ใน ctor คืนค่าใน dtor ออกจาก scope ทางไหนก็คืนเสมอ</p></details><details><summary>debounce มีกี่วิธี?</summary><p>ฮาร์ดแวร์ (RC + Schmitt trigger) และซอฟต์แวร์ (รอให้นิ่งตามเวลา หรือ sample หลายครั้ง) เลือกตามต้นทุน BOM กับ CPU</p></details><details><summary>merge กับ rebase เลือกอย่างไร?</summary><p>merge เก็บประวัติจริงและปลอดภัยกับ branch ที่แชร์ rebase ทำประวัติเส้นตรง ใช้กับ branch ส่วนตัวก่อนเปิด PR</p></details><details><summary>pipeline CI/CD ของ firmware ควรมีอะไร?</summary><p>build ทุก target, unit test บน host, static analysis, เก็บ artifact, release ตาม tag พร้อมเวอร์ชันฝังใน binary, ขั้นต่อไปคือ HIL test บน runner ที่ต่อบอร์ดจริง</p></details><figure class="dg"><div class="sv"><svg viewBox="0 0 400 390" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="ba"/><text x="200" y="31" text-anchor="middle" class="tt">คอร์สนี้</text><text x="200" y="49" text-anchor="middle" class="sub">C++ · RAII · ISR · test · CI/CD</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="50" rx="8" class="b"/><text x="200" y="111" text-anchor="middle" class="tt">I²C + IMU บนบอร์ด (Sense)</text><text x="200" y="129" text-anchor="middle" class="sub">driver class ของ LSM6DS3</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><rect x="40" y="170" width="320" height="50" rx="8" class="b"/><text x="200" y="191" text-anchor="middle" class="tt">BLE peripheral</text><text x="200" y="209" text-anchor="middle" class="sub">ส่งค่าเซนเซอร์เข้ามือถือ</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="bm"/><text x="200" y="271" text-anchor="middle" class="tt">Zephyr / nRF Connect SDK</text><text x="200" y="289" text-anchor="middle" class="sub">RTOS · devicetree · ใช้จริงในอุตสาหกรรม</text><line x1="200" y1="302" x2="200" y2="326" class="ln" marker-end="url(#ah)"/><rect x="40" y="330" width="320" height="50" rx="8" class="b"/><text x="200" y="351" text-anchor="middle" class="tt">Custom board + production test</text><text x="200" y="369" text-anchor="middle" class="sub">สิ่งที่คุณทำงานอยู่แล้ว ต่อยอดได้</text></svg></div><figcaption>เส้นทางต่อหลังจบคอร์ส</figcaption></figure><aside class="iv"><b>มุมงานจริง</b><p>ประสบการณ์ PCB, failure analysis และ V&amp;V ช่วยงาน firmware ได้มาก ใน README หรือ design note ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร คนที่มาอ่านโค้ดทีหลังจะเข้าใจเหตุผล ไม่ใช่เห็นแค่ตัวเลข</p></aside>
+<label class="done"><input type="checkbox" id="done-l24" data-l="l24"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../23/"><small>← บทก่อนหน้า</small><span>23 · CD: release firmware อัตโนมัติด้วย tag</span></a><span class="next none"></span></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>12 · Interrupts, volatile and lambdas · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/12/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/12/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">12 / 24</span></nav>
+<article class="lesson" id="l12">
+<header class="lh"><span class="big m">12</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Interrupts, volatile and lambdas</h1><p class="meta">25 min · Hardware: Button on D1</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Write a correct ISR, and share data between the ISR and loop safely</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
+<text x="10" y="30" class="sub m">loop()</text><text x="10" y="112" class="sub m">ISR</text>
+<rect x="60" y="16" width="120" height="26" rx="5" class="bm"/><text x="120" y="33" text-anchor="middle" class="sub m">read pressCount</text>
+<rect x="222" y="16" width="160" height="26" rx="5" class="bm"/><text x="302" y="33" text-anchor="middle" class="sub m">resume where it was</text>
+<line x1="180" y1="42" x2="186" y2="92" class="la" marker-end="url(#aha)"/>
+<rect x="186" y="96" width="44" height="26" rx="5" class="ba"/><text x="208" y="113" text-anchor="middle" class="sub m">+1</text>
+<line x1="230" y1="96" x2="234" y2="46" class="ln" marker-end="url(#ah)"/>
+<path d="M10 160 H180 V140 H190 V160 H390" class="w acc"/>
+<text x="120" y="180" text-anchor="middle" class="sub">FALLING edge on D1 → CPU jumps to the ISR</text>
+<text x="300" y="134" text-anchor="middle" class="sub">ISR: short · no delay · no Serial</text>
+</svg></div><figcaption>An ISR can cut into loop at any moment</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">isr_count.ino</div><pre><code>constexpr uint8_t kButtonPin = D1;
+volatile uint32_t pressCount = 0;   // volatile: changes outside normal flow, never cache
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+  // a capture-less lambda converts to a function pointer
+  attachInterrupt(digitalPinToInterrupt(kButtonPin), [] {
+    pressCount = pressCount + 1;
+  }, FALLING);
+}
+
+void loop() {
+  uint32_t count;
+  noInterrupts();          // copy it out atomically
+  count = pressCount;
+  interrupts();
+  Serial.println(count);
+  delay(500);
+}</code></pre></div>
+<p>Press the button once and the number often goes up by more than 1. That is the bounce from lesson 07. Conclusion: an ISR on a mechanical button still needs time-based debounce (e.g. check <code class="il">millis()</code> in the ISR, or send an event for loop to handle).</p>
+<h3 id="s2">Check your understanding</h3><details><summary>Does volatile make pressCount++ atomic?</summary><p>No. volatile only forces a real memory read/write every time, but ++ is load-add-store, three instructions that can be interrupted. Use a critical section or std::atomic.</p></details><details><summary>What must you never do in an ISR?</summary><p>delay(), Serial.print(), malloc/new, long work, or calling non-reentrant functions. Let the ISR set a flag or push into a buffer, and return as fast as possible.</p></details><aside class="iv"><b>In practice</b><p>A missing volatile is a top cause of "works in debug, breaks in release". Remember the three cases that need it: variables changed by an ISR, memory-mapped registers and variables shared between threads, and remember that it is not synchronization.</p></aside>
+<label class="done"><input type="checkbox" id="done-l12" data-l="l12"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../11/"><small>← Previous</small><span>11 · Memory in embedded systems</span></a><a class="next" href="../13/"><small>Next →</small><span>13 · Mini project 1: cooperative scheduler</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

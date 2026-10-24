@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>12 · Interrupt, volatile และ lambda · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/12/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/12/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">12 / 24</span></nav>
+<article class="lesson" id="l12">
+<header class="lh"><span class="big m">12</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Interrupt, volatile และ lambda</h1><p class="meta">25 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> เขียน ISR ที่ถูกต้อง และแชร์ข้อมูลระหว่าง ISR กับ loop อย่างปลอดภัย</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
+<text x="10" y="30" class="sub m">loop()</text><text x="10" y="112" class="sub m">ISR</text>
+<rect x="60" y="16" width="120" height="26" rx="5" class="bm"/><text x="120" y="33" text-anchor="middle" class="sub m">อ่าน pressCount</text>
+<rect x="222" y="16" width="160" height="26" rx="5" class="bm"/><text x="302" y="33" text-anchor="middle" class="sub m">ทำงานต่อจากเดิม</text>
+<line x1="180" y1="42" x2="186" y2="92" class="la" marker-end="url(#aha)"/>
+<rect x="186" y="96" width="44" height="26" rx="5" class="ba"/><text x="208" y="113" text-anchor="middle" class="sub m">+1</text>
+<line x1="230" y1="96" x2="234" y2="46" class="ln" marker-end="url(#ah)"/>
+<path d="M10 160 H180 V140 H190 V160 H390" class="w acc"/>
+<text x="120" y="180" text-anchor="middle" class="sub">ขอบ FALLING ที่ D1 → CPU กระโดดเข้า ISR ทันที</text>
+<text x="300" y="134" text-anchor="middle" class="sub">ISR: สั้น · ไม่ delay · ไม่ Serial</text>
+</svg></div><figcaption>ISR แทรกกลาง loop ได้ทุกเมื่อ</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">isr_count.ino</div><pre><code>constexpr uint8_t kButtonPin = D1;
+volatile uint32_t pressCount = 0;   // volatile: ค่าเปลี่ยนนอก flow ปกติ ห้าม cache
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+  // lambda ที่ไม่ capture อะไร แปลงเป็น function pointer ได้
+  attachInterrupt(digitalPinToInterrupt(kButtonPin), [] {
+    pressCount = pressCount + 1;
+  }, FALLING);
+}
+
+void loop() {
+  uint32_t count;
+  noInterrupts();          // copy ออกมาแบบ atomic
+  count = pressCount;
+  interrupts();
+  Serial.println(count);
+  delay(500);
+}</code></pre></div>
+<p>กดปุ่ม 1 ครั้ง ตัวเลขมักเพิ่มมากกว่า 1 นั่นคือ bounce ที่เห็นในบท 07 ข้อสรุป: ISR บนปุ่มกลไกต้อง debounce ด้วยเวลา (เช่นเช็ก <code class="il">millis()</code> ใน ISR หรือส่ง event ให้ loop จัดการ)</p>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>volatile ทำให้ pressCount++ เป็น atomic ไหม?</summary><p>ไม่ volatile แค่บังคับให้อ่าน/เขียน memory จริงทุกครั้ง แต่ ++ คือ load-add-store 3 คำสั่ง ถูกแทรกกลางได้ ต้องใช้ critical section หรือ std::atomic</p></details><details><summary>อะไรห้ามทำใน ISR?</summary><p>delay(), Serial.print(), malloc/new, ทำงานนาน และเรียกฟังก์ชันที่ไม่ reentrant ให้ ISR ตั้ง flag หรือ push ลง buffer แล้วกลับเร็วที่สุด</p></details><aside class="iv"><b>มุมงานจริง</b><p>การลืม volatile เป็นสาเหตุอันดับต้น ๆ ของอาการ "build debug ทำงาน แต่ build release พัง" จำ 3 กรณีที่ต้องใช้: ตัวแปรที่ ISR แก้, memory-mapped register, ตัวแปรที่แชร์ระหว่าง thread และจำไว้ว่ามันไม่ใช่ synchronization</p></aside>
+<label class="done"><input type="checkbox" id="done-l12" data-l="l12"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../11/"><small>← บทก่อนหน้า</small><span>11 · หน่วยความจำใน embedded</span></a><a class="next" href="../13/"><small>บทถัดไป →</small><span>13 · Mini project 1: cooperative scheduler</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

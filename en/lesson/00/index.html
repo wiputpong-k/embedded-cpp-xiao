@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>00 · Install the tools + first Blink · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/00/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/00/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">00 / 24</span></nav>
+<article class="lesson" id="l00">
+<header class="lh"><span class="big m">00</span><div class="lhm"><p class="mod">Module 0 · Setup</p><h1>Install the tools + first Blink</h1><p class="meta">30 min · Hardware: Board only</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Step 1: Install Arduino IDE 2</a></li><li><a href="#s2">Step 2: Add the Seeed board source</a></li><li><a href="#s3">Step 3: Install the board core</a></li><li><a href="#s4">Step 4: Connect the board and pick the board and port</a></li><li><a href="#s5">Hands-on: your first Blink</a></li><li><a href="#s6">Try next</a></li><li><a href="#s7">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> The IDE compiles and flashes the board, and you know the on-board LED is active-LOW</p>
+<p>This is the setup lesson, so it takes longer than the others. Work through the steps from top to bottom; each step ends with a way to check that it worked. The instructions are for Windows; macOS notes are given where they differ.</p>
+<h3 id="s1">Step 1: Install Arduino IDE 2</h3>
+<p>Arduino IDE is the program you use to write code, compile it and upload it to the board.</p>
+<ol>
+<li>Open <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
+<li>Under Arduino IDE 2, pick the Windows installer (Win 10 and newer). If the page asks for a donation, you can click <b>Just Download</b>.</li>
+<li>Run the downloaded file and click Next through the defaults. If Windows asks whether to install a driver, click Install.</li>
+<li>Start Arduino IDE. The first launch may download extra components; if the firewall asks for permission, click Allow.</li>
+</ol>
+<p class="note">Check: the program opens a window with empty <code class="il">void setup()</code> and <code class="il">void loop()</code> functions.</p>
+<h3 id="s2">Step 2: Add the Seeed board source</h3>
+<p>Arduino IDE does not include the XIAO board out of the box. First you tell the IDE where to download Seeed's board package from.</p>
+<ol>
+<li>In Arduino IDE, open <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>). The Preferences window opens.</li>
+<li>Find the <b>Additional boards manager URLs</b> field near the bottom of the window.</li>
+<li>Copy the URL below with its copy button and paste it into that field. If the field already has other URLs, click the icon on the right of the field and paste it on a new line.</li>
+<li>Click <b>OK</b> to close the window.</li>
+</ol><div class="code"><div class="cl">Additional boards manager URLs</div><pre><code>https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json</code></pre></div>
+<h3 id="s3">Step 3: Install the board core</h3>
+<p>A core is the set of files that teaches the IDE about a board, including the compiler for the nRF52840 chip.</p>
+<ol>
+<li>Open <b>Boards Manager</b>: click the board icon in the left sidebar (second icon from the top), or use <b>Tools → Board → Boards Manager…</b></li>
+<li>Type <code class="il">seeed nrf52</code> in the search box. Two entries appear; pick <b>Seeed nRF52 Boards</b>, not <i>Seeed nRF52 mbed-enabled Boards</i>.</li>
+<li>Click <b>Install</b> and wait. It can take several minutes because it also downloads the compiler. If a window asks about a driver, click Install or Yes.</li>
+</ol>
+<p class="note">We use the non-mbed core because it builds faster and works with Adafruit's BLE library. Check: the Seeed nRF52 Boards entry shows INSTALLED.</p>
+<h3 id="s4">Step 4: Connect the board and pick the board and port</h3>
+<ol>
+<li>Plug the board into your computer with a USB-C cable that carries data (some charger cables only carry power).</li>
+<li>Open <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
+<li>Open <b>Tools → Port</b> and pick the board's port (on Windows, <code class="il">COM</code> plus a number, e.g. COM5; on macOS, <code class="il">/dev/cu.usbmodem…</code>).</li>
+</ol>
+<p class="note">Check: if you are not sure which port is the board, unplug the cable and open the Port menu again; the port that disappeared is the board. If no port shows up at all, try another USB cable.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 300" role="img">
+<rect x="178" y="24" width="44" height="22" rx="5" class="b"/><text x="200" y="39" text-anchor="middle" class="sub m">USB-C</text>
+<rect x="140" y="44" width="120" height="226" rx="12" class="bm"/>
+<circle cx="200" cy="66" r="7" class="pa"/><text x="200" y="92" text-anchor="middle" class="sub">RGB LED</text><text x="200" y="105" text-anchor="middle" class="sub">active-LOW</text>
+<text x="200" y="245" text-anchor="middle" class="tt m">XIAO</text><text x="200" y="260" text-anchor="middle" class="sub m">nRF52840</text>
+<circle cx="152" cy="76" r="6" class="pa"/><text x="138" y="80" text-anchor="end" class="tt acc m">D0 / A0</text><circle cx="152" cy="104" r="6" class="pa"/><text x="138" y="108" text-anchor="end" class="tt acc m">D1</text><circle cx="152" cy="132" r="6" class="pa"/><text x="138" y="136" text-anchor="end" class="tt acc m">D2</text><circle cx="152" cy="160" r="6" class="pn"/><text x="138" y="164" text-anchor="end" class="tt m">D3</text><circle cx="152" cy="188" r="6" class="pn"/><text x="138" y="192" text-anchor="end" class="tt m">D4 / SDA</text><circle cx="152" cy="216" r="6" class="pn"/><text x="138" y="220" text-anchor="end" class="tt m">D5 / SCL</text><circle cx="152" cy="244" r="6" class="pn"/><text x="138" y="248" text-anchor="end" class="tt m">D6 / TX</text><circle cx="248" cy="76" r="6" class="pn"/><text x="262" y="80" text-anchor="start" class="tt m">5V</text><circle cx="248" cy="104" r="6" class="pa"/><text x="262" y="108" text-anchor="start" class="tt acc m">GND</text><circle cx="248" cy="132" r="6" class="pa"/><text x="262" y="136" text-anchor="start" class="tt acc m">3V3</text><circle cx="248" cy="160" r="6" class="pn"/><text x="262" y="164" text-anchor="start" class="tt m">D10 / MOSI</text><circle cx="248" cy="188" r="6" class="pn"/><text x="262" y="192" text-anchor="start" class="tt m">D9 / MISO</text><circle cx="248" cy="216" r="6" class="pn"/><text x="262" y="220" text-anchor="start" class="tt m">D8 / SCK</text><circle cx="248" cy="244" r="6" class="pn"/><text x="262" y="248" text-anchor="start" class="tt m">D7 / RX</text>
+<text x="8" y="292" class="sub">Orange = course pins: D0 pot · D1 button · D2 external LED</text>
+</svg></div><figcaption>XIAO nRF52840 Sense: GPIO is 3.3 V. Never feed 5 V into a D pin.</figcaption></figure>
+<h3 id="s5">Hands-on: your first Blink</h3>
+<ol>
+<li>Open <b>File → New Sketch</b>. A new window opens with starter code.</li>
+<li>Delete all of that code, click the <b>Copy</b> button at the top right of the code below, and paste it in.</li>
+<li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>.</li>
+<li>Click <b>Verify</b> (the check mark at the top left) to compile. The first compile can take a minute; wait for <i>Done compiling</i> at the bottom.</li>
+<li>Click <b>Upload</b> (the right arrow next to Verify) and wait for <i>Done uploading</i>.</li>
+</ol><div class="code"><div class="cl">blink.ino</div><pre><code>// The on-board LED anode is tied to 3V3, so it lights when you write LOW
+void setup() {
+  pinMode(LED_RED, OUTPUT);
+  digitalWrite(LED_RED, HIGH);   // off
+}
+
+void loop() {
+  digitalWrite(LED_RED, LOW);    // on
+  delay(200);
+  digitalWrite(LED_RED, HIGH);   // off
+  delay(800);
+}</code></pre></div>
+<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
+<p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
+<h3 id="s6">Try next</h3>
+<ol>
+<li>Change <code class="il">LED_RED</code> to <code class="il">LED_GREEN</code> or <code class="il">LED_BLUE</code> in all three places and upload again. The LED color should change.</li>
+<li>Open <b>File → Preferences…</b>, tick <b>Show verbose output during: compile</b>, click OK and click Verify again. The Output panel at the bottom shows the compiler commands the IDE actually runs; lesson 01 explains what each one does.</li>
+</ol>
+<h3 id="s7">Check your understanding</h3><details><summary>Why does LED_RED light when you write LOW?</summary><p>The LED is active-LOW: its anode sits at 3V3 and the GPIO pin sinks the current, so current flows when the pin is LOW.</p></details><details><summary>Why use the non-mbed core in this course?</summary><p>It builds faster, supports Bluefruit BLE and is easy to compile in CI. Both cores run the same C++.</p></details>
+<label class="done"><input type="checkbox" id="done-l00" data-l="l00"> I finished this lesson</label>
+</article>
+<nav class="pager"><span class="prev none"></span><a class="next" href="../01/"><small>Next →</small><span>01 · .ino is C++, and the path from code to board</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

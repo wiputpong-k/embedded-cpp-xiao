@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>13 · Mini project 1: cooperative scheduler · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/13/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/13/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">13 / 24</span></nav>
+<article class="lesson" id="l13">
+<header class="lh"><span class="big m">13</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Mini project 1: cooperative scheduler</h1><p class="meta">30 นาที · ฮาร์ดแวร์: LED + ปุ่ม + Pot</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">เตรียมวงจรและโปรเจกต์</a></li><li><a href="#s2">ทดสอบ</a></li><li><a href="#s3">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> รวม LED, ปุ่ม และ pot เป็น firmware เดียวที่ไม่มี delay() เลย โครงสร้างแบบนี้ใช้จริงก่อนจะขึ้น RTOS</p>
+<p>firmware จริงต้องทำหลายอย่างพร้อมกัน เช่น กระพริบ LED, อ่านปุ่ม และอ่านเซนเซอร์ ถ้าใช้ <code class="il">delay()</code> งานหนึ่งจะบล็อกงานอื่นทั้งหมด วิธีแก้ที่ง่ายที่สุดคือ cooperative scheduler: แบ่งงานเป็น task สั้น ๆ แต่ละ task มีรอบการทำงานของตัวเอง แล้วให้ <code class="il">loop()</code> คอยเช็กว่า task ไหนถึงเวลาแล้วบ้าง</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 294" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">loop()</text><text x="200" y="49" text-anchor="middle" class="sub">วนเร็วที่สุด ไม่มี delay()</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">now = millis()</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">ทุก task: now − lastRun ≥ period ?</text><text x="200" y="193" text-anchor="middle" class="sub">ใช่ → lastRun = now; run()</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><text x="212" y="223" class="sub m">แล้ววนกลับ</text><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">handleSerial()</text><text x="200" y="273" text-anchor="middle" class="sub">อ่านคำสั่งทีละตัวอักษร ไม่ block</text></svg></div><figcaption>แต่ละ task มีรอบของตัวเอง loop แค่ตรวจว่าถึงเวลาหรือยัง</figcaption></figure>
+<h3 id="s1">เตรียมวงจรและโปรเจกต์</h3>
+<ol>
+<li>ต่อวงจรให้ครบ 3 อย่างบน breadboard เดียวกัน: LED + R ที่ D2 (บท 04), pot ที่ A0 (บท 06) และปุ่มที่ D1 (บท 07)</li>
+<li>สร้าง sketch ใหม่ แล้วกด <b>File → Save As…</b> ตั้งชื่อ <code class="il">firmware</code> จะได้โฟลเดอร์ <code class="il">firmware/</code> ที่มีไฟล์ <code class="il">firmware.ino</code> (Arduino บังคับให้ชื่อโฟลเดอร์กับชื่อไฟล์ .ino ตรงกัน)</li>
+<li>สร้างโฟลเดอร์ <code class="il">src</code> ในโฟลเดอร์ <code class="il">firmware/</code> แล้วคัดลอก 3 ไฟล์จากบทก่อนมาไว้: <code class="il">Led.h</code> (บท 05), <code class="il">Debouncer.h</code> (บท 07) และ <code class="il">RingBuffer.h</code> (บท 10)</li>
+<li>วางโค้ดข้างล่างใน <code class="il">firmware.ino</code> แล้วกด <b>Upload</b></li>
+</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &quot;src/Led.h&quot;
+#include &quot;src/Debouncer.h&quot;
+#include &quot;src/RingBuffer.h&quot;
+
+#if __has_include(&quot;src/version.h&quot;)
+#include &quot;src/version.h&quot;          // CI สร้างไฟล์นี้ (บท 23)
+#else
+#define FW_VERSION &quot;dev&quot;
+#endif
+
+constexpr uint8_t kButtonPin = D1;
+constexpr uint8_t kPotPin    = A0;
+
+Led status(LED_GREEN, true);
+Led ext(D2, false);
+Debouncer button;
+RingBuffer&lt;uint16_t, 16&gt; samples;
+bool paused = false;
+
+struct Task {
+  uint32_t periodMs;
+  uint32_t lastRunMs;
+  void (*run)();
+};
+
+void blinkTask() { if (!paused) status.toggle(); }
+
+void buttonTask() {
+  bool pressed = digitalRead(kButtonPin) == LOW;
+  if (button.update(pressed, millis()) == Debouncer::Event::Pressed) {
+    paused = !paused;
+    ext.toggle();
+  }
+}
+
+void sensorTask() { samples.pushOverwrite(analogRead(kPotPin)); }
+
+void reportTask() {
+  Serial.print(&quot;avg:&quot;);     Serial.print(average(samples));
+  Serial.print(&quot; paused:&quot;); Serial.println(paused ? 1 : 0);
+}
+
+Task tasks[] = {
+  {500, 0, blinkTask},
+  {5,   0, buttonTask},
+  {20,  0, sensorTask},
+  {200, 0, reportTask},
+};
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+  status.begin();
+  ext.begin();
+  Serial.print(&quot;fw &quot;); Serial.println(FW_VERSION);
+}
+
+void loop() {
+  uint32_t now = millis();
+  for (Task&amp; t : tasks) {
+    if (now - t.lastRunMs &gt;= t.periodMs) {
+      t.lastRunMs = now;
+      t.run();
+    }
+  }
+}</code></pre></div>
+<h3 id="s2">ทดสอบ</h3>
+<ol>
+<li>LED เขียวบนบอร์ดต้องกระพริบทุก 0.5 วินาที</li>
+<li>กดปุ่ม: LED เขียวหยุดกระพริบ และ LED ภายนอกติด กดอีกครั้งเพื่อกลับเป็นเหมือนเดิม</li>
+<li>เปิด <b>Tools → Serial Plotter</b> (ตั้ง 115200 baud) แล้วหมุน pot เส้น <code class="il">avg</code> ต้องขึ้นลงตาม</li>
+</ol>
+<p>ทุกอย่างทำงานพร้อมกันโดยไม่มี <code class="il">delay()</code> สักบรรทัด ลองแก้ตัวเลขใน <code class="il">tasks[]</code> เช่นเปลี่ยน blinkTask เป็น 100 แล้ว Upload ใหม่ดูผล</p>
+<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>ถ้า reportTask ใช้เวลา 30 ms จะเกิดอะไรกับ buttonTask?</summary><p>buttonTask ถูกเลื่อนไปจน reportTask จบ เพราะเป็น cooperative (ไม่มี preemption) ทุก task ต้องสั้น ถ้าทำไม่ได้คือสัญญาณว่าถึงเวลาใช้ RTOS</p></details><details><summary>ทำไม Task ใช้ function pointer ไม่ใช้ std::function?</summary><p>function pointer ขนาด 4 byte ไม่จอง heap และคาดเดาได้ std::function อาจจอง heap เมื่อ capture ข้อมูล</p></details>
+<label class="done"><input type="checkbox" id="done-l13" data-l="l13"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../12/"><small>← บทก่อนหน้า</small><span>12 · Interrupt, volatile และ lambda</span></a><a class="next" href="../14/"><small>บทถัดไป →</small><span>14 · Mini project 2: รับคำสั่งทาง Serial</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

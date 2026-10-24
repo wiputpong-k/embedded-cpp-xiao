@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>07 · Buttons and debounce · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/07/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/07/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">07 / 24</span></nav>
+<article class="lesson" id="l07">
+<header class="lh"><span class="big m">07</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Buttons and debounce</h1><p class="meta">30 min · Hardware: Button on D1</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Wire it up</a></li><li><a href="#s2">Why debounce</a></li><li><a href="#s3">Hands-on</a></li><li><a href="#s4">How the Debouncer works</a></li><li><a href="#s5">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Wire a button, and write non-blocking debounce as a class that does not depend on Arduino (you will test it on a PC in lesson 19)</p>
+<h3 id="s1">Wire it up</h3>
+<p>A tactile button has 4 legs. The legs on the same side are pairs that are already connected inside. If you place it the wrong way round, the button looks permanently pressed. The safe trick is to use two legs that are <b>diagonally opposite</b>, because they always belong to different pairs.</p>
+<ol>
+<li>Unplug the USB cable first.</li>
+<li>Press the button into the breadboard across the center gap.</li>
+<li>Run a wire from one button leg to pin D1.</li>
+<li>Connect the diagonally opposite leg to GND.</li>
+</ol>
+<p>No external resistor is needed, because the code turns on <code class="il">INPUT_PULLUP</code>: a resistor inside the chip that pulls D1 up to 3.3 V. So when the button is released the pin reads HIGH, and when it is pressed the pin is connected to GND and reads LOW.</p>
+<h3 id="s2">Why debounce</h3>
+<p>The metal contacts inside a button bounce against each other several times in the first 1–5 ms of a press. If the code reads the pin directly, one press can count as several. The Debouncer fixes this by accepting a new state only after the signal has stayed stable for a set time (20 ms by default).</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<text x="10" y="20" class="sub">Pin D1 (raw): HIGH = released, LOW = pressed</text>
+<path d="M10 40 H120 V80 H126 V40 H132 V80 H140 V48 H146 V80 H390" class="w acc"/>
+<text x="133" y="98" text-anchor="middle" class="sub">bounce 1–5 ms</text>
+<text x="10" y="124" class="sub">After Debouncer (stableMs = 20)</text>
+<path d="M10 140 H210 V176 H390" class="w"/>
+<line x1="146" y1="84" x2="146" y2="186" class="ln dash"/><line x1="210" y1="84" x2="210" y2="186" class="ln dash"/>
+<line x1="148" y1="194" x2="208" y2="194" class="ln" marker-end="url(#ah)"/><text x="178" y="207" text-anchor="middle" class="sub m">20 ms</text>
+<text x="218" y="160" class="tt acc">Event::Pressed</text>
+</svg></div><figcaption>The Debouncer waits until the signal has been stable for 20 ms before confirming</figcaption></figure>
+<h3 id="s3">Hands-on</h3>
+<ol>
+<li>Create a new sketch (<b>File → New Sketch</b>) and save it as <code class="il">button_count</code>.</li>
+<li>Create <code class="il">src/Debouncer.h</code> the same way as in lesson 05 (<b>Sketch → Show Sketch Folder</b> → create a <code class="il">src</code> folder → create <code class="il">Debouncer.h</code>) and paste the first code block below.</li>
+<li>Paste the second code block into <code class="il">button_count.ino</code> and click <b>Upload</b>.</li>
+<li>Open <b>Tools → Serial Monitor</b> and set the speed at the right of the Serial Monitor panel to <b>115200 baud</b>, to match <code class="il">Serial.begin(115200)</code> in the code.</li>
+<li>Press the button a few times. <code class="il">presses</code> should go up by exactly 1 each time.</li>
+</ol><div class="code"><div class="cl">src/Debouncer.h</div><pre><code>#pragma once
+#include &lt;stdint.h&gt;
+
+// Pure logic: never calls the Arduino API, so it can be tested on a PC
+class Debouncer {
+public:
+  enum class Event : uint8_t { None, Pressed, Released };
+
+  explicit Debouncer(uint32_t stableMs = 20) : stableMs_(stableMs) {}
+
+  // raw: true = pressed (already converted from active-LOW), nowMs: current time
+  Event update(bool raw, uint32_t nowMs) {
+    if (raw != lastRaw_) {  // still bouncing → restart the timer
+      lastRaw_ = raw;
+      changedAt_ = nowMs;
+      return Event::None;
+    }
+    if (raw != stable_ &amp;&amp; (nowMs - changedAt_) &gt;= stableMs_) {
+      stable_ = raw;
+      return stable_ ? Event::Pressed : Event::Released;
+    }
+    return Event::None;
+  }
+
+  bool isPressed() const { return stable_; }
+
+private:
+  uint32_t stableMs_;
+  uint32_t changedAt_ = 0;
+  bool lastRaw_ = false;
+  bool stable_ = false;
+};</code></pre></div><div class="code"><div class="cl">button_count.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+
+constexpr uint8_t kButtonPin = D1;
+
+Debouncer button;        // stableMs = 20 (default)
+uint32_t presses = 0;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+}
+
+void loop() {
+  bool pressed = (digitalRead(kButtonPin) == LOW);   // active-LOW → true = pressed
+  if (button.update(pressed, millis()) == Debouncer::Event::Pressed) {
+    presses++;
+    Serial.print(&quot;presses = &quot;);
+    Serial.println(presses);
+  }
+}</code></pre></div>
+<h3 id="s4">How the Debouncer works</h3>
+<ul>
+<li><code class="il">update()</code> is called on every pass of loop with the value just read (<code class="il">raw</code>) and the current time (<code class="il">nowMs</code>). There is no <code class="il">delay()</code>, so loop stays free for other work.</li>
+<li>If <code class="il">raw</code> differs from the previous call, the contacts are still bouncing, so it stores the time in <code class="il">changedAt_</code> and starts counting again.</li>
+<li>Once <code class="il">raw</code> has been stable for <code class="il">stableMs_</code> and differs from the confirmed state (<code class="il">stable_</code>), it switches state and returns <code class="il">Event::Pressed</code> or <code class="il">Event::Released</code> exactly once.</li>
+<li>The class never calls <code class="il">millis()</code> or <code class="il">digitalRead()</code> itself; the caller passes the values in. That is what lets you test it on a PC in lesson 19.</li>
+</ul>
+<p>Try changing <code class="il">Debouncer button;</code> to <code class="il">Debouncer button(0);</code> (no waiting at all) and upload again. Press the button and watch the count sometimes jump by several at once. That is the bounce the Debouncer filters out. Then change it back.</p>
+<h3 id="s5">Check your understanding</h3><details><summary>Why is nowMs - changedAt_ still correct when millis() overflows (after about 49.7 days)?</summary><p>Unsigned 32-bit subtraction is modulo 2³², so the difference is always right as long as the interval is under 49.7 days. Never write now > changedAt_ + stableMs_; that breaks on overflow.</p></details><details><summary>Why not just call delay(20) after reading the button?</summary><p>delay() stops the whole program, so nothing else can run (no sensor reads, no LED blinking), and short presses can still be missed. This Debouncer costs only a few microseconds per call.</p></details>
+<label class="done"><input type="checkbox" id="done-l07" data-l="l07"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../06/"><small>← Previous</small><span>06 · RAII and destructors</span></a><a class="next" href="../08/"><small>Next →</small><span>08 · State machine</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>07 · ปุ่มกดและ debounce · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/07/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/07/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">07 / 24</span></nav>
+<article class="lesson" id="l07">
+<header class="lh"><span class="big m">07</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>ปุ่มกดและ debounce</h1><p class="meta">30 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">ต่อวงจร</a></li><li><a href="#s2">ทำไมต้อง debounce</a></li><li><a href="#s3">Hands-on</a></li><li><a href="#s4">Debouncer ทำงานอย่างไร</a></li><li><a href="#s5">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> ต่อปุ่มกด และเขียน debounce แบบ non-blocking เป็น class ที่ไม่พึ่ง Arduino (จะ test บน PC ในบท 19)</p>
+<h3 id="s1">ต่อวงจร</h3>
+<p>ปุ่มกด tactile มี 4 ขา ขาที่อยู่ฝั่งเดียวกันเป็นคู่ที่ต่อกันอยู่แล้วข้างใน ถ้าวางผิดทิศ ปุ่มจะดูเหมือนกดค้างตลอดเวลา วิธีที่ปลอดภัยที่สุดคือใช้ขาที่อยู่ <b>ทแยงมุม</b> กัน เพราะจะเป็นคนละคู่เสมอ</p>
+<ol>
+<li>ถอดสาย USB ออกก่อน</li>
+<li>เสียบปุ่มคร่อมร่องกลางของ breadboard</li>
+<li>ต่อสายจากขาหนึ่งของปุ่มไปที่ขา D1</li>
+<li>ต่อขาที่อยู่ทแยงมุมกับขานั้นไปที่ GND</li>
+</ol>
+<p>วงจรนี้ไม่ต้องใช้ R ภายนอก เพราะโค้ดจะเปิด <code class="il">INPUT_PULLUP</code> คือ R ภายในชิปที่ดึงขา D1 ขึ้นไปที่ 3.3 V ตอนปล่อยปุ่มขาจึงเป็น HIGH และตอนกดปุ่ม ขาถูกต่อลง GND จึงเป็น LOW</p>
+<h3 id="s2">ทำไมต้อง debounce</h3>
+<p>หน้าสัมผัสโลหะในปุ่มจะเด้งกระทบกันหลายครั้งในช่วง 1–5 ms แรกของการกด ถ้าโค้ดอ่านขาตรง ๆ กดครั้งเดียวอาจนับได้หลายครั้ง Debouncer แก้ปัญหานี้โดยยืนยันสถานะใหม่ก็ต่อเมื่อสัญญาณนิ่งต่อเนื่องครบเวลาที่กำหนด (ค่าเริ่มต้น 20 ms)</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<text x="10" y="20" class="sub">ขา D1 (raw) — HIGH = ปล่อย, LOW = กด</text>
+<path d="M10 40 H120 V80 H126 V40 H132 V80 H140 V48 H146 V80 H390" class="w acc"/>
+<text x="133" y="98" text-anchor="middle" class="sub">bounce 1–5 ms</text>
+<text x="10" y="124" class="sub">หลัง Debouncer (stableMs = 20)</text>
+<path d="M10 140 H210 V176 H390" class="w"/>
+<line x1="146" y1="84" x2="146" y2="186" class="ln dash"/><line x1="210" y1="84" x2="210" y2="186" class="ln dash"/>
+<line x1="148" y1="194" x2="208" y2="194" class="ln" marker-end="url(#ah)"/><text x="178" y="207" text-anchor="middle" class="sub m">20 ms</text>
+<text x="218" y="160" class="tt acc">Event::Pressed</text>
+</svg></div><figcaption>Debouncer รอให้สัญญาณนิ่งครบ 20 ms ก่อนยืนยัน</figcaption></figure>
+<h3 id="s3">Hands-on</h3>
+<ol>
+<li>สร้าง sketch ใหม่ (<b>File → New Sketch</b>) แล้วบันทึกชื่อ <code class="il">button_count</code></li>
+<li>สร้างไฟล์ <code class="il">src/Debouncer.h</code> แบบเดียวกับบท 05 (<b>Sketch → Show Sketch Folder</b> → สร้างโฟลเดอร์ <code class="il">src</code> → สร้างไฟล์ <code class="il">Debouncer.h</code>) แล้ววางโค้ดชุดแรกข้างล่าง</li>
+<li>วางโค้ดชุดที่สองลงใน <code class="il">button_count.ino</code> แล้วกด <b>Upload</b></li>
+<li>เปิด <b>Tools → Serial Monitor</b> แล้วตั้งค่าความเร็วที่มุมขวาของหน้าต่าง Serial Monitor เป็น <b>115200 baud</b> ให้ตรงกับ <code class="il">Serial.begin(115200)</code> ในโค้ด</li>
+<li>กดปุ่มทีละครั้ง ตัวเลข <code class="il">presses</code> ต้องเพิ่มทีละ 1</li>
+</ol><div class="code"><div class="cl">src/Debouncer.h</div><pre><code>#pragma once
+#include &lt;stdint.h&gt;
+
+// Pure logic: ไม่เรียก Arduino API เลย จึง test บน PC ได้
+class Debouncer {
+public:
+  enum class Event : uint8_t { None, Pressed, Released };
+
+  explicit Debouncer(uint32_t stableMs = 20) : stableMs_(stableMs) {}
+
+  // raw: true = กดอยู่ (แปลง active-LOW มาแล้ว), nowMs: เวลาปัจจุบัน
+  Event update(bool raw, uint32_t nowMs) {
+    if (raw != lastRaw_) {  // ยังเด้งอยู่ → เริ่มจับเวลาใหม่
+      lastRaw_ = raw;
+      changedAt_ = nowMs;
+      return Event::None;
+    }
+    if (raw != stable_ &amp;&amp; (nowMs - changedAt_) &gt;= stableMs_) {
+      stable_ = raw;
+      return stable_ ? Event::Pressed : Event::Released;
+    }
+    return Event::None;
+  }
+
+  bool isPressed() const { return stable_; }
+
+private:
+  uint32_t stableMs_;
+  uint32_t changedAt_ = 0;
+  bool lastRaw_ = false;
+  bool stable_ = false;
+};</code></pre></div><div class="code"><div class="cl">button_count.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+
+constexpr uint8_t kButtonPin = D1;
+
+Debouncer button;        // stableMs = 20 (ค่าเริ่มต้น)
+uint32_t presses = 0;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+}
+
+void loop() {
+  bool pressed = (digitalRead(kButtonPin) == LOW);   // active-LOW → true = กด
+  if (button.update(pressed, millis()) == Debouncer::Event::Pressed) {
+    presses++;
+    Serial.print(&quot;presses = &quot;);
+    Serial.println(presses);
+  }
+}</code></pre></div>
+<h3 id="s4">Debouncer ทำงานอย่างไร</h3>
+<ul>
+<li><code class="il">update()</code> ถูกเรียกทุกรอบ loop พร้อมค่าที่อ่านได้ (<code class="il">raw</code>) และเวลาปัจจุบัน (<code class="il">nowMs</code>) ไม่มี <code class="il">delay()</code> เลย loop จึงทำงานอื่นต่อได้</li>
+<li>ถ้า <code class="il">raw</code> ต่างจากรอบที่แล้ว แปลว่ายังเด้งอยู่ จึงจำเวลาไว้ใน <code class="il">changedAt_</code> แล้วเริ่มนับใหม่</li>
+<li>ถ้า <code class="il">raw</code> นิ่งมานานครบ <code class="il">stableMs_</code> และต่างจากสถานะที่ยืนยันแล้ว (<code class="il">stable_</code>) จึงเปลี่ยนสถานะ แล้วคืน <code class="il">Event::Pressed</code> หรือ <code class="il">Event::Released</code> ครั้งเดียว</li>
+<li>class นี้ไม่เรียก <code class="il">millis()</code> หรือ <code class="il">digitalRead()</code> เอง ผู้เรียกเป็นคนส่งค่าเข้ามา จึงนำไป test บน PC ได้ในบท 19</li>
+</ul>
+<p>ลองเปลี่ยนบรรทัด <code class="il">Debouncer button;</code> เป็น <code class="il">Debouncer button(0);</code> (ไม่รอให้นิ่งเลย) แล้ว Upload ใหม่ กดปุ่มดูว่าบางครั้งตัวเลขกระโดดเพิ่มทีละหลายค่า นั่นคือ bounce ที่ Debouncer กรองออก จากนั้นเปลี่ยนกลับ</p>
+<h3 id="s5">เช็กความเข้าใจ</h3><details><summary>ทำไม nowMs - changedAt_ ยังถูกต้องแม้ millis() overflow (ราว 49.7 วัน)?</summary><p>การลบ unsigned 32-bit เป็น modulo 2³² ผลต่างจึงถูกเสมอตราบใดที่ช่วงเวลาไม่เกิน 49.7 วัน ห้ามเขียนแบบ now > changedAt_ + stableMs_ เพราะพังตอน overflow</p></details><details><summary>ทำไมไม่ใช้ delay(20) หลังอ่านปุ่มแทน?</summary><p>delay() หยุดทั้งโปรแกรม ระหว่างนั้นอ่านเซนเซอร์หรือกระพริบ LED ไม่ได้ และยังพลาดการกดสั้น ๆ ได้ Debouncer แบบนี้ใช้เวลาแค่ไม่กี่ไมโครวินาทีต่อรอบ</p></details>
+<label class="done"><input type="checkbox" id="done-l07" data-l="l07"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../06/"><small>← บทก่อนหน้า</small><span>06 · RAII และ destructor</span></a><a class="next" href="../08/"><small>บทถัดไป →</small><span>08 · State machine</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>23 · CD: release firmware อัตโนมัติด้วย tag · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/23/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/23/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">23 / 24</span></nav>
+<article class="lesson" id="l23">
+<header class="lh"><span class="big m">23</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h1>CD: release firmware อัตโนมัติด้วย tag</h1><p class="meta">30 นาที · ฮาร์ดแวร์: บอร์ด + คอมพิวเตอร์</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">ขั้นที่ 1: เพิ่ม workflow release</a></li><li><a href="#s2">ขั้นที่ 2: ติด tag แล้ว push</a></li><li><a href="#s3">ขั้นที่ 3: แฟลชไฟล์จาก Release ลงบอร์ด</a></li><li><a href="#s4">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> push tag แล้วได้ GitHub Release ที่มีไฟล์ firmware และเลขเวอร์ชันฝังในตัว แล้วแฟลชไฟล์นั้นลงบอร์ดได้</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git tag -a v0.1.0</text><text x="200" y="49" text-anchor="middle" class="sub">ติดเวอร์ชันแบบ SemVer</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">git push origin v0.1.0</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">release.yml</text><text x="200" y="193" text-anchor="middle" class="sub">สร้าง version.h → compile</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">GitHub Release</text><text x="200" y="273" text-anchor="middle" class="sub">แนบ .hex / .zip + release notes</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">ทีม / QA ดาวน์โหลดไปแฟลช</text><text x="200" y="353" text-anchor="middle" class="sub">ทุกเวอร์ชันย้อนกลับได้</text></svg></div><figcaption>จาก tag ถึงไฟล์ที่ QA ดาวน์โหลดไปแฟลช</figcaption></figure>
+<p>CD (Continuous Delivery) คือการส่งมอบไฟล์ที่พร้อมใช้งานโดยอัตโนมัติ workflow ในบทนี้ทำงานเมื่อ push <b>tag</b> ที่ขึ้นต้นด้วย <code class="il">v</code> เช่น <code class="il">v0.1.0</code> มันจะสร้างไฟล์ <code class="il">version.h</code> จากชื่อ tag, compile firmware แล้วสร้างหน้า GitHub Release พร้อมแนบไฟล์ให้ดาวน์โหลด</p>
+<h3 id="s1">ขั้นที่ 1: เพิ่ม workflow release</h3>
+<p>main ถูกตั้งกฎให้รับการเปลี่ยนแปลงผ่าน PR เท่านั้น (บท 18) จึงต้องเพิ่มไฟล์นี้ผ่าน PR เหมือนเดิม สร้างไฟล์ <code class="il">.github/workflows/release.yml</code> ด้วยเนื้อหาข้างล่าง แล้วรันคำสั่งชุดถัดไป</p>
+<div class="code"><div class="cl">.github/workflows/release.yml</div><pre><code>name: Release
+
+on:
+  push:
+    tags: [&#x27;v*.*.*&#x27;]
+
+permissions:
+  contents: write
+
+env:
+  BOARD_URL: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+  FQBN: Seeeduino:nrf52:xiaonRF52840Sense
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: &#x27;3.11&#x27;
+      - run: pip install adafruit-nrfutil
+      - uses: arduino/setup-arduino-cli@v2
+      - run: |
+          arduino-cli core update-index --additional-urls &quot;$BOARD_URL&quot;
+          arduino-cli core install Seeeduino:nrf52 --additional-urls &quot;$BOARD_URL&quot;
+      - name: Stamp version
+        run: echo &quot;#define FW_VERSION \&quot;${GITHUB_REF_NAME}\&quot;&quot; &gt; firmware/src/version.h
+      - name: Compile
+        run: arduino-cli compile --fqbn &quot;$FQBN&quot; --additional-urls &quot;$BOARD_URL&quot; --output-dir out firmware
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.hex
+            out/*.zip
+          generate_release_notes: true</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/release
+git add .github/workflows/release.yml
+git commit -m &quot;ci: release firmware on version tag&quot;
+git push -u origin ci/release
+gh pr create --fill
+gh pr checks --watch
+gh pr merge --squash --delete-branch
+git switch main
+git pull</code></pre></div>
+<h3 id="s2">ขั้นที่ 2: ติด tag แล้ว push</h3>
+<p>tag คือป้ายชื่อที่ติดไว้กับ commit หนึ่ง ใช้บอกว่า commit นี้คือเวอร์ชันอะไร การ push tag ไม่ต้องผ่าน PR หลัง push ให้เปิดแท็บ <b>Actions</b> ดู workflow <i>Release</i> ทำงาน เมื่อเสร็จจะมีหน้า Release ใหม่ (<code class="il">gh release view --web</code>)</p><div class="code"><div class="cl">Git Bash</div><pre><code>git tag -a v0.1.0 -m &quot;first release: scheduler, debounce, moving average&quot;
+git push origin v0.1.0
+gh release view --web</code></pre></div>
+<h3 id="s3">ขั้นที่ 3: แฟลชไฟล์จาก Release ลงบอร์ด</h3>
+<p>บอร์ด XIAO nRF52840 รับ firmware ผ่าน bootloader ด้วยไฟล์ <code class="il">.zip</code> (DFU package) ไม่ใช่ไฟล์ .hex โดยตรง Arduino IDE ทำขั้นนี้ให้ทุกครั้งที่กด Upload ส่วนไฟล์จาก Release ต้องใช้เครื่องมือ <code class="il">adafruit-nrfutil</code></p>
+<ol>
+<li>ถ้ายังไม่มี Python ให้ติดตั้งก่อน (คำสั่งแรกข้างล่าง ใน PowerShell) แล้วปิด terminal เปิดใหม่ จากนั้นติดตั้ง <code class="il">adafruit-nrfutil</code> ด้วย pip</li>
+<li>ใน Git Bash ดาวน์โหลดไฟล์ <code class="il">.zip</code> จาก Release (ชื่อประมาณ <code class="il">firmware.ino.zip</code>)</li>
+<li>กดปุ่ม reset บนบอร์ด 2 ครั้งเร็ว ๆ ให้เข้า bootloader แล้วดูเลขพอร์ตใน Arduino IDE ที่ <b>Tools → Port</b> (เช่น COM5)</li>
+<li>รันคำสั่ง <code class="il">adafruit-nrfutil</code> โดยเปลี่ยน <code class="il">COM5</code> เป็นพอร์ตของคุณ รอจนขึ้นว่า Device programmed</li>
+<li>เปิด Serial Monitor (115200 baud) แล้วกด reset 1 ครั้ง ต้องเห็น <code class="il">fw v0.1.0</code> (ถ้า build จาก IDE ในเครื่องจะเห็น <code class="il">fw dev</code>)</li>
+</ol><div class="code"><div class="cl">PowerShell</div><pre><code>winget install -e --id Python.Python.3.12
+pip install adafruit-nrfutil</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>gh release download v0.1.0 --pattern &quot;*.zip&quot;
+adafruit-nrfutil --verbose dfu serial --package firmware.ino.zip -p COM5 -b 115200 --singlebank</code></pre></div>
+<p>นี่คือ traceability: รู้เสมอว่าบอร์ดตัวไหนรัน firmware เวอร์ชันไหน และย้อนไปดูโค้ดของเวอร์ชันนั้นได้จาก tag</p>
+<p class="note">SemVer: MAJOR.MINOR.PATCH แก้บั๊ก +PATCH, ฟีเจอร์ใหม่ที่เข้ากันได้ +MINOR, เปลี่ยนแบบเข้ากันไม่ได้ (เช่น protocol) +MAJOR ถ้าต้องการไฟล์ .uf2 สำหรับลากวางลงไดรฟ์ที่ขึ้นมาตอน double-tap reset ให้แปลงจาก .hex ด้วย uf2conv.py (family 0xADA52840)</p>
+<h3 id="s4">เช็กความเข้าใจ</h3><details><summary>ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?</summary><p>ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release</p></details><details><summary>permissions: contents: write จำเป็นไหม?</summary><p>จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release</p></details>
+<label class="done"><input type="checkbox" id="done-l23" data-l="l23"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../22/"><small>← บทก่อนหน้า</small><span>22 · CI 2: compile firmware ใน CI</span></a><a class="next" href="../24/"><small>บทถัดไป →</small><span>24 · Capstone และทบทวน</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>03 · namespace, overloading, enum class · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/03/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/03/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">03 / 24</span></nav>
+<article class="lesson" id="l03">
+<header class="lh"><span class="big m">03</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>namespace, overloading, enum class</h1><p class="meta">20 min · Hardware: Board only</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Organize names, and understand why C++ needs name mangling</p><div class="vs"><div><span class="tag">C</span><p>Function names must be unique, so you write <code class="il">log_int</code>, <code class="il">log_float</code>, and an <code class="il">enum</code> mixes with int anywhere.</p></div><div><span class="tag t2">C++</span><p>One name can be overloaded for different parameters, <code class="il">namespace</code> prevents name clashes, and <code class="il">enum class</code> never converts to int by itself and can set its size with <code class="il">: uint8_t</code>.</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<text x="10" y="18" class="sub">C++ source (namespace logx)</text><text x="220" y="18" class="sub">symbol name in .o / .elf</text>
+<rect x="6" y="28" width="190" height="34" rx="6" class="b"/><text x="14" y="49" class="tt m sm">info(const char*)</text><line x1="198" y1="45" x2="212" y2="45" class="ln" marker-end="url(#ah)"/><rect x="216" y="28" width="178" height="34" rx="6" class="ba"/><text x="224" y="49" class="tt m sm">_ZN4logx4infoEPKc</text>
+<rect x="6" y="70" width="190" height="34" rx="6" class="b"/><text x="14" y="91" class="tt m sm">info(const char*, int)</text><line x1="198" y1="87" x2="212" y2="87" class="ln" marker-end="url(#ah)"/><rect x="216" y="70" width="178" height="34" rx="6" class="ba"/><text x="224" y="91" class="tt m sm">_ZN4logx4infoEPKci</text>
+<rect x="6" y="112" width="190" height="34" rx="6" class="b"/><text x="14" y="133" class="tt m sm">info(const char*,float,int)</text><line x1="198" y1="129" x2="212" y2="129" class="ln" marker-end="url(#ah)"/><rect x="216" y="112" width="178" height="34" rx="6" class="ba"/><text x="224" y="133" class="tt m sm">_ZN4logx4infoEPKcfi</text>
+<rect x="6" y="164" width="190" height="34" rx="6" class="b"/><text x="14" y="185" class="tt m sm">extern &quot;C&quot; void foo()</text><line x1="198" y1="181" x2="212" y2="181" class="ln" marker-end="url(#ah)"/><rect x="216" y="164" width="178" height="34" rx="6" class="b"/><text x="224" y="185" class="tt m sm">foo</text>
+<text x="10" y="158" class="sub">Called from C or ASM? extern "C" turns mangling off</text>
+</svg></div><figcaption>The compiler encodes parameter types into the symbol name, which makes overloading possible</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">logx.ino</div><pre><code>namespace logx {
+void info(const char* msg) {
+  Serial.print(&quot;[I] &quot;); Serial.println(msg);
+}
+void info(const char* key, int value) {
+  Serial.print(&quot;[I] &quot;); Serial.print(key); Serial.print(&#x27;=&#x27;); Serial.println(value);
+}
+void info(const char* key, float value, int digits = 2) {   // default argument
+  Serial.print(&quot;[I] &quot;); Serial.print(key); Serial.print(&#x27;=&#x27;); Serial.println(value, digits);
+}
+}  // namespace logx
+
+enum class Mode : uint8_t { Off, Slow, Fast };
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+  logx::info(&quot;boot&quot;);
+  logx::info(&quot;uptime_ms&quot;, (int)millis());
+  logx::info(&quot;vbat&quot;, 3.71f);
+  logx::info(&quot;pi&quot;, 3.14159f, 4);
+  Mode m = Mode::Slow;
+  logx::info(&quot;mode&quot;, static_cast&lt;int&gt;(m));   // explicit cast required
+  // int bad = m;   // uncomment this line: compile error
+}
+
+void loop() {}</code></pre></div><h3 id="s2">Check your understanding</h3><details><summary>How do you include a library written in C?</summary><p>Wrap the header in extern "C" { … } so the linker finds the C-style symbol names. Without it you get undefined reference errors.</p></details><details><summary>Why is enum class safer than enum?</summary><p>It never converts to int implicitly, its enumerator names do not leak into the outer scope, and you can set the underlying type to control its size in memory.</p></details>
+<label class="done"><input type="checkbox" id="done-l03" data-l="l03"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../02/"><small>← Previous</small><span>02 · Reference, const and constexpr instead of #define</span></a><a class="next" href="../04/"><small>Next →</small><span>04 · class: encapsulation and constructors</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>02 · Reference, const and constexpr instead of #define · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/02/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/02/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">02 / 24</span></nav>
+<article class="lesson" id="l02">
+<header class="lh"><span class="big m">02</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Reference, const and constexpr instead of #define</h1><p class="meta">25 min · Hardware: Board only</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Stop using #define for constants, and pass parameters by reference in the right places</p><div class="vs"><div><span class="tag">C</span><p>Constants use <code class="il">#define</code>: no type, no scope. To change the caller's variable you pass a pointer.</p></div><div><span class="tag t2">C++</span><p><code class="il">constexpr</code> has a type and is computed at compile time, using no RAM. <code class="il">T&amp;</code> is an alias for an existing variable: never null, no <code class="il">*</code> needed.</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
+<text x="205" y="22" text-anchor="middle" class="sub m">current @ 0x2000_0104</text>
+<rect x="150" y="30" width="110" height="46" rx="8" class="ba"/><text x="205" y="59" text-anchor="middle" class="tt m">2</text>
+<rect x="14" y="120" width="140" height="42" rx="8" class="b"/><text x="84" y="138" text-anchor="middle" class="tt m">size_t* p</text><text x="84" y="154" text-anchor="middle" class="sub m">= 0x2000_0104</text>
+<path d="M84 118 C84 90 120 70 148 60" class="ln" marker-end="url(#ah)"/>
+<rect x="252" y="120" width="140" height="42" rx="8" class="b dash"/><text x="322" y="138" text-anchor="middle" class="tt m">size_t&amp; idx</text><text x="322" y="154" text-anchor="middle" class="sub">alias of current</text>
+<path d="M300 118 C300 95 270 85 262 72" class="la" marker-end="url(#aha)"/>
+<text x="84" y="182" text-anchor="middle" class="sub">nullable · can re-point</text>
+<text x="322" y="182" text-anchor="middle" class="sub">never null · bound at init</text>
+</svg></div><figcaption>A pointer stores an address of its own; a reference stays bound to the original variable for life</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">rgb_cycle.ino</div><pre><code>constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
+constexpr size_t  kLedCount  = sizeof(kLedPins) / sizeof(kLedPins[0]);
+constexpr uint32_t kStepMs   = 150;
+
+void allOff() {
+  for (uint8_t pin : kLedPins) {   // range-based for (C++11)
+    digitalWrite(pin, HIGH);
+  }
+}
+
+void nextIndex(size_t&amp; idx) {      // reference: changes the caller&#x27;s variable directly
+  idx = (idx + 1) % kLedCount;
+}
+
+size_t current = 0;
+
+void setup() {
+  for (uint8_t pin : kLedPins) pinMode(pin, OUTPUT);
+  allOff();
+}
+
+void loop() {
+  allOff();
+  digitalWrite(kLedPins[current], LOW);
+  delay(kStepMs);
+  nextIndex(current);
+}</code></pre></div>
+<p>Add a function <code class="il">void printPin(const uint8_t&amp; p)</code> and try writing <code class="il">p = 0;</code> inside it. Read the compiler error. That is what const buys you: bugs caught at compile time.</p>
+<h3 id="s2">Check your understanding</h3><details><summary>When should you pass const T& instead of by value?</summary><p>When T is bigger than a register (structs, buffers), to avoid a copy. Pass int, float and pointers by value: faster and easier to read.</p></details><details><summary>How does constexpr differ from const?</summary><p>const means read-only, but the value may only be known at runtime. constexpr must be known at compile time, so it can size an array or be a template argument.</p></details><aside class="iv"><b>In practice</b><p>In firmware code reviews, #define constants are often sent back to become constexpr: #define has no type checking, ignores namespaces and scope, is invisible to the debugger, and macro expansion can cause side effects.</p></aside>
+<label class="done"><input type="checkbox" id="done-l02" data-l="l02"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../01/"><small>← Previous</small><span>01 · .ino is C++, and the path from code to board</span></a><a class="next" href="../03/"><small>Next →</small><span>03 · namespace, overloading, enum class</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

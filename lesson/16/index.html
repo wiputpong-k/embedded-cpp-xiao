@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>16 · Branch, merge และแก้ conflict · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/16/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/16/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">16 / 24</span></nav>
+<article class="lesson" id="l16">
+<header class="lh"><span class="big m">16</span><div class="lhm"><p class="mod">โมดูล B · Git และ GitHub</p><h1>Branch, merge และแก้ conflict</h1><p class="meta">25 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on: สร้าง conflict เองแล้วแก้</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<line x1="30" y1="50" x2="370" y2="50" class="w"/>
+<path d="M150 50 C170 50 170 112 196 112 H270 C296 112 296 50 314 50" class="w acc"/>
+<circle cx="40" cy="50" r="9" class="pn"/><circle cx="95" cy="50" r="9" class="pn"/><circle cx="150" cy="50" r="9" class="pn"/>
+<circle cx="230" cy="50" r="9" class="pn"/><circle cx="318" cy="50" r="11" class="pm"/>
+<circle cx="206" cy="112" r="9" class="pa"/><circle cx="262" cy="112" r="9" class="pa"/>
+<text x="374" y="54" class="tt m sm">main</text>
+<text x="230" y="148" text-anchor="middle" class="tt m sm acc">feature/fast-blink</text>
+<text x="230" y="28" text-anchor="middle" class="sub">แก้บรรทัดเดียวกัน</text><text x="318" y="28" text-anchor="middle" class="sub">merge</text>
+<text x="10" y="166" class="sub">ถ้า 2 branch แก้บรรทัดเดียวกัน git จะหยุดให้คุณเลือก = merge conflict</text>
+</svg></div><figcaption>feature branch แตกจาก main แล้ว merge กลับ</figcaption></figure>
+<h3 id="s1">Hands-on: สร้าง conflict เองแล้วแก้</h3><div class="code"><div class="cl">terminal</div><pre><code>git switch -c feature/fast-blink
+# ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}
+git commit -am &quot;feat: faster default blink&quot;
+
+git switch main
+# แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}
+git commit -am &quot;chore: slower default blink&quot;
+
+git merge feature/fast-blink      # → CONFLICT</code></pre></div><div class="code"><div class="cl">firmware.ino ตอน conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+  {1000, 0, blinkTask},
+=======
+  {250, 0, blinkTask},
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code># แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย &lt;&lt;&lt; === &gt;&gt;&gt; ออก
+git add firmware/firmware.ino
+git commit                         # ปิด merge
+git log --oneline --graph --all
+git branch -d feature/fast-blink</code></pre></div>
+<p class="note">merge เก็บประวัติตามจริง (มี merge commit) ส่วน <code class="il">git rebase main</code> ย้าย commit ของ branch ไปต่อท้าย main ทำให้ประวัติเป็นเส้นตรง กฎ: ห้าม rebase branch ที่คนอื่นดึงไปแล้ว</p>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าแก้ conflict ผิดแล้วอยากเริ่มใหม่ทำอย่างไร?</summary><p>git merge --abort ก่อน commit จะกลับไปสถานะก่อน merge</p></details><details><summary>ทำไมทีมไม่ commit ตรงเข้า main?</summary><p>main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย</p></details>
+<label class="done"><input type="checkbox" id="done-l16" data-l="l16"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../15/"><small>← บทก่อนหน้า</small><span>15 · ติดตั้ง Git และ commit แรก</span></a><a class="next" href="../17/"><small>บทถัดไป →</small><span>17 · GitHub: สร้าง repo และ push</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -47,25 +47,55 @@ h1 { font: 700 clamp(34px, 7vw, 56px)/1.1 var(--display); margin: 0 0 14px; text
 .kit { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 .kit li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 15px; }
 .kit b { font-family: var(--mono); color: var(--accent); font-weight: 500; }
-.plan { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px; margin-top: 24px; }
-.wk { min-width: 0; }
-.wk h3 { font: 600 13px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--mask); margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
-.wk ol { list-style: none; padding: 0; margin: 0; }
-.wk li { display: flex; align-items: center; gap: 8px; }
-.wk a { flex: 1; min-width: 0; display: flex; gap: 10px; align-items: baseline; text-decoration: none; color: var(--fg); padding: 5px 0; font-size: 15px; }
-.wk a:hover .pt { color: var(--accent); }
+/* home: start button, search, module blocks */
+.start { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; margin-top: 22px; }
+.cta { display: inline-block; background: var(--accent); color: var(--surface); text-decoration: none; font: 600 15px var(--body); padding: 10px 18px; border-radius: 8px; max-width: 100%; }
+.cta:hover { filter: brightness(1.08); }
+.search { flex: 1 1 260px; min-width: 0; position: relative; }
+#q { width: 100%; box-sizing: border-box; font: 15px var(--body); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
+#results { list-style: none; margin: 6px 0 0; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+#results a { display: flex; gap: 10px; align-items: baseline; padding: 6px 8px; border-radius: 6px; text-decoration: none; color: var(--fg); }
+#results a:hover, #results a:focus-visible { background: var(--mask-soft); }
+#results small { display: block; color: var(--muted); font-size: 13px; }
+.mods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px 28px; padding-block: 8px 28px; }
+.modblock { min-width: 0; }
+.modhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.modblock h2 { font: 600 13px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--mask); margin: 0; }
+.mc { font-size: 12px; color: var(--muted); }
+.mprog { height: 4px; background: var(--code); border-radius: 2px; overflow: hidden; margin: 6px 0 4px; }
+.mpf { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.modblock ol { list-style: none; padding: 0; margin: 0; }
+.modblock li { display: flex; align-items: center; gap: 8px; }
+.modblock a { flex: 1; min-width: 0; display: flex; gap: 10px; align-items: baseline; text-decoration: none; color: var(--fg); padding: 5px 0; font-size: 15px; }
+.modblock a:hover .pt { color: var(--accent); }
 .pn2 { color: var(--muted); font-size: 12px; }
 .pt { flex: 1; min-width: 0; }
 .pm2 { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line); flex: none; }
 .dot.on { background: var(--accent); border-color: var(--accent); }
 
-.lesson { padding-block: 40px 28px; border-top: 1px solid var(--line); }
+/* lesson page: breadcrumb, header, in-lesson contents, prev/next */
+.crumb { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 20px; font-size: 14px; }
+.crumb a { text-decoration: none; }
+.crumb span { color: var(--muted); font-size: 12px; }
+.lesson { padding-block: 20px 28px; }
+.lesson h1 { font: 600 clamp(24px, 5vw, 32px)/1.25 var(--display); margin: 2px 0 4px; text-wrap: balance; letter-spacing: 0; }
+.toc { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 14px; margin: 0 0 18px; font-size: 14px; }
+.toc b { font: 600 12px var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--mask); }
+.toc ol { margin: 6px 0 0; padding-left: 20px; columns: 2 220px; column-gap: 24px; }
+.toc li { break-inside: avoid; padding: 1px 0; }
+.toc a { text-decoration: none; }
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--line); padding-top: 20px; }
+.pager a { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); text-decoration: none; color: var(--fg); min-width: 0; }
+.pager a:hover { border-color: var(--accent); }
+.pager small { color: var(--muted); font-size: 12px; }
+.pager span { font-size: 15px; overflow-wrap: anywhere; }
+.pager .next { text-align: right; grid-column: 2; }
+.lesson h3[id] { scroll-margin-top: 64px; }
 .lh { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
 .big { font-size: 40px; line-height: 1; color: var(--accent); font-weight: 500; padding-top: 4px; }
 .lhm { min-width: 0; }
 .mod { margin: 0; font-size: 12px; letter-spacing: .06em; color: var(--mask); text-transform: uppercase; }
-.lesson h2 { font: 600 clamp(22px, 4.2vw, 28px)/1.25 var(--display); margin: 2px 0 4px; text-wrap: balance; }
 .meta { margin: 0; color: var(--muted); font-size: 14px; }
 .lesson h3 { font: 600 17px var(--display); margin: 24px 0 8px; }
 .lesson p, .lesson li { max-width: 68ch; }
@@ -125,7 +155,8 @@ details[open] summary { color: var(--accent); }
 .ft { border-top: 2px solid var(--fg); padding-top: 16px; color: var(--muted); font-size: 14px; }
 
 @media (max-width: 640px) {
-  .ovg, .plan, .vs { grid-template-columns: 1fr; }
+  .ovg, .mods, .vs, .pager { grid-template-columns: 1fr; }
+  .pager .next { grid-column: 1; }
   .big { font-size: 30px; }
   .brand { display: none; }
   .sv svg { max-width: 100%; }

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>09 · Inheritance, virtual และ interface · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/09/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/09/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">09 / 24</span></nav>
+<article class="lesson" id="l09">
+<header class="lh"><span class="big m">09</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Inheritance, virtual และ interface</h1><p class="meta">25 นาที · ฮาร์ดแวร์: Pot ที่ A0</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> ออกแบบ interface ISensor ให้สลับเซนเซอร์จริงกับเซนเซอร์ปลอมได้ และรู้ต้นทุนของ virtual</p>
+<p>ใน C ทำ polymorphism ด้วย struct ของ function pointer เอง ใน C++ ใช้ <code class="il">virtual</code> แล้ว compiler สร้างตาราง (vtable) ให้ ประโยชน์หลักใน embedded คือสลับ implementation ได้ เช่น ใช้ FakeSensor ตอน test โดยไม่ต้องแก้โค้ดที่เรียกใช้</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
+<text x="10" y="18" class="sub">object: pot</text>
+<rect x="10" y="26" width="118" height="34" rx="6" class="ba"/><text x="20" y="48" class="tt m sm">vptr (4 B)</text>
+<rect x="10" y="60" width="118" height="34" rx="6" class="b"/><text x="20" y="82" class="tt m sm">pin_ = A0</text>
+<text x="150" y="18" class="sub">vtable ของ PotSensor (flash)</text>
+<rect x="150" y="26" width="110" height="30" rx="0" class="bm"/><text x="160" y="46" class="tt m sm">[0] ~dtor</text>
+<rect x="150" y="56" width="110" height="30" rx="0" class="bm"/><text x="160" y="76" class="tt m sm">[1] name</text>
+<rect x="150" y="86" width="110" height="30" rx="0" class="bm"/><text x="160" y="106" class="tt m sm">[2] read</text>
+<line x1="128" y1="43" x2="146" y2="43" class="la" marker-end="url(#aha)"/>
+<line x1="260" y1="71" x2="280" y2="71" class="ln" marker-end="url(#ah)"/><text x="284" y="75" class="tt m sm">Pot::name()</text>
+<line x1="260" y1="101" x2="280" y2="101" class="ln" marker-end="url(#ah)"/><text x="284" y="105" class="tt m sm">Pot::read()</text>
+<text x="10" y="146" class="sub">s-&gt;read() = อ่าน vptr → อ่าน entry [2] → กระโดดไปเรียก</text>
+<text x="10" y="166" class="sub">ต้นทุน: RAM +4 B ต่อ object, flash 1 ตารางต่อ class, call ทางอ้อม 1 ครั้ง</text>
+<text x="10" y="186" class="sub">FakeSensor มี vtable ของตัวเอง ชี้ไปฟังก์ชันของมัน</text>
+</svg></div><figcaption>กลไกของ virtual call</figcaption></figure>
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>class ISensor {
+public:
+  virtual ~ISensor() = default;
+  virtual const char* name() const = 0;   // pure virtual = ต้อง override
+  virtual float read() = 0;
+};
+
+class PotSensor : public ISensor {
+public:
+  explicit PotSensor(uint8_t pin) : pin_(pin) {}
+  const char* name() const override { return &quot;pot&quot;; }
+  float read() override { return analogRead(pin_) * (100.0f / 1023.0f); }  // %
+private:
+  uint8_t pin_;
+};
+
+class FakeSensor : public ISensor {
+public:
+  const char* name() const override { return &quot;fake&quot;; }
+  float read() override { t_ += 0.1f; return 50.0f + 40.0f * sinf(t_); }
+private:
+  float t_ = 0;
+};
+
+PotSensor pot(A0);
+FakeSensor fake;
+ISensor* sensors[] = {&amp;pot, &amp;fake};
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  for (ISensor* s : sensors) {
+    Serial.print(s-&gt;name()); Serial.print(&#x27;:&#x27;);
+    Serial.print(s-&gt;read()); Serial.print(&#x27; &#x27;);
+  }
+  Serial.println();
+  delay(50);
+}</code></pre></div><p>เปิด Tools → Serial Plotter จะเห็นกราฟ 2 เส้น หมุน pot เทียบกับคลื่น sine</p><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ทำไม base class ต้องมี virtual destructor?</summary><p>ถ้า delete object ผ่าน pointer ของ base แล้ว destructor ไม่ virtual destructor ของ derived จะไม่ถูกเรียก resource รั่ว</p></details><details><summary>ถ้าไม่อยากจ่ายต้นทุน virtual มีทางเลือกอะไร?</summary><p>ใช้ template (static polymorphism / CRTP) ให้ compiler รู้ชนิดตอน compile แล้ว inline ได้ แลกกับ code size ที่อาจเพิ่มขึ้น</p></details><aside class="iv"><b>มุมงานจริง</b><p>เวลาทีมถกกันว่า "virtual ช้าไหม" ให้คุยด้วยตัวเลข: เพิ่ม load 2 ครั้ง + indirect branch ต่อ call บน Cortex-M4 ราวไม่กี่ cycle ต้นทุนจริงคือ inline ไม่ได้ จึงควรเลี่ยงเฉพาะใน hot loop หรือ ISR</p></aside>
+<label class="done"><input type="checkbox" id="done-l09" data-l="l09"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../08/"><small>← บทก่อนหน้า</small><span>08 · State machine</span></a><a class="next" href="../10/"><small>บทถัดไป →</small><span>10 · Template: RingBuffer&lt;T, N&gt;</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

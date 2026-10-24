@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>19 · Separate logic from hardware + run tests on a PC · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/19/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/19/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">19 / 24</span></nav>
+<article class="lesson" id="l19">
+<header class="lh"><span class="big m">19</span><div class="lhm"><p class="mod">Module C · Testable code and CI/CD</p><h1>Separate logic from hardware + run tests on a PC</h1><p class="meta">30 min · Hardware: Computer</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Step 1: Install g++</a></li><li><a href="#s2">Step 2: Add the test file and run it</a></li><li><a href="#s3">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Install g++ and run the Debouncer and RingBuffer tests on a PC in seconds, with no board plugged in</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 270" role="img">
+<rect x="10" y="14" width="270" height="48" rx="8" class="b"/><text x="22" y="34" class="tt m sm">firmware.ino</text><text x="22" y="52" class="sub">glue code · scheduler · wiring</text>
+<rect x="10" y="72" width="270" height="56" rx="8" class="ba"/><text x="22" y="94" class="tt m sm">Pure logic</text><text x="22" y="114" class="sub">Debouncer, RingBuffer, filter : no Arduino</text>
+<rect x="10" y="138" width="270" height="48" rx="8" class="bm"/><text x="22" y="158" class="tt m sm">HAL / Arduino API</text><text x="22" y="176" class="sub">digitalRead, millis, analogRead, Serial</text>
+<rect x="10" y="196" width="270" height="48" rx="8" class="b"/><text x="22" y="216" class="tt m sm">Hardware</text><text x="22" y="234" class="sub">nRF52840 GPIO, SAADC, USB</text>
+<path d="M290 76 H300 V124 H290" class="la"/><text x="306" y="96" class="tt sm acc">test on PC</text><text x="306" y="112" class="sub">g++ · secs · CI</text>
+<path d="M290 18 H300 V240 H290" class="ln"/><text x="306" y="200" class="tt sm">test on board</text><text x="306" y="216" class="sub">slower · manual</text>
+<text x="10" y="264" class="sub">Rule: complex logic goes in the orange layer, which CI can test</text>
+</svg></div><figcaption>The more logic lives in layers that know nothing about hardware, the more you can test automatically</figcaption></figure>
+<p>The Debouncer and RingBuffer never call the Arduino API. The Debouncer takes the time as a parameter (<code class="il">nowMs</code>) instead of calling <code class="il">millis()</code> itself. This is the simplest form of dependency injection: it lets g++ compile the code on a PC, and lets a test control time down to the millisecond.</p>
+<h3 id="s1">Step 1: Install g++</h3>
+<p>Windows has no C++ compiler built in. The recommended way to get one is MSYS2.</p>
+<ol>
+<li>Open <a href="https://www.msys2.org/">msys2.org</a>, download the installer (<code class="il">msys2-x86_64-….exe</code>) and install with the defaults. You get a <code class="il">C:\msys64</code> folder.</li>
+<li>Open <b>MSYS2 UCRT64</b> from the Start menu and run the first command below. When asked to confirm, press Enter or type <code class="il">Y</code>.</li>
+<li>Let Git Bash find g++: press the Windows key, type <i>Edit environment variables for your account</i>, pick <b>Path</b> → <b>Edit</b> → <b>New</b>, enter <code class="il">C:\msys64\ucrt64\bin</code> and click OK on every window.</li>
+<li>Close Git Bash, open it again and run <code class="il">g++ --version</code>. You should see a version number.</li>
+</ol>
+<p class="note">macOS: run <code class="il">xcode-select --install</code>, which gives you a compiler you can call as g++. Linux (Ubuntu): run <code class="il">sudo apt install g++</code>.</p>
+<div class="code"><div class="cl">MSYS2 UCRT64</div><pre><code>pacman -S mingw-w64-ucrt-x86_64-gcc</code></pre></div>
+<h3 id="s2">Step 2: Add the test file and run it</h3>
+<ol>
+<li>In Git Bash, go into the repo and create a <code class="il">test</code> folder (the first 2 lines below).</li>
+<li>Run <code class="il">notepad test/test_main.cpp</code> (or <code class="il">code</code>), paste the <code class="il">test/test_main.cpp</code> code below and save.</li>
+<li>Run the g++ command, then <code class="il">./test_runner</code>. You should see <code class="il">ALL TESTS PASSED</code>.</li>
+<li>Commit the test file.</li>
+</ol>
+<p><code class="il">-Ifirmware/src</code> tells g++ to look for headers in that folder, so the test includes the very same <code class="il">Debouncer.h</code> and <code class="il">RingBuffer.h</code> the board uses. <code class="il">-Wall -Wextra -Werror</code> turns on all warnings and treats them as errors.</p>
+<div class="code"><div class="cl">Git Bash</div><pre><code>cd ~/xiao-embedded-cpp
+mkdir test
+g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_runner
+./test_runner
+# ALL TESTS PASSED
+git add test/
+git commit -m &quot;test: add host unit tests&quot;</code></pre></div><div class="code"><div class="cl">test/test_main.cpp</div><pre><code>#include &lt;cstdio&gt;
+#include &lt;cstdlib&gt;
+#include &quot;RingBuffer.h&quot;
+#include &quot;Debouncer.h&quot;
+
+static int failures = 0;
+#define CHECK(cond)                                                    \
+  do {                                                                 \
+    if (!(cond)) {                                                     \
+      std::printf(&quot;FAIL %s:%d  %s\n&quot;, __FILE__, __LINE__, #cond);      \
+      ++failures;                                                      \
+    }                                                                  \
+  } while (0)
+
+static void test_ringbuffer() {
+  RingBuffer&lt;int, 3&gt; rb;
+  CHECK(rb.size() == 0);
+  CHECK(rb.push(1) &amp;&amp; rb.push(2) &amp;&amp; rb.push(3));
+  CHECK(!rb.push(4));          // already full
+  int v = 0;
+  CHECK(rb.pop(v) &amp;&amp; v == 1);  // FIFO: first in, first out
+  rb.pushOverwrite(4);
+  rb.pushOverwrite(5);         // full → drops 2
+  CHECK(rb.at(0) == 3 &amp;&amp; rb.at(2) == 5);
+  CHECK(average(rb) == 4.0f);
+}
+
+static void test_debouncer() {
+  using E = Debouncer::Event;
+  Debouncer d(20);
+  CHECK(d.update(true, 0) == E::None);   // press starts
+  CHECK(d.update(false, 5) == E::None);  // bounce
+  CHECK(d.update(true, 8) == E::None);   // bounce
+  CHECK(d.update(true, 20) == E::None);  // stable for only 12 ms
+  CHECK(d.update(true, 28) == E::Pressed);
+  CHECK(d.isPressed());
+  CHECK(d.update(true, 40) == E::None);  // held down, no repeat event
+}
+
+int main() {
+  test_ringbuffer();
+  test_debouncer();
+  if (failures == 0) std::puts(&quot;ALL TESTS PASSED&quot;);
+  return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+}</code></pre></div><h3 id="s3">Check your understanding</h3><details><summary>Why does the exit code matter?</summary><p>CI decides pass/fail from each command's exit code: 0 = pass, anything else = fail, which stops the pipeline. That is why test_main.cpp returns EXIT_FAILURE when any CHECK fails.</p></details><details><summary>Why can tests on a PC be trusted when they never touch the board?</summary><p>The tests compile the same headers as the real firmware and exercise pure logic. The hardware-dependent parts (reading pins, real timing) still need separate tests on the board.</p></details>
+<label class="done"><input type="checkbox" id="done-l19" data-l="l19"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../18/"><small>← Previous</small><span>18 · Pull Request</span></a><a class="next" href="../20/"><small>Next →</small><span>20 · Write your own unit tests</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

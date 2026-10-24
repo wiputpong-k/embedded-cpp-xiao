@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>08 · State machine · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/08/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/08/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">08 / 24</span></nav>
+<article class="lesson" id="l08">
+<header class="lh"><span class="big m">08</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>State machine</h1><p class="meta">25 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> ใช้ปุ่มที่ debounce แล้วสลับโหมดการกระพริบของ LED ด้วย state machine แบบ non-blocking</p>
+<p>state machine คือการออกแบบโปรแกรมให้อยู่ใน <b>สถานะ</b> (state) ใดสถานะหนึ่งเสมอ และเปลี่ยนสถานะเมื่อเกิด <b>เหตุการณ์</b> (event) เท่านั้น บทนี้มี 3 สถานะ คือ Off, Slow (กระพริบทุก 500 ms) และ Fast (ทุก 100 ms) เหตุการณ์เดียวคือ <code class="il">Event::Pressed</code> จาก Debouncer ในบทที่แล้ว</p>
+<p>ใช้ <code class="il">enum class Mode</code> (บท 03) เก็บสถานะ และแยกกฎการเปลี่ยนสถานะไว้ในฟังก์ชัน <code class="il">next()</code> ที่เดียว เวลาจะเพิ่มโหมดใหม่จึงรู้ทันทีว่าต้องแก้ตรงไหน</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 130" role="img">
+<rect x="14" y="40" width="88" height="40" rx="20" class="b"/><text x="58" y="65" text-anchor="middle" class="tt m">Off</text>
+<rect x="156" y="40" width="88" height="40" rx="20" class="bm"/><text x="200" y="65" text-anchor="middle" class="tt m">Slow</text>
+<rect x="298" y="40" width="88" height="40" rx="20" class="ba"/><text x="342" y="65" text-anchor="middle" class="tt m">Fast</text>
+<line x1="104" y1="60" x2="152" y2="60" class="ln" marker-end="url(#ah)"/><line x1="246" y1="60" x2="294" y2="60" class="ln" marker-end="url(#ah)"/>
+<path d="M342 82 C342 122 58 122 58 84" class="ln" marker-end="url(#ah)"/>
+<text x="128" y="32" text-anchor="middle" class="sub">กด</text><text x="270" y="32" text-anchor="middle" class="sub">กด</text><text x="200" y="124" text-anchor="middle" class="sub">กด</text>
+<text x="200" y="98" text-anchor="middle" class="sub m">500 ms   ·   100 ms</text>
+</svg></div><figcaption>state machine 3 สถานะ เปลี่ยนเมื่อได้ Event::Pressed</figcaption></figure>
+<h3 id="s1">Hands-on</h3>
+<ol>
+<li>สร้าง sketch ใหม่ชื่อ <code class="il">button_modes</code></li>
+<li>คัดลอกโฟลเดอร์ <code class="il">src</code> จาก sketch <code class="il">button_count</code> มาไว้ในโฟลเดอร์ของ sketch ใหม่ (ใช้ <b>Sketch → Show Sketch Folder</b> เปิดทั้งสองโฟลเดอร์)</li>
+<li>วางโค้ดข้างล่างใน <code class="il">button_modes.ino</code> แล้วกด <b>Upload</b></li>
+<li>กดปุ่ม: LED เขียวต้องเปลี่ยนจากดับ → กระพริบช้า → กระพริบเร็ว → ดับ วนไปเรื่อย ๆ</li>
+</ol><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+
+constexpr uint8_t kButtonPin = D1;
+enum class Mode : uint8_t { Off, Slow, Fast };
+
+Debouncer button;
+Mode mode = Mode::Off;
+uint32_t lastToggle = 0;
+bool ledOn = false;
+
+Mode next(Mode m) {
+  switch (m) {
+    case Mode::Off:  return Mode::Slow;
+    case Mode::Slow: return Mode::Fast;
+    case Mode::Fast: return Mode::Off;
+  }
+  return Mode::Off;
+}
+
+uint32_t periodMs(Mode m) { return m == Mode::Slow ? 500 : 100; }
+
+void setup() {
+  pinMode(kButtonPin, INPUT_PULLUP);
+  pinMode(LED_GREEN, OUTPUT);
+  digitalWrite(LED_GREEN, HIGH);
+}
+
+void loop() {
+  uint32_t now = millis();
+  bool pressed = (digitalRead(kButtonPin) == LOW);
+  if (button.update(pressed, now) == Debouncer::Event::Pressed) {
+    mode = next(mode);
+  }
+  if (mode == Mode::Off) {
+    digitalWrite(LED_GREEN, HIGH);
+  } else if (now - lastToggle &gt;= periodMs(mode)) {
+    lastToggle = now;
+    ledOn = !ledOn;
+    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
+  }
+}</code></pre></div>
+<p>สังเกตว่าการกระพริบใช้ <code class="il">now - lastToggle &gt;= periodMs(mode)</code> แทน <code class="il">delay()</code> loop จึงวนเร็วตลอดเวลา และตอบสนองต่อปุ่มได้ทันทีแม้อยู่ในโหมด Slow</p>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ทำไม switch มี return Mode::Off ท้ายฟังก์ชันอีก?</summary><p>บาง compiler เตือนว่า control reaches end of non-void function แม้จะครอบทุก case แล้ว ใส่ไว้เพื่อความปลอดภัยและ warning-free</p></details><details><summary>ถ้าจะเพิ่มโหมด "ติดค้าง" ต้องแก้ตรงไหนบ้าง?</summary><p>เพิ่มชื่อใน enum class Mode, เพิ่ม case ใน next() ให้เข้าและออกจากโหมดใหม่ และเพิ่มเงื่อนไขใน loop ให้เขียน LOW ค้างไว้ ส่วนอื่นไม่ต้องแก้</p></details>
+<label class="done"><input type="checkbox" id="done-l08" data-l="l08"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../07/"><small>← บทก่อนหน้า</small><span>07 · ปุ่มกดและ debounce</span></a><a class="next" href="../09/"><small>บทถัดไป →</small><span>09 · Inheritance, virtual และ interface</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

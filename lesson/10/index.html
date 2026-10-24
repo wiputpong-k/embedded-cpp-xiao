@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>10 · Template: RingBuffer · Embedded C++ บน XIAO</title>
+<link rel="alternate" hreflang="th" href="./"><link rel="alternate" hreflang="en" href="../../en/lesson/10/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="ไปที่บทเรียน"><option value="../../">สารบัญ</option><option value="../../lesson/00/">00 · ติดตั้งเครื่องมือ + Blink แรก</option><option value="../../lesson/01/">01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</option><option value="../../lesson/02/">02 · Reference, const และ constexpr แทน #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation และ constructor</option><option value="../../lesson/05/">05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</option><option value="../../lesson/06/">06 · RAII และ destructor</option><option value="../../lesson/07/">07 · ปุ่มกดและ debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual และ interface</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · หน่วยความจำใน embedded</option><option value="../../lesson/12/">12 · Interrupt, volatile และ lambda</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: รับคำสั่งทาง Serial</option><option value="../../lesson/15/">15 · ติดตั้ง Git และ commit แรก</option><option value="../../lesson/16/">16 · Branch, merge และแก้ conflict</option><option value="../../lesson/17/">17 · GitHub: สร้าง repo และ push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · แยก logic ออกจากฮาร์ดแวร์ + รัน test บน PC</option><option value="../../lesson/20/">20 · เขียน unit test เอง</option><option value="../../lesson/21/">21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile firmware ใน CI</option><option value="../../lesson/23/">23 · CD: release firmware อัตโนมัติด้วย tag</option><option value="../../lesson/24/">24 · Capstone และทบทวน</option></select>
+<div class="prog" aria-label="ความคืบหน้า"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../en/lesson/10/" class="lang" id="lang" hreflang="en" aria-label="Read in English">EN</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">10 / 24</span></nav>
+<article class="lesson" id="l10">
+<header class="lh"><span class="big m">10</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Template: RingBuffer&lt;T, N&gt;</h1><p class="meta">30 นาที · ฮาร์ดแวร์: Pot ที่ A0</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<p class="goal"><b>เป้าหมาย</b> เขียน container ขนาดคงที่ใช้ซ้ำได้ทุกชนิด โดยไม่ใช้ heap</p><div class="vs"><div><span class="tag">C</span><p>ทำ buffer สำหรับ int, float แยกกัน หรือใช้ <code class="il">void*</code> + macro ซึ่งไม่มี type safety</p></div><div><span class="tag t2">C++</span><p>template ให้ compiler สร้างโค้ดเฉพาะชนิดให้ ขนาด N เป็นค่าตอน compile ตรวจได้ด้วย <code class="il">static_assert</code></p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<rect x="18" y="58" width="40" height="40" rx="6" class="b"/><text x="38" y="83" text-anchor="middle" class="tt m sm"></text><text x="38" y="112" text-anchor="middle" class="sub m">0</text><rect x="64" y="58" width="40" height="40" rx="6" class="b"/><text x="84" y="83" text-anchor="middle" class="tt m sm"></text><text x="84" y="112" text-anchor="middle" class="sub m">1</text><rect x="110" y="58" width="40" height="40" rx="6" class="ba"/><text x="130" y="83" text-anchor="middle" class="tt m sm">611</text><text x="130" y="112" text-anchor="middle" class="sub m">2</text><rect x="156" y="58" width="40" height="40" rx="6" class="ba"/><text x="176" y="83" text-anchor="middle" class="tt m sm">608</text><text x="176" y="112" text-anchor="middle" class="sub m">3</text><rect x="202" y="58" width="40" height="40" rx="6" class="ba"/><text x="222" y="83" text-anchor="middle" class="tt m sm">615</text><text x="222" y="112" text-anchor="middle" class="sub m">4</text><rect x="248" y="58" width="40" height="40" rx="6" class="ba"/><text x="268" y="83" text-anchor="middle" class="tt m sm">603</text><text x="268" y="112" text-anchor="middle" class="sub m">5</text><rect x="294" y="58" width="40" height="40" rx="6" class="b"/><text x="314" y="83" text-anchor="middle" class="tt m sm"></text><text x="314" y="112" text-anchor="middle" class="sub m">6</text><rect x="340" y="58" width="40" height="40" rx="6" class="b"/><text x="360" y="83" text-anchor="middle" class="tt m sm"></text><text x="360" y="112" text-anchor="middle" class="sub m">7</text>
+<text x="130" y="22" text-anchor="middle" class="tt acc">tail → pop()</text><line x1="130" y1="28" x2="130" y2="54" class="la" marker-end="url(#aha)"/>
+<text x="314" y="22" text-anchor="middle" class="tt">head → push()</text><line x1="314" y1="28" x2="314" y2="54" class="ln" marker-end="url(#ah)"/>
+<path d="M360 118 C360 156 38 156 38 120" class="ln dash" marker-end="url(#ah)"/>
+<text x="200" y="166" text-anchor="middle" class="sub">index = (index + 1) % N → วนกลับต้น buffer ไม่ต้องเลื่อนข้อมูล</text>
+</svg></div><figcaption>ring buffer: head เขียน tail อ่าน วนรอบด้วย modulo</figcaption></figure>
+<h3 id="s1">Hands-on</h3><p>สร้าง <code class="il">src/RingBuffer.h</code></p><div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
+#include &lt;stddef.h&gt;
+
+// FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile
+template &lt;typename T, size_t N&gt;
+class RingBuffer {
+  static_assert(N &gt; 0, &quot;N must be &gt; 0&quot;);
+
+public:
+  bool push(const T&amp; v) {
+    if (count_ == N) return false;  // เต็ม
+    buf_[head_] = v;
+    head_ = (head_ + 1) % N;
+    ++count_;
+    return true;
+  }
+
+  bool pop(T&amp; out) {
+    if (count_ == 0) return false;  // ว่าง
+    out = buf_[tail_];
+    tail_ = (tail_ + 1) % N;
+    --count_;
+    return true;
+  }
+
+  // เต็มแล้วให้ทิ้งตัวเก่าสุด (เหมาะกับ moving average)
+  void pushOverwrite(const T&amp; v) {
+    if (count_ == N) {
+      T dropped;
+      pop(dropped);
+    }
+    push(v);
+  }
+
+  size_t size() const { return count_; }
+  bool full() const { return count_ == N; }
+  const T&amp; at(size_t i) const { return buf_[(tail_ + i) % N]; }  // 0 = เก่าสุด
+
+private:
+  T buf_[N]{};
+  size_t head_ = 0, tail_ = 0, count_ = 0;
+};
+
+template &lt;typename T, size_t N&gt;
+float average(const RingBuffer&lt;T, N&gt;&amp; rb) {
+  if (rb.size() == 0) return 0.0f;
+  float sum = 0;
+  for (size_t i = 0; i &lt; rb.size(); ++i) sum += rb.at(i);
+  return sum / rb.size();
+}</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &quot;src/RingBuffer.h&quot;
+
+RingBuffer&lt;uint16_t, 16&gt; samples;   // 16 ค่าล่าสุด
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  uint16_t raw = analogRead(A0);
+  samples.pushOverwrite(raw);
+  Serial.print(&quot;raw:&quot;); Serial.print(raw);
+  Serial.print(&quot; avg:&quot;); Serial.println(average(samples));
+  delay(20);
+}</code></pre></div><p>เปิด Serial Plotter เทียบเส้น raw กับ avg ลองเปลี่ยน N เป็น 4 และ 64 สังเกตความหน่วงและความเรียบ (moving average N จุด = delay ราว N/2 sample)</p><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?</summary><p>compiler สร้างโค้ด 2 ชุด (template instantiation) flash เพิ่มขึ้น ถ้ามีหลายชนิดเกินไปเรียกว่า code bloat</p></details><details><summary>ถ้า ISR เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?</summary><p>ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ต้องครอบด้วย CriticalSection หรือออกแบบ SPSC ที่ฝั่ง producer แก้แค่ head ฝั่ง consumer แก้แค่ tail</p></details>
+<label class="done"><input type="checkbox" id="done-l10" data-l="l10"> เรียนบทนี้จบแล้ว</label>
+</article>
+<nav class="pager"><a class="prev" href="../09/"><small>← บทก่อนหน้า</small><span>09 · Inheritance, virtual และ interface</span></a><a class="next" href="../11/"><small>บทถัดไป →</small><span>11 · หน่วยความจำใน embedded</span></a></nav>
+</main>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

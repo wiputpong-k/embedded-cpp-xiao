@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>16 · Branch, merge and resolve conflicts · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/16/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/16/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">16 / 24</span></nav>
+<article class="lesson" id="l16">
+<header class="lh"><span class="big m">16</span><div class="lhm"><p class="mod">Module B · Git and GitHub</p><h1>Branch, merge and resolve conflicts</h1><p class="meta">25 min · Hardware: Computer</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on: create a conflict, then resolve it</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Split work into branches, and resolve merge conflicts without panic</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<line x1="30" y1="50" x2="370" y2="50" class="w"/>
+<path d="M150 50 C170 50 170 112 196 112 H270 C296 112 296 50 314 50" class="w acc"/>
+<circle cx="40" cy="50" r="9" class="pn"/><circle cx="95" cy="50" r="9" class="pn"/><circle cx="150" cy="50" r="9" class="pn"/>
+<circle cx="230" cy="50" r="9" class="pn"/><circle cx="318" cy="50" r="11" class="pm"/>
+<circle cx="206" cy="112" r="9" class="pa"/><circle cx="262" cy="112" r="9" class="pa"/>
+<text x="374" y="54" class="tt m sm">main</text>
+<text x="230" y="148" text-anchor="middle" class="tt m sm acc">feature/fast-blink</text>
+<text x="230" y="28" text-anchor="middle" class="sub">same line edited</text><text x="318" y="28" text-anchor="middle" class="sub">merge</text>
+<text x="10" y="166" class="sub">Same line changed on both branches → git stops = merge conflict</text>
+</svg></div><figcaption>A feature branch splits off main, then merges back</figcaption></figure>
+<h3 id="s1">Hands-on: create a conflict, then resolve it</h3><div class="code"><div class="cl">terminal</div><pre><code>git switch -c feature/fast-blink
+# in firmware.ino change {500, 0, blinkTask} to {250, 0, blinkTask}
+git commit -am &quot;feat: faster default blink&quot;
+
+git switch main
+# change the same line to {1000, 0, blinkTask}
+git commit -am &quot;chore: slower default blink&quot;
+
+git merge feature/fast-blink      # → CONFLICT</code></pre></div><div class="code"><div class="cl">firmware.ino during the conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+  {1000, 0, blinkTask},
+=======
+  {250, 0, blinkTask},
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code># keep the line you want and delete the &lt;&lt;&lt; === &gt;&gt;&gt; markers
+git add firmware/firmware.ino
+git commit                         # completes the merge
+git log --oneline --graph --all
+git branch -d feature/fast-blink</code></pre></div>
+<p class="note">merge keeps the real history (with a merge commit), while <code class="il">git rebase main</code> replays the branch's commits on top of main for a straight-line history. Rule: never rebase a branch someone else has already pulled.</p>
+<h3 id="s2">Check your understanding</h3><details><summary>You resolved a conflict wrongly and want to start over. What do you do?</summary><p>git merge --abort before you commit takes you back to the state before the merge.</p></details><details><summary>Why do teams not commit straight to main?</summary><p>main should always build and pass its tests. Going through a branch + PR lets CI and teammates check first, and makes changes easy to revert.</p></details>
+<label class="done"><input type="checkbox" id="done-l16" data-l="l16"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../15/"><small>← Previous</small><span>15 · Install Git and make your first commit</span></a><a class="next" href="../17/"><small>Next →</small><span>17 · GitHub: create a repo and push</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

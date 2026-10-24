@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>06 · RAII and destructors · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/06/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/06/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">06 / 24</span></nav>
+<article class="lesson" id="l06">
+<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>RAII and destructors</h1><p class="meta">25 min · Hardware: 10 kΩ pot on A0</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Let scope manage resources automatically: timing, disabling/enabling interrupts</p>
+<p>RAII (Resource Acquisition Is Initialization): acquire the resource in the constructor and release it in the destructor. The compiler always calls the destructor when the object leaves scope, so you can never forget <code class="il">unlock</code> or <code class="il">enable_irq</code>, even if you <code class="il">return</code> early. C has no such mechanism.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
+<path d="M26 26 H16 V174 H26" class="la"/>
+<text x="36" y="32" class="tt m">{</text>
+<text x="52" y="62" class="tt m sm">ScopedTimer t("read");</text>
+<rect x="210" y="46" width="184" height="26" rx="6" class="bm"/><text x="218" y="63" class="sub m">ctor: start_ = micros()</text>
+<text x="52" y="104" class="tt m sm">// ... timed work ...</text>
+<text x="36" y="150" class="tt m">}  // leave scope</text>
+<rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
+<text x="36" y="192" class="sub">The destructor always runs, whichever way you leave the scope</text>
+</svg></div><figcaption>The object's lifetime is tied to the braces</figcaption></figure>
+<h3 id="s1">Hands-on</h3><p>Wire the potentiometer: outer legs to 3V3 and GND, middle leg to A0.</p><div class="code"><div class="cl">raii.ino</div><pre><code>class ScopedTimer {
+public:
+  explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
+  ~ScopedTimer() {
+    uint32_t us = micros() - start_;
+    Serial.print(label_); Serial.print(&quot;: &quot;); Serial.print(us); Serial.println(&quot; us&quot;);
+  }
+  ScopedTimer(const ScopedTimer&amp;) = delete;             // no copying
+  ScopedTimer&amp; operator=(const ScopedTimer&amp;) = delete;
+private:
+  const char* label_;
+  uint32_t start_;
+};
+
+// Nestable interrupt disable: save the previous state, then restore it
+class CriticalSection {
+public:
+  CriticalSection() : primask_(__get_PRIMASK()) { __disable_irq(); }
+  ~CriticalSection() { __set_PRIMASK(primask_); }
+private:
+  uint32_t primask_;
+};
+
+void setup() { Serial.begin(115200); }
+
+void loop() {
+  long sum = 0;
+  {
+    ScopedTimer t(&quot;analogRead x100&quot;);
+    for (int i = 0; i &lt; 100; ++i) sum += analogRead(A0);
+  }                                   // destructor runs here
+  Serial.print(&quot;avg = &quot;); Serial.println(sum / 100);
+  delay(1000);
+}</code></pre></div><h3 id="s2">Check your understanding</h3><details><summary>Why = delete the copy constructor?</summary><p>If copying were allowed, two objects would run the destructor, e.g. re-enabling interrupts twice or printing the time twice. A resource with a single owner should not be copyable.</p></details><details><summary>Can CriticalSection be used with BLE (SoftDevice)?</summary><p>Only for a very short time, a few microseconds. If interrupts stay off longer, the SoftDevice misses radio timing. Real projects use sd_nvic_critical_region_enter instead.</p></details><aside class="iv"><b>In practice</b><p>RAII is a main reason many teams move from C to C++ in embedded work: zero runtime overhead, and it removes a whole class of resource-leak bugs, such as forgetting to re-enable interrupts on an error path.</p></aside>
+<label class="done"><input type="checkbox" id="done-l06" data-l="l06"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../05/"><small>← Previous</small><span>05 · Split code into files: headers and src/</span></a><a class="next" href="../07/"><small>Next →</small><span>07 · Buttons and debounce</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

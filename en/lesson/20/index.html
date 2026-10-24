@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>20 · Write your own unit tests · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/20/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/20/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">20 / 24</span></nav>
+<article class="lesson" id="l20">
+<header class="lh"><span class="big m">20</span><div class="lhm"><p class="mod">Module C · Testable code and CI/CD</p><h1>Write your own unit tests</h1><p class="meta">25 min · Hardware: Computer</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">How test_main.cpp works</a></li><li><a href="#s2">Hands-on 1: make a test fail</a></li><li><a href="#s3">Hands-on 2: add your own tests</a></li><li><a href="#s4">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Understand how test_main.cpp works, make a test fail on purpose, and add a new test yourself</p>
+<h3 id="s1">How test_main.cpp works</h3>
+<ul>
+<li><code class="il">CHECK(cond)</code> is a macro. If <code class="il">cond</code> is false, it prints the file name (<code class="il">__FILE__</code>), the line number (<code class="il">__LINE__</code>) and the condition as text (<code class="il">#cond</code>), and counts the failure.</li>
+<li>It is wrapped in <code class="il">do { … } while (0)</code> so the macro behaves like a single statement, even inside an <code class="il">if</code> without braces.</li>
+<li>Each test is its own function (<code class="il">test_ringbuffer</code>, <code class="il">test_debouncer</code>). <code class="il">main()</code> calls them all and returns an exit code based on the result.</li>
+<li><code class="il">test_debouncer</code> feeds in fake times of 0, 5, 8, 20 and 28 ms, so it tests bouncing precisely every time, which is almost impossible to do by hand on a real board.</li>
+</ul>
+<h3 id="s2">Hands-on 1: make a test fail</h3>
+<ol>
+<li>Open <code class="il">firmware/src/Debouncer.h</code> and change <code class="il">&gt;= stableMs_</code> to <code class="il">&gt; stableMs_</code>.</li>
+<li>Compile and run the tests again (same commands as lesson 19). You see a <code class="il">FAIL …</code> line with the file and line number, and no ALL TESTS PASSED.</li>
+<li>Run <code class="il">echo $?</code> right after the test run. It prints 1, the failure exit code.</li>
+<li>Change it back to <code class="il">&gt;=</code> and run again until it passes.</li>
+</ol>
+<h3 id="s3">Hands-on 2: add your own tests</h3>
+<p>Add the functions below above <code class="il">main()</code> in <code class="il">test/test_main.cpp</code>, then add <code class="il">test_average_empty();</code> and <code class="il">test_debouncer_release();</code> to <code class="il">main()</code> after the existing tests. Make them pass, then commit.</p>
+<div class="code"><div class="cl">test/test_main.cpp</div><pre><code>static void test_average_empty() {
+  RingBuffer&lt;int, 4&gt; rb;
+  CHECK(average(rb) == 0.0f);      // empty → 0, no divide by zero
+}
+
+static void test_debouncer_release() {
+  using E = Debouncer::Event;
+  Debouncer d(20);
+  d.update(true, 0);
+  CHECK(d.update(true, 20) == E::Pressed);
+  CHECK(d.update(false, 30) == E::None);      // just released, not stable yet
+  CHECK(d.update(false, 50) == E::Released);  // stable for 20 ms
+  CHECK(!d.isPressed());
+}</code></pre></div>
+<p class="note">Real projects use a framework such as GoogleTest, Catch2 or Unity (for C), but the idea is the same: CHECK a condition, report the failing line, and exit with a non-zero code on failure so CI knows.</p>
+<h3 id="s4">Check your understanding</h3><details><summary>How do you test code that calls digitalRead()?</summary><p>Hide hardware access behind an interface (like ISensor in lesson 09) and plug in a fake/mock for tests, or pass the value in instead of letting the function read it.</p></details><details><summary>What makes a good test?</summary><p>Fast, gives the same result every run, tests one thing, and reads clearly as an expectation. Include edge cases such as an empty buffer, a full buffer and time overflow.</p></details><aside class="iv"><b>In practice</b><p>Most firmware teams test in layers: host unit tests for logic, HIL tests on real boards for drivers, and system tests for features. The first layer is the fastest and cheapest, so it runs in CI on every commit.</p></aside>
+<label class="done"><input type="checkbox" id="done-l20" data-l="l20"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../19/"><small>← Previous</small><span>19 · Separate logic from hardware + run tests on a PC</span></a><a class="next" href="../21/"><small>Next →</small><span>21 · CI 1: run tests automatically with GitHub Actions</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>14 · Mini project 2: commands over Serial · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/14/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/14/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">14 / 24</span></nav>
+<article class="lesson" id="l14">
+<header class="lh"><span class="big m">14</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Mini project 2: commands over Serial</h1><p class="meta">25 min · Hardware: LED + button + pot</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Add non-blocking command input from Serial Monitor to the firmware from the previous lesson</p>
+<p>Real firmware often takes commands from outside, such as settings or test triggers. The catch is that text arrives one character at a time. If you wait for a whole line with something like <code class="il">Serial.readStringUntil()</code>, loop stalls while it waits and every other task stops.</p>
+<p><code class="il">handleSerial()</code> avoids this by reading only the characters that have already arrived, collecting them in a buffer, and returning right away. When it sees a line ending (<code class="il">\n</code> or <code class="il">\r</code>), it converts the text to a number and uses it.</p>
+<ul>
+<li><code class="il">static</code> makes <code class="il">buf</code> and <code class="il">len</code> keep their values between calls (lesson 11), so half a line is not lost.</li>
+<li><code class="il">len &lt; sizeof(buf) - 1</code> stops writes past the end of the buffer and leaves one slot for <code class="il">\0</code>.</li>
+<li>Always check the range (50–5000) before using the value. Never trust outside input unchecked.</li>
+</ul>
+
+<h3 id="s1">Hands-on</h3>
+<ol>
+<li>Open the <code class="il">firmware</code> sketch from the previous lesson and replace all of its code with the code below (it adds <code class="il">handleSerial()</code> and calls it on the last line of <code class="il">loop()</code>).</li>
+<li>Click <b>Upload</b>, then open <b>Tools → Serial Monitor</b> at <b>115200 baud</b>.</li>
+<li>At the right of the Serial Monitor there is a line-ending option. Pick <b>New Line</b>, otherwise the board never knows you finished typing a line.</li>
+<li>Type <code class="il">100</code> in the message box at the top of the Serial Monitor and press Enter. The green LED should blink faster. Try <code class="il">2000</code>, then <code class="il">10</code> (out of range, so nothing should change).</li>
+</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &quot;src/Led.h&quot;
+#include &quot;src/Debouncer.h&quot;
+#include &quot;src/RingBuffer.h&quot;
+
+#if __has_include(&quot;src/version.h&quot;)
+#include &quot;src/version.h&quot;          // generated by CI (lesson 23)
+#else
+#define FW_VERSION &quot;dev&quot;
+#endif
+
+constexpr uint8_t kButtonPin = D1;
+constexpr uint8_t kPotPin    = A0;
+
+Led status(LED_GREEN, true);
+Led ext(D2, false);
+Debouncer button;
+RingBuffer&lt;uint16_t, 16&gt; samples;
+bool paused = false;
+
+struct Task {
+  uint32_t periodMs;
+  uint32_t lastRunMs;
+  void (*run)();
+};
+
+void blinkTask() { if (!paused) status.toggle(); }
+
+void buttonTask() {
+  bool pressed = digitalRead(kButtonPin) == LOW;
+  if (button.update(pressed, millis()) == Debouncer::Event::Pressed) {
+    paused = !paused;
+    ext.toggle();
+  }
+}
+
+void sensorTask() { samples.pushOverwrite(analogRead(kPotPin)); }
+
+void reportTask() {
+  Serial.print(&quot;avg:&quot;);     Serial.print(average(samples));
+  Serial.print(&quot; paused:&quot;); Serial.println(paused ? 1 : 0);
+}
+
+Task tasks[] = {
+  {500, 0, blinkTask},
+  {5,   0, buttonTask},
+  {20,  0, sensorTask},
+  {200, 0, reportTask},
+};
+
+// type 50–5000 and press Enter to change the blink period
+void handleSerial() {
+  static char buf[16];
+  static size_t len = 0;
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == &#x27;\n&#x27; || c == &#x27;\r&#x27;) {
+      if (len &gt; 0) {
+        buf[len] = &#x27;\0&#x27;;
+        long ms = atol(buf);
+        if (ms &gt;= 50 &amp;&amp; ms &lt;= 5000) tasks[0].periodMs = ms;
+        len = 0;
+      }
+    } else if (len &lt; sizeof(buf) - 1) {
+      buf[len++] = c;
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(kButtonPin, INPUT_PULLUP);
+  status.begin();
+  ext.begin();
+  Serial.print(&quot;fw &quot;); Serial.println(FW_VERSION);
+}
+
+void loop() {
+  uint32_t now = millis();
+  for (Task&amp; t : tasks) {
+    if (now - t.lastRunMs &gt;= t.periodMs) {
+      t.lastRunMs = now;
+      t.run();
+    }
+  }
+  handleSerial();
+}</code></pre></div>
+<p class="note">The <code class="il">#if __has_include("src/version.h")</code> line checks whether <code class="il">version.h</code> exists. It does not yet, so the program prints <code class="il">fw dev</code> at startup. In lesson 23, CI generates this file with the real version number automatically.</p>
+<h3 id="s2">Check your understanding</h3><details><summary>What happens if you type more than 15 characters?</summary><p>The extra characters are dropped, because len never grows past sizeof(buf) - 1. The program does not crash or overwrite other memory, and the resulting number is still range-checked.</p></details><details><summary>Why check for both \n and \r?</summary><p>Different terminal programs send different line endings: \n, \r, or both. Accepting either, and skipping empty lines (len == 0), makes it work with all of them.</p></details>
+<label class="done"><input type="checkbox" id="done-l14" data-l="l14"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../13/"><small>← Previous</small><span>13 · Mini project 1: cooperative scheduler</span></a><a class="next" href="../15/"><small>Next →</small><span>15 · Install Git and make your first commit</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

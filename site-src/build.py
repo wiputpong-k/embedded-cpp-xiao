@@ -1,8 +1,9 @@
-import html, os, runpy
+import html, json, os, re, runpy, shutil
 D = os.path.dirname(os.path.abspath(__file__))
 LANGS = ('th', 'en')
 # Running `python build.py` re-runs this file once per language with LANG preset.
 if 'LANG' not in globals():
+    shutil.rmtree(os.path.join(D, 'pages'), ignore_errors=True)
     for l in LANGS: runpy.run_path(os.path.abspath(__file__), init_globals={'LANG': l}, run_name='__build__')
     raise SystemExit
 def T(th, en=None):
@@ -339,1054 +340,156 @@ def vs(c, cpp): return f'<div class="vs"><div><span class="tag">C</span><p>{c}</
 BOARD = T('บอร์ดอย่างเดียว', 'Board only')
 POT = T('Pot ที่ A0', 'Pot on A0')
 BTN = T('ปุ่มกดที่ D1', 'Button on D1')
+PC = T('คอมพิวเตอร์', 'Computer')
 
 SEEED_URL = 'https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json'
 
-lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink แรก', 'Install the tools + first Blink'), 45, BOARD, goal(T('IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW', 'The IDE compiles and flashes the board, and you know the on-board LED is active-LOW')) + T('''
-<p>บทนี้เป็นบทติดตั้ง จึงใช้เวลานานกว่าบทอื่น ทำตามทีละขั้นจากบนลงล่าง ท้ายแต่ละขั้นมีวิธีเช็กว่าทำสำเร็จแล้ว ตัวอย่างเขียนสำหรับ Windows ถ้าใช้ macOS ให้ดูหมายเหตุในขั้นนั้น</p>
-<h3>ขั้นที่ 1: ติดตั้ง Arduino IDE 2</h3>
-<p>Arduino IDE คือโปรแกรมที่ใช้เขียนโค้ด compile และอัปโหลดลงบอร์ด</p>
-<ol>
-<li>เปิดหน้า <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
-<li>ในหัวข้อ Arduino IDE 2 เลือกตัวติดตั้งของ Windows (Win 10 and newer) ถ้าหน้าเว็บขอรับบริจาค กด <b>Just Download</b> ได้เลย</li>
-<li>เปิดไฟล์ที่ดาวน์โหลดมา กด Next ตามค่าเริ่มต้นจนจบ ถ้า Windows ถามว่าจะติดตั้ง driver ไหม ให้กด Install</li>
-<li>เปิด Arduino IDE ครั้งแรก โปรแกรมอาจดาวน์โหลดส่วนประกอบเพิ่มสักครู่ ถ้า firewall ถามสิทธิ์ ให้กด Allow</li>
-</ol>
-<p class="note">เช็ก: เปิดโปรแกรมแล้วเห็นหน้าต่างที่มีโค้ด <code class="il">void setup()</code> และ <code class="il">void loop()</code> ว่าง ๆ</p>
-<h3>ขั้นที่ 2: ติดตั้ง Git</h3>
-<p>Git คือโปรแกรมเก็บประวัติการแก้โค้ด จะเริ่มใช้จริงในบท 12 แต่ติดตั้งไว้ตั้งแต่ตอนนี้</p>
-<ol>
-<li>(ไม่บังคับ) ถ้าอยากใช้ VS Code เป็นโปรแกรมแก้ข้อความ ให้ติดตั้งจาก <a href="https://code.visualstudio.com/">code.visualstudio.com</a> ก่อน เพราะตัวติดตั้ง Git จะถามหาโปรแกรมนี้</li>
-<li>เปิดหน้า <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> แล้วดาวน์โหลดตัวติดตั้ง Git for Windows แบบ 64-bit</li>
-<li>เปิดตัวติดตั้ง แล้วกด Next ตามค่าเริ่มต้น ยกเว้น 2 หน้านี้
-<ul>
-<li><b>Choosing the default editor used by Git:</b> เลือก <i>Use Visual Studio Code as Git's default editor</i> ถ้าติดตั้ง VS Code แล้ว หรือเลือก <i>Use Notepad as Git's default editor</i> ถ้าไม่ได้ติดตั้ง</li>
-<li><b>Adjusting the name of the initial branch:</b> เลือก <i>Override the default branch name</i> แล้วพิมพ์ <code class="il">main</code></li>
-</ul></li>
-<li>กด Install แล้วรอจนเสร็จ</li>
-</ol>
-<p class="note">ทำไมต้องเลือก editor: บางคำสั่งของ Git จะเปิดโปรแกรมแก้ข้อความให้คุณพิมพ์ เช่น <code class="il">git commit</code> ที่ไม่ใส่ <code class="il">-m</code> หรือตอน merge ในบท 13 ค่าเริ่มต้นของ Git คือ Vim ซึ่งคนที่ไม่เคยใช้มักออกจากโปรแกรมไม่เป็น VS Code หรือ Notepad ใช้ง่ายกว่า เลือกตัวไหนก็ได้ ไม่มีผลกับเนื้อหาในคอร์ส</p>
-<p class="note">เช็ก: เปิด PowerShell (กดปุ่ม Windows พิมพ์ <i>PowerShell</i> แล้วกด Enter) พิมพ์ <code class="il">git --version</code> แล้วกด Enter ต้องเห็นข้อความแบบ <code class="il">git version 2.xx.x.windows.1</code> ถ้าขึ้นว่าไม่รู้จักคำสั่ง ให้ปิด PowerShell แล้วเปิดใหม่ (macOS: เปิด Terminal แล้วพิมพ์ <code class="il">git --version</code> ถ้ายังไม่มี Git ระบบจะถามว่าจะติดตั้งไหม ให้กด Install)</p>
-<h3>ขั้นที่ 3: เพิ่มแหล่งดาวน์โหลดบอร์ด Seeed</h3>
-<p>Arduino IDE ไม่มีบอร์ด XIAO มาให้ตั้งแต่แรก ต้องบอก IDE ก่อนว่าจะดาวน์โหลดข้อมูลบอร์ดของ Seeed จากที่ไหน</p>
-<ol>
-<li>ใน Arduino IDE กดเมนู <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>) จะมีหน้าต่าง Preferences เปิดขึ้นมา</li>
-<li>หาช่อง <b>Additional boards manager URLs</b> ซึ่งอยู่ใกล้ด้านล่างของหน้าต่าง</li>
-<li>กดปุ่มคัดลอกที่ URL ข้างล่าง แล้ววางในช่องนั้น ถ้าในช่องมี URL อื่นอยู่แล้ว ให้กดไอคอนทางขวาของช่อง แล้ววางเป็นบรรทัดใหม่</li>
-<li>กด <b>OK</b> เพื่อปิดหน้าต่าง</li>
-</ol>''', '''
-<p>This is the setup lesson, so it takes longer than the others. Work through the steps from top to bottom; each step ends with a way to check that it worked. The instructions are for Windows; macOS notes are given where they differ.</p>
-<h3>Step 1: Install Arduino IDE 2</h3>
-<p>Arduino IDE is the program you use to write code, compile it and upload it to the board.</p>
-<ol>
-<li>Open <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a></li>
-<li>Under Arduino IDE 2, pick the Windows installer (Win 10 and newer). If the page asks for a donation, you can click <b>Just Download</b>.</li>
-<li>Run the downloaded file and click Next through the defaults. If Windows asks whether to install a driver, click Install.</li>
-<li>Start Arduino IDE. The first launch may download extra components; if the firewall asks for permission, click Allow.</li>
-</ol>
-<p class="note">Check: the program opens a window with empty <code class="il">void setup()</code> and <code class="il">void loop()</code> functions.</p>
-<h3>Step 2: Install Git</h3>
-<p>Git keeps the history of your code changes. You start using it in lesson 12, but install it now.</p>
-<ol>
-<li>(Optional) If you want VS Code as your text editor, install it first from <a href="https://code.visualstudio.com/">code.visualstudio.com</a>, because the Git installer looks for it.</li>
-<li>Open <a href="https://git-scm.com/downloads/win">git-scm.com/downloads/win</a> and download the 64-bit Git for Windows installer.</li>
-<li>Run the installer and click Next through the defaults, except on these two pages:
-<ul>
-<li><b>Choosing the default editor used by Git:</b> pick <i>Use Visual Studio Code as Git's default editor</i> if you installed VS Code, or <i>Use Notepad as Git's default editor</i> if you did not.</li>
-<li><b>Adjusting the name of the initial branch:</b> pick <i>Override the default branch name</i> and type <code class="il">main</code>.</li>
-</ul></li>
-<li>Click Install and wait until it finishes.</li>
-</ol>
-<p class="note">Why choose an editor? Some Git commands open a text editor for you to type in, such as <code class="il">git commit</code> without <code class="il">-m</code>, or a merge in lesson 13. Git's default is Vim, which newcomers often cannot figure out how to exit. VS Code or Notepad is easier. Either one works for this course.</p>
-<p class="note">Check: open PowerShell (press the Windows key, type <i>PowerShell</i>, press Enter), type <code class="il">git --version</code> and press Enter. You should see something like <code class="il">git version 2.xx.x.windows.1</code>. If the command is not recognized, close PowerShell and open it again. (macOS: open Terminal and type <code class="il">git --version</code>. If Git is missing, macOS offers to install it; click Install.)</p>
-<h3>Step 3: Add the Seeed board source</h3>
-<p>Arduino IDE does not include the XIAO board out of the box. First you tell the IDE where to download Seeed's board package from.</p>
-<ol>
-<li>In Arduino IDE, open <b>File → Preferences…</b> (macOS: <b>Arduino IDE → Settings…</b>). The Preferences window opens.</li>
-<li>Find the <b>Additional boards manager URLs</b> field near the bottom of the window.</li>
-<li>Copy the URL below with its copy button and paste it into that field. If the field already has other URLs, click the icon on the right of the field and paste it on a new line.</li>
-<li>Click <b>OK</b> to close the window.</li>
-</ol>''') + code(SEEED_URL, 'Additional boards manager URLs') + T('''
-<h3>ขั้นที่ 4: ติดตั้ง core ของบอร์ด</h3>
-<p>core คือชุดไฟล์ที่ทำให้ IDE รู้จักบอร์ด รวมถึง compiler สำหรับชิป nRF52840</p>
-<ol>
-<li>เปิด <b>Boards Manager</b> โดยกดไอคอนรูปบอร์ดที่แถบซ้ายมือ (ไอคอนที่ 2 จากบน) หรือเมนู <b>Tools → Board → Boards Manager…</b></li>
-<li>พิมพ์ <code class="il">seeed nrf52</code> ในช่องค้นหา จะเจอ 2 รายการ ให้เลือก <b>Seeed nRF52 Boards</b> ไม่ใช่ <i>Seeed nRF52 mbed-enabled Boards</i></li>
-<li>กด <b>Install</b> แล้วรอ อาจใช้เวลาหลายนาทีเพราะต้องดาวน์โหลด compiler ด้วย ถ้ามีหน้าต่างถามเรื่อง driver ให้กด Install หรือ Yes</li>
-</ol>
-<p class="note">เลือก core แบบ non-mbed เพราะ build เร็วกว่าและใช้ BLE library ของ Adafruit ได้ เช็ก: รายการ Seeed nRF52 Boards ขึ้นคำว่า INSTALLED</p>
-<h3>ขั้นที่ 5: ต่อบอร์ด แล้วเลือกบอร์ดกับพอร์ต</h3>
-<ol>
-<li>เสียบบอร์ดเข้าคอมด้วยสาย USB-C ที่ส่งข้อมูลได้ (สายที่มากับที่ชาร์จบางเส้นชาร์จได้อย่างเดียว)</li>
-<li>กดเมนู <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
-<li>กดเมนู <b>Tools → Port</b> แล้วเลือกพอร์ตของบอร์ด (Windows เป็น <code class="il">COM</code> ตามด้วยตัวเลข เช่น COM5 macOS เป็น <code class="il">/dev/cu.usbmodem…</code>)</li>
-</ol>
-<p class="note">เช็ก: ถ้าไม่รู้ว่าพอร์ตไหนคือบอร์ด ให้ถอดสายแล้วเปิดเมนู Port ดูอีกครั้ง พอร์ตที่หายไปคือบอร์ด ถ้าไม่มีพอร์ตขึ้นเลย ให้ลองเปลี่ยนสาย USB</p>
-''', '''
-<h3>Step 4: Install the board core</h3>
-<p>A core is the set of files that teaches the IDE about a board, including the compiler for the nRF52840 chip.</p>
-<ol>
-<li>Open <b>Boards Manager</b>: click the board icon in the left sidebar (second icon from the top), or use <b>Tools → Board → Boards Manager…</b></li>
-<li>Type <code class="il">seeed nrf52</code> in the search box. Two entries appear; pick <b>Seeed nRF52 Boards</b>, not <i>Seeed nRF52 mbed-enabled Boards</i>.</li>
-<li>Click <b>Install</b> and wait. It can take several minutes because it also downloads the compiler. If a window asks about a driver, click Install or Yes.</li>
-</ol>
-<p class="note">We use the non-mbed core because it builds faster and works with Adafruit's BLE library. Check: the Seeed nRF52 Boards entry shows INSTALLED.</p>
-<h3>Step 5: Connect the board and pick the board and port</h3>
-<ol>
-<li>Plug the board into your computer with a USB-C cable that carries data (some charger cables only carry power).</li>
-<li>Open <b>Tools → Board → Seeed nRF52 Boards → Seeed XIAO nRF52840 Sense</b></li>
-<li>Open <b>Tools → Port</b> and pick the board's port (on Windows, <code class="il">COM</code> plus a number, e.g. COM5; on macOS, <code class="il">/dev/cu.usbmodem…</code>).</li>
-</ol>
-<p class="note">Check: if you are not sure which port is the board, unplug the cable and open the Port menu again; the port that disappeared is the board. If no port shows up at all, try another USB cable.</p>
-''') + fig(SVG_PINOUT, T('XIAO nRF52840 Sense: GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D', 'XIAO nRF52840 Sense: GPIO is 3.3 V. Never feed 5 V into a D pin.')) + T('''
-<h3>Hands-on: Blink แรก</h3>
-<ol>
-<li>กดเมนู <b>File → New Sketch</b> จะได้หน้าต่างใหม่ที่มีโค้ดตั้งต้น</li>
-<li>ลบโค้ดเดิมทั้งหมด แล้วกดปุ่ม <b>คัดลอก</b> ที่มุมขวาบนของโค้ดข้างล่าง มาวางแทน</li>
-<li>กดเมนู <b>File → Save As…</b> แล้วตั้งชื่อ <code class="il">blink</code></li>
-<li>กดปุ่ม <b>Verify</b> (เครื่องหมายถูกที่มุมซ้ายบน) เพื่อ compile ครั้งแรกอาจนานเป็นนาที รอจนเห็น <i>Done compiling</i> ที่ด้านล่าง</li>
-<li>กดปุ่ม <b>Upload</b> (ลูกศรขวาถัดจาก Verify) แล้วรอจนเห็น <i>Done uploading</i></li>
-</ol>''', '''
-<h3>Hands-on: your first Blink</h3>
-<ol>
-<li>Open <b>File → New Sketch</b>. A new window opens with starter code.</li>
-<li>Delete all of that code, click the <b>Copy</b> button at the top right of the code below, and paste it in.</li>
-<li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>.</li>
-<li>Click <b>Verify</b> (the check mark at the top left) to compile. The first compile can take a minute; wait for <i>Done compiling</i> at the bottom.</li>
-<li>Click <b>Upload</b> (the right arrow next to Verify) and wait for <i>Done uploading</i>.</li>
-</ol>''') + code('''// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
-void setup() {
-  pinMode(LED_RED, OUTPUT);
-  digitalWrite(LED_RED, HIGH);   // ดับ
-}
-
-void loop() {
-  digitalWrite(LED_RED, LOW);    // ติด
-  delay(200);
-  digitalWrite(LED_RED, HIGH);   // ดับ
-  delay(800);
-}''', 'blink.ino', en={'// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW': '// The on-board LED anode is tied to 3V3, so it lights when you write LOW',
-                      '// ดับ': '// off', '// ติด': '// on'}) + T('''
-<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ</p>
-<p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
-<h3>ลองต่อ</h3>
-<ol>
-<li>เปลี่ยน <code class="il">LED_RED</code> เป็น <code class="il">LED_GREEN</code> หรือ <code class="il">LED_BLUE</code> ให้ครบทั้ง 3 จุด แล้ว Upload ใหม่ สีของ LED ต้องเปลี่ยนตาม</li>
-<li>เปิด <b>File → Preferences…</b> ติ๊กช่อง <b>Show verbose output during: compile</b> กด OK แล้วกด Verify อีกครั้ง หน้าต่าง Output ด้านล่างจะแสดงคำสั่ง compiler ที่ IDE เรียกจริง บท 01 จะอธิบายว่าแต่ละคำสั่งทำอะไร</li>
-</ol>
-''', '''
-<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
-<p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
-<h3>Try next</h3>
-<ol>
-<li>Change <code class="il">LED_RED</code> to <code class="il">LED_GREEN</code> or <code class="il">LED_BLUE</code> in all three places and upload again. The LED color should change.</li>
-<li>Open <b>File → Preferences…</b>, tick <b>Show verbose output during: compile</b>, click OK and click Verify again. The Output panel at the bottom shows the compiler commands the IDE actually runs; lesson 01 explains what each one does.</li>
-</ol>
-''') + T('''
-<h3>ขั้นที่ 6 (ทำตอนนี้หรือรอถึงบท 16 ก็ได้): ติดตั้ง arduino-cli</h3>
-<p>arduino-cli คือ Arduino แบบสั่งงานด้วยคำสั่งพิมพ์ ใช้ในบท 16 เพื่อหาค่า FQBN ซึ่งเป็นชื่อเต็มของบอร์ดที่ CI ใช้ตอน compile</p>
-<ol>
-<li>เปิดหน้า <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> แล้วดาวน์โหลดไฟล์ที่ลงท้ายด้วย <code class="il">Windows_64bit.zip</code> ของเวอร์ชันล่าสุด</li>
-<li>แตกไฟล์ zip ไว้ในโฟลเดอร์ที่หาง่าย เช่น <code class="il">C:\\tools\\arduino-cli</code></li>
-<li>เปิดโฟลเดอร์นั้นใน File Explorer คลิกขวาที่พื้นที่ว่าง แล้วเลือก <b>Open in Terminal</b></li>
-<li>คัดลอกคำสั่งข้างล่างไปวาง แล้วกด Enter ทีละบรรทัด</li>
-</ol>''', '''
-<h3>Step 6 (now, or wait until lesson 16): install arduino-cli</h3>
-<p>arduino-cli is Arduino driven by typed commands. Lesson 16 uses it to find the FQBN, the board's full name that CI uses to compile.</p>
-<ol>
-<li>Open <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> and download the file ending in <code class="il">Windows_64bit.zip</code> from the latest release.</li>
-<li>Extract the zip into a folder that is easy to find, e.g. <code class="il">C:\\tools\\arduino-cli</code>.</li>
-<li>Open that folder in File Explorer, right-click an empty area and choose <b>Open in Terminal</b>.</li>
-<li>Copy the commands below and run them one line at a time.</li>
-</ol>''') + code(f'''.\\arduino-cli.exe core update-index --additional-urls {SEEED_URL}
-.\\arduino-cli.exe core install Seeeduino:nrf52 --additional-urls {SEEED_URL}
-.\\arduino-cli.exe board listall xiao''', 'PowerShell') + T('''
-<p>คำสั่งสุดท้ายจะแสดงชื่อบอร์ดพร้อม FQBN เช่น <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code> จดค่านี้ไว้ใช้ในบท 16</p>
-''', '''
-<p>The last command lists the boards with their FQBN, e.g. <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code>. Note it down for lesson 16.</p>
-''') + qa([(T('ทำไม LED_RED ติดตอนเขียน LOW?', 'Why does LED_RED light when you write LOW?'),
-           T('LED ต่อแบบ active-LOW: ขั้วบวกอยู่ที่ 3V3 ขา GPIO ทำหน้าที่ sink กระแส เมื่อขาเป็น LOW จึงมีกระแสไหล', 'The LED is active-LOW: its anode sits at 3V3 and the GPIO pin sinks the current, so current flows when the pin is LOW.')),
-          (T('ทำไมต้องใช้ core non-mbed ในคอร์สนี้?', 'Why use the non-mbed core in this course?'),
-           T('build เร็วกว่า ใช้ Bluefruit BLE ได้ และ compile ใน CI ได้ง่าย ทั้งสอง core เขียน C++ ได้เหมือนกัน', 'It builds faster, supports Bluefruit BLE and is easy to compile in CI. Both cores run the same C++.'))]))
-
-lesson('01', 'A', T('.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด', '.ino is C++, and the path from code to board'), 20, BOARD, goal(T('เข้าใจว่า Arduino ซ่อนอะไรไว้ และเห็น toolchain จริง', 'See what Arduino hides from you, and the real toolchain')) + T('''
-<p>ไฟล์ .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ ส่วน <code class="il">main()</code> อยู่ใน core:</p>
-''', '''
-<p>A .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. <code class="il">main()</code> lives in the core:</p>
-''') + code('''int main() {
-  init();          // clock, timer, USB CDC
-  setup();
-  for (;;) {
-    loop();
-  }
-}''', T('core/main.cpp (ย่อ)', 'core/main.cpp (trimmed)')) + fig(SVG_BUILD, T('pipeline การ build ที่เกิดขึ้นทุกครั้งที่กด Verify', 'The build pipeline that runs every time you press Verify')) + '''
-<h3>Hands-on</h3>''' + code('''void setup() {
-  Serial.begin(115200);
-  while (!Serial) {}             // รอ USB CDC พร้อม
-  Serial.print("__cplusplus = ");  Serial.println(__cplusplus);
-  Serial.print("sizeof(int) = ");  Serial.println(sizeof(int));
-  Serial.print("sizeof(void*) = ");Serial.println(sizeof(void*));
-  Serial.print("sizeof(bool) = "); Serial.println(sizeof(bool));
-}
-
-void loop() {}''', 'whoami.ino', en={'// รอ USB CDC พร้อม': '// wait for USB CDC'}) + T('''
-<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (เช่น 201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ จากนั้นดูบรรทัดท้ายของ output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = RAM แบบ static</p>
-''', '''
-<p><code class="il">__cplusplus</code> tells you the language standard the compiler uses (e.g. 201103 = C++11, 201703 = C++17). Note it down, because the features you can use depend on it. Then read the last lines of the output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = static RAM.</p>
-''') + qa([(T('ถ้า __cplusplus ได้ 201103 จะใช้ if constexpr ได้ไหม?', 'If __cplusplus is 201103, can you use if constexpr?'),
-           T('ไม่ได้ if constexpr เป็นของ C++17 ต้องเพิ่ม flag -std=gnu++17 หรือเลี่ยงไปใช้ template overload', 'No. if constexpr is C++17. Add -std=gnu++17 or fall back to template overloads.')),
-          (T('"Global variables use" นับ stack ด้วยไหม?', 'Does "Global variables use" include the stack?'),
-           T('ไม่นับ นับเฉพาะ .data + .bss ที่รู้ขนาดตอน link ตัวแปร local บน stack ไม่อยู่ในตัวเลขนี้', 'No. It counts only .data + .bss, whose sizes are known at link time. Local variables on the stack are not in that number.'))])
-   + iv(T('ในงานจริงเมื่อ build มีปัญหา ให้ไล่ตามลำดับ preprocess → compile → link (linker script กำหนด address) → objcopy → flash จะรู้ว่าพังที่ขั้นไหน และเก็บ .elf ไว้เสมอ เพราะมี debug symbol ที่ debugger ต้องใช้ ส่วน .hex/.bin คือ image ที่ลงชิป',
-          'When a build breaks, walk the stages in order: preprocess → compile → link (the linker script sets the addresses) → objcopy → flash, and you will see where it failed. Always keep the .elf: it carries the debug symbols the debugger needs, while the .hex/.bin is the image that goes onto the chip.')))
-
-lesson('02', 'A', T('Reference, const และ constexpr แทน #define', 'Reference, const and constexpr instead of #define'), 25, BOARD, goal(T('เลิกใช้ #define กับค่าคงที่ และส่งพารามิเตอร์ด้วย reference ได้ถูกที่', 'Stop using #define for constants, and pass parameters by reference in the right places'))
-   + vs(T('ค่าคงที่ใช้ <code class="il">#define</code> ไม่มี type ไม่มี scope แก้ตัวแปรของผู้เรียกต้องส่ง pointer', 'Constants use <code class="il">#define</code>: no type, no scope. To change the caller\'s variable you pass a pointer.'),
-        T('<code class="il">constexpr</code> มี type และคำนวณตอน compile ไม่กิน RAM ส่วน <code class="il">T&amp;</code> คือชื่อเล่นของตัวแปรเดิม ไม่มี null ไม่ต้องเขียน <code class="il">*</code>', '<code class="il">constexpr</code> has a type and is computed at compile time, using no RAM. <code class="il">T&amp;</code> is an alias for an existing variable: never null, no <code class="il">*</code> needed.'))
-   + fig(SVG_REF, T('pointer เก็บ address แยก ส่วน reference ผูกกับตัวแปรเดิมตลอดชีวิต', 'A pointer stores an address of its own; a reference stays bound to the original variable for life')) + '''
-<h3>Hands-on</h3>''' + code('''constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
-constexpr size_t  kLedCount  = sizeof(kLedPins) / sizeof(kLedPins[0]);
-constexpr uint32_t kStepMs   = 150;
-
-void allOff() {
-  for (uint8_t pin : kLedPins) {   // range-based for (C++11)
-    digitalWrite(pin, HIGH);
-  }
-}
-
-void nextIndex(size_t& idx) {      // reference: แก้ตัวแปรของผู้เรียกได้เลย
-  idx = (idx + 1) % kLedCount;
-}
-
-size_t current = 0;
-
-void setup() {
-  for (uint8_t pin : kLedPins) pinMode(pin, OUTPUT);
-  allOff();
-}
-
-void loop() {
-  allOff();
-  digitalWrite(kLedPins[current], LOW);
-  delay(kStepMs);
-  nextIndex(current);
-}''', 'rgb_cycle.ino', en={'// reference: แก้ตัวแปรของผู้เรียกได้เลย': "// reference: changes the caller's variable directly"}) + T('''
-<p>ลองเพิ่มฟังก์ชัน <code class="il">void printPin(const uint8_t&amp; p)</code> แล้วพยายามเขียน <code class="il">p = 0;</code> ข้างใน ดู error ที่ compiler ฟ้อง นี่คือประโยชน์ของ const: จับบั๊กตอน compile</p>
-''', '''
-<p>Add a function <code class="il">void printPin(const uint8_t&amp; p)</code> and try writing <code class="il">p = 0;</code> inside it. Read the compiler error. That is what const buys you: bugs caught at compile time.</p>
-''') + qa([(T('เมื่อไหร่ควรส่ง const T& แทนส่งค่า?', 'When should you pass const T& instead of by value?'),
-           T('เมื่อ T ใหญ่กว่า register (struct, buffer) เพื่อเลี่ยงการ copy ส่วน int, float, pointer ส่งค่าตรง ๆ เร็วกว่าและอ่านง่ายกว่า', 'When T is bigger than a register (structs, buffers), to avoid a copy. Pass int, float and pointers by value: faster and easier to read.')),
-          (T('constexpr ต่างจาก const อย่างไร?', 'How does constexpr differ from const?'),
-           T('const = ห้ามแก้ แต่อาจรู้ค่าตอน runtime ส่วน constexpr = ต้องรู้ค่าตอน compile จึงใช้เป็นขนาด array หรือ template argument ได้', 'const means read-only, but the value may only be known at runtime. constexpr must be known at compile time, so it can size an array or be a template argument.'))])
-   + iv(T('ใน code review ของทีม firmware ค่าคงที่แบบ #define มักถูกขอให้เปลี่ยนเป็น constexpr เพราะ #define ไม่มี type checking, ไม่เคารพ namespace/scope, debugger มองไม่เห็นชื่อ และอาจเกิด side effect จาก macro expansion',
-          'In firmware code reviews, #define constants are often sent back to become constexpr: #define has no type checking, ignores namespaces and scope, is invisible to the debugger, and macro expansion can cause side effects.')))
-
-lesson('03', 'A', 'namespace, overloading, enum class', 20, BOARD, goal(T('จัดระเบียบชื่อและเข้าใจว่าทำไม C++ ต้องมี name mangling', 'Organize names, and understand why C++ needs name mangling'))
-   + vs(T('ชื่อฟังก์ชันซ้ำไม่ได้ ต้องตั้ง <code class="il">log_int</code>, <code class="il">log_float</code> และ <code class="il">enum</code> ปนกับ int ได้ทุกที่', 'Function names must be unique, so you write <code class="il">log_int</code>, <code class="il">log_float</code>, and an <code class="il">enum</code> mixes with int anywhere.'),
-        T('overload ชื่อเดียวหลายพารามิเตอร์ได้ <code class="il">namespace</code> กันชื่อชน <code class="il">enum class</code> ไม่แปลงเป็น int เอง กำหนดขนาด <code class="il">: uint8_t</code> ได้', 'One name can be overloaded for different parameters, <code class="il">namespace</code> prevents name clashes, and <code class="il">enum class</code> never converts to int by itself and can set its size with <code class="il">: uint8_t</code>.'))
-   + fig(SVG_MANGLE, T('compiler ฝังชนิดพารามิเตอร์ลงในชื่อ symbol จึง overload ได้', 'The compiler encodes parameter types into the symbol name, which makes overloading possible')) + '''
-<h3>Hands-on</h3>''' + code('''namespace logx {
-void info(const char* msg) {
-  Serial.print("[I] "); Serial.println(msg);
-}
-void info(const char* key, int value) {
-  Serial.print("[I] "); Serial.print(key); Serial.print('='); Serial.println(value);
-}
-void info(const char* key, float value, int digits = 2) {   // default argument
-  Serial.print("[I] "); Serial.print(key); Serial.print('='); Serial.println(value, digits);
-}
-}  // namespace logx
-
-enum class Mode : uint8_t { Off, Slow, Fast };
-
-void setup() {
-  Serial.begin(115200);
-  while (!Serial) {}
-  logx::info("boot");
-  logx::info("uptime_ms", (int)millis());
-  logx::info("vbat", 3.71f);
-  logx::info("pi", 3.14159f, 4);
-  Mode m = Mode::Slow;
-  logx::info("mode", static_cast<int>(m));   // ต้อง cast เอง
-  // int bad = m;   // ลองเปิดบรรทัดนี้: compile error
-}
-
-void loop() {}''', 'logx.ino', en={'// ต้อง cast เอง': '// explicit cast required', '// ลองเปิดบรรทัดนี้: compile error': '// uncomment this line: compile error'})
-   + qa([(T('ถ้า library เขียนด้วย C ต้อง include อย่างไร?', 'How do you include a library written in C?'),
-          T('ครอบ header ด้วย extern "C" { … } เพื่อให้ linker หา symbol ชื่อแบบ C เจอ ถ้าไม่ครอบจะ error undefined reference', 'Wrap the header in extern "C" { … } so the linker finds the C-style symbol names. Without it you get undefined reference errors.')),
-         (T('ทำไม enum class ปลอดภัยกว่า enum?', 'Why is enum class safer than enum?'),
-          T('ไม่แปลงเป็น int เอง ชื่อ enumerator ไม่หลุดออกมาใน scope ภายนอก และกำหนด underlying type ได้ จึงคุมขนาดในหน่วยความจำได้', 'It never converts to int implicitly, its enumerator names do not leak into the outer scope, and you can set the underlying type to control its size in memory.'))]))
-
-lesson('04', 'A', T('class: encapsulation และ constructor', 'class: encapsulation and constructors'), 30, 'LED + R 1 kΩ', goal(T('เขียน class Led ที่ซ่อนเรื่อง active-LOW ไว้ข้างใน', 'Write a Led class that hides the active-LOW detail inside'))
-   + vs(T('struct เก็บข้อมูล + ฟังก์ชัน <code class="il">led_on(&amp;led)</code> แยกกัน ใครก็แก้ field ได้', 'A struct holds the data and a separate function <code class="il">led_on(&amp;led)</code> acts on it. Anyone can change the fields.'),
-        T('ข้อมูล (private) และพฤติกรรม (public) อยู่ด้วยกัน คอมไพล์แล้วได้โค้ดขนาดใกล้เคียงกัน เพราะ <code class="il">this</code> ก็คือ pointer ที่ส่งเข้าไปแบบซ่อน', 'Data (private) and behavior (public) live together. The compiled code is about the same size, because <code class="il">this</code> is just a hidden pointer argument.'))
-   + fig(SVG_WIRE, T('ต่อ LED ภายนอกที่ D2 ผ่าน R 1 kΩ ลง GND (active-HIGH)', 'External LED on D2 through 1 kΩ to GND (active-HIGH)')) + '''
-<h3>Hands-on</h3>''' + code('''class Led {
-public:
-  Led(uint8_t pin, bool activeLow) : pin_(pin), activeLow_(activeLow) {}
-
-  void begin() { pinMode(pin_, OUTPUT); off(); }
-  void on()     { write(true); }
-  void off()    { write(false); }
-  void toggle() { write(!isOn_); }
-  bool isOn() const { return isOn_; }   // const method: ไม่แก้ state
-
-private:
-  void write(bool on) {
-    isOn_ = on;
-    digitalWrite(pin_, (on != activeLow_) ? HIGH : LOW);
-  }
-  uint8_t pin_;
-  bool activeLow_;
-  bool isOn_ = false;
-};
-
-Led red(LED_RED, true);   // บนบอร์ด: active-LOW
-Led ext(D2, false);       // ภายนอก: active-HIGH
-
-void setup() {
-  red.begin();
-  ext.begin();
-}
-
-void loop() {
-  red.toggle();
-  ext.toggle();
-  delay(300);
-}''', 'led_class.ino', en={'// const method: ไม่แก้ state': '// const method: does not change state',
-                           '// บนบอร์ด: active-LOW': '// on-board: active-LOW', '// ภายนอก: active-HIGH': '// external: active-HIGH'}) + T('''
-<p class="note">ทำไมมี <code class="il">begin()</code> แยก ไม่เรียก <code class="il">pinMode</code> ใน constructor? เพราะ object global ถูกสร้างก่อน <code class="il">main()</code> และก่อน <code class="il">init()</code> ฮาร์ดแวร์อาจยังไม่พร้อม เป็น pattern มาตรฐานของ embedded C++</p>
-<p>ทดลอง: ย้ายโค้ดไปไว้ที่ <code class="il">src/Led.h</code> (สร้างโฟลเดอร์ src ในโฟลเดอร์ sketch, บรรทัดแรกใส่ <code class="il">#pragma once</code> และ <code class="il">#include &lt;Arduino.h&gt;</code>) แล้ว <code class="il">#include "src/Led.h"</code> จะใช้ต่อในบท 11</p>
-''', '''
-<p class="note">Why a separate <code class="il">begin()</code> instead of calling <code class="il">pinMode</code> in the constructor? Global objects are constructed before <code class="il">main()</code> and before <code class="il">init()</code>, so the hardware may not be ready yet. This is a standard embedded C++ pattern.</p>
-<p>Try it: move the class to <code class="il">src/Led.h</code> (create a src folder inside the sketch folder and start the file with <code class="il">#pragma once</code> and <code class="il">#include &lt;Arduino.h&gt;</code>), then <code class="il">#include "src/Led.h"</code>. You will reuse it in lesson 11.</p>
-''') + qa([(T('member initializer list (: pin_(pin)) ดีกว่ากำหนดค่าใน body อย่างไร?', 'Why is a member initializer list (: pin_(pin)) better than assigning in the body?'),
-           T('สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้อง default-construct แล้วค่อย assign และจำเป็นสำหรับ member ที่เป็น const หรือ reference', 'Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.')),
-          (T('object Led ใช้ RAM กี่ byte โดยประมาณ?', 'Roughly how many bytes of RAM does a Led object use?'),
-           T('ราว 3–4 byte (pin_, activeLow_, isOn_ + padding) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน', 'About 3–4 bytes (pin_, activeLow_, isOn_ + padding). Member functions cost no RAM per object; they live in flash and are shared.'))])
-   + iv(T('บั๊ก "static initialization order fiasco" เจอได้จริงในโปรเจกต์หลายไฟล์: ลำดับการสร้าง global object ข้ามไฟล์ไม่ถูกกำหนด object หนึ่งอาจเรียกใช้อีกตัวที่ยังไม่ถูกสร้าง ทางแก้คือ begin() หรือ function-local static',
-          'The "static initialization order fiasco" is a real bug in multi-file projects: the construction order of global objects across files is unspecified, so one object may use another that does not exist yet. The fixes are begin() or a function-local static.')))
-
-lesson('05', 'A', T('RAII และ destructor', 'RAII and destructors'), 25, T('Pot 10 kΩ ที่ A0', '10 kΩ pot on A0'), goal(T('ใช้ scope ควบคุม resource อัตโนมัติ: จับเวลา, ปิด/เปิด interrupt', 'Let scope manage resources automatically: timing, disabling/enabling interrupts')) + T('''
-<p>RAII (Resource Acquisition Is Initialization): ขอ resource ใน constructor คืนใน destructor แล้ว compiler จะเรียก destructor ให้เมื่อออกจาก scope เสมอ จึงไม่มีทางลืม <code class="il">unlock</code> หรือ <code class="il">enable_irq</code> แม้จะ <code class="il">return</code> กลางทาง C ไม่มีกลไกนี้</p>
-''', '''
-<p>RAII (Resource Acquisition Is Initialization): acquire the resource in the constructor and release it in the destructor. The compiler always calls the destructor when the object leaves scope, so you can never forget <code class="il">unlock</code> or <code class="il">enable_irq</code>, even if you <code class="il">return</code> early. C has no such mechanism.</p>
-''') + fig(SVG_RAII, T('อายุของ object ผูกกับวงเล็บปีกกา', "The object's lifetime is tied to the braces")) + '''
-<h3>Hands-on</h3>''' + T('<p>ต่อ potentiometer: ขาข้าง 3V3 กับ GND, ขากลางเข้า A0</p>', '<p>Wire the potentiometer: outer legs to 3V3 and GND, middle leg to A0.</p>') + code('''class ScopedTimer {
-public:
-  explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
-  ~ScopedTimer() {
-    uint32_t us = micros() - start_;
-    Serial.print(label_); Serial.print(": "); Serial.print(us); Serial.println(" us");
-  }
-  ScopedTimer(const ScopedTimer&) = delete;             // ห้าม copy
-  ScopedTimer& operator=(const ScopedTimer&) = delete;
-private:
-  const char* label_;
-  uint32_t start_;
-};
-
-// ปิด interrupt แบบซ้อนได้: เก็บสถานะเดิมแล้วคืนค่าเดิม
-class CriticalSection {
-public:
-  CriticalSection() : primask_(__get_PRIMASK()) { __disable_irq(); }
-  ~CriticalSection() { __set_PRIMASK(primask_); }
-private:
-  uint32_t primask_;
-};
-
-void setup() { Serial.begin(115200); }
-
-void loop() {
-  long sum = 0;
-  {
-    ScopedTimer t("analogRead x100");
-    for (int i = 0; i < 100; ++i) sum += analogRead(A0);
-  }                                   // destructor ทำงานตรงนี้
-  Serial.print("avg = "); Serial.println(sum / 100);
-  delay(1000);
-}''', 'raii.ino', en={'// ห้าม copy': '// no copying', '// ปิด interrupt แบบซ้อนได้: เก็บสถานะเดิมแล้วคืนค่าเดิม': '// Nestable interrupt disable: save the previous state, then restore it',
-                     '// destructor ทำงานตรงนี้': '// destructor runs here'})
-   + qa([(T('ทำไมต้อง = delete copy constructor?', 'Why = delete the copy constructor?'),
-          T('ถ้า copy ได้ จะมี 2 object ที่ destructor ทำงานซ้ำ เช่น เปิด interrupt 2 ครั้ง หรือพิมพ์เวลาซ้ำ resource ที่มีเจ้าของคนเดียวควรห้าม copy', 'If copying were allowed, two objects would run the destructor, e.g. re-enabling interrupts twice or printing the time twice. A resource with a single owner should not be copyable.')),
-         (T('CriticalSection ใช้กับ BLE (SoftDevice) ได้ไหม?', 'Can CriticalSection be used with BLE (SoftDevice)?'),
-          T('ใช้ได้แค่ช่วงสั้นมาก ไม่กี่ไมโครวินาที ถ้าปิดนาน SoftDevice จะพลาด timing ของวิทยุ ในงานจริงใช้ sd_nvic_critical_region_enter แทน', 'Only for a very short time, a few microseconds. If interrupts stay off longer, the SoftDevice misses radio timing. Real projects use sd_nvic_critical_region_enter instead.'))])
-   + iv(T('RAII คือเหตุผลหลักที่หลายทีมย้ายจาก C มา C++ ในงาน embedded เพราะไม่มี runtime overhead และกำจัดบั๊ก resource leak ทั้งกลุ่ม เช่น ลืมเปิด interrupt คืนใน error path',
-          'RAII is a main reason many teams move from C to C++ in embedded work: zero runtime overhead, and it removes a whole class of resource-leak bugs, such as forgetting to re-enable interrupts on an error path.')))
-
-lesson('06', 'A', T('ปุ่มกด, debounce และ state machine', 'Buttons, debounce and state machines'), 30, BTN, goal(T('เขียน debounce แบบ non-blocking เป็น class ที่ไม่พึ่ง Arduino (จะ test ได้ในบท 15)', 'Write non-blocking debounce as a class that does not depend on Arduino (you will test it in lesson 15)')) + T('''
-<p>ต่อปุ่มระหว่าง D1 กับ GND แล้วใช้ <code class="il">INPUT_PULLUP</code> ปล่อย = HIGH, กด = LOW หน้าสัมผัสจะเด้งหลายครั้งในไม่กี่มิลลิวินาที ถ้าไม่ debounce กดครั้งเดียวจะนับได้หลายครั้ง</p>
-''', '''
-<p>Wire the button between D1 and GND and use <code class="il">INPUT_PULLUP</code>: released = HIGH, pressed = LOW. The contacts bounce several times within a few milliseconds, so without debounce one press counts as many.</p>
-''') + fig(SVG_BOUNCE, T('Debouncer รอให้สัญญาณนิ่งครบ 20 ms ก่อนยืนยัน', 'The Debouncer waits until the signal has been stable for 20 ms before confirming')) + '''
-<h3>Hands-on</h3>''' + T('<p>สร้างไฟล์ <code class="il">src/Debouncer.h</code> ในโฟลเดอร์ sketch</p>', '<p>Create <code class="il">src/Debouncer.h</code> in the sketch folder.</p>') + code(DEB, 'src/Debouncer.h') + code('''#include "src/Debouncer.h"
-
-constexpr uint8_t kButtonPin = D1;
-enum class Mode : uint8_t { Off, Slow, Fast };
-
-Debouncer button;
-Mode mode = Mode::Off;
-uint32_t lastToggle = 0;
-bool ledOn = false;
-
-Mode next(Mode m) {
-  switch (m) {
-    case Mode::Off:  return Mode::Slow;
-    case Mode::Slow: return Mode::Fast;
-    case Mode::Fast: return Mode::Off;
-  }
-  return Mode::Off;
-}
-
-uint32_t periodMs(Mode m) { return m == Mode::Slow ? 500 : 100; }
-
-void setup() {
-  pinMode(kButtonPin, INPUT_PULLUP);
-  pinMode(LED_GREEN, OUTPUT);
-  digitalWrite(LED_GREEN, HIGH);
-}
-
-void loop() {
-  uint32_t now = millis();
-  bool pressed = (digitalRead(kButtonPin) == LOW);
-  if (button.update(pressed, now) == Debouncer::Event::Pressed) {
-    mode = next(mode);
-  }
-  if (mode == Mode::Off) {
-    digitalWrite(LED_GREEN, HIGH);
-  } else if (now - lastToggle >= periodMs(mode)) {
-    lastToggle = now;
-    ledOn = !ledOn;
-    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
-  }
-}''', 'button_modes.ino') + fig(SVG_STATE, T('state machine 3 สถานะ เปลี่ยนเมื่อได้ Event::Pressed', 'A 3-state machine that advances on Event::Pressed'))
-   + qa([(T('ทำไม now - lastToggle ยังถูกต้องแม้ millis() overflow (ราว 49.7 วัน)?', 'Why is now - lastToggle still correct when millis() overflows (after about 49.7 days)?'),
-          T('การลบ unsigned 32-bit เป็น modulo 2³² ผลต่างจึงถูกเสมอตราบใดที่ช่วงเวลาไม่เกิน 49.7 วัน ห้ามเขียนแบบ now > lastToggle + period เพราะพังตอน overflow', 'Unsigned 32-bit subtraction is modulo 2³², so the difference is always right as long as the interval is under 49.7 days. Never write now > lastToggle + period; that breaks on overflow.')),
-         (T('ทำไม switch มี return Mode::Off ท้ายฟังก์ชันอีก?', 'Why is there another return Mode::Off after the switch?'),
-          T('บาง compiler เตือนว่า control reaches end of non-void function แม้จะครอบทุก case แล้ว ใส่ไว้เพื่อความปลอดภัยและ warning-free', 'Some compilers warn "control reaches end of non-void function" even when every case is covered. It is there for safety and a warning-free build.'))]))
-
-lesson('07', 'A', T('Inheritance, virtual และ interface', 'Inheritance, virtual and interfaces'), 25, POT, goal(T('ออกแบบ interface ISensor ให้สลับเซนเซอร์จริงกับเซนเซอร์ปลอมได้ และรู้ต้นทุนของ virtual', 'Design an ISensor interface that lets you swap a real sensor for a fake one, and know what virtual costs')) + T('''
-<p>ใน C ทำ polymorphism ด้วย struct ของ function pointer เอง ใน C++ ใช้ <code class="il">virtual</code> แล้ว compiler สร้างตาราง (vtable) ให้ ประโยชน์หลักใน embedded คือสลับ implementation ได้ เช่น ใช้ FakeSensor ตอน test โดยไม่ต้องแก้โค้ดที่เรียกใช้</p>
-''', '''
-<p>In C you build polymorphism yourself from a struct of function pointers. In C++ you write <code class="il">virtual</code> and the compiler builds the table (vtable) for you. The main benefit in embedded is swapping implementations, for example using FakeSensor in tests without touching the calling code.</p>
-''') + fig(SVG_VTABLE, T('กลไกของ virtual call', 'How a virtual call works')) + '''
-<h3>Hands-on</h3>''' + code('''class ISensor {
-public:
-  virtual ~ISensor() = default;
-  virtual const char* name() const = 0;   // pure virtual = ต้อง override
-  virtual float read() = 0;
-};
-
-class PotSensor : public ISensor {
-public:
-  explicit PotSensor(uint8_t pin) : pin_(pin) {}
-  const char* name() const override { return "pot"; }
-  float read() override { return analogRead(pin_) * (100.0f / 1023.0f); }  // %
-private:
-  uint8_t pin_;
-};
-
-class FakeSensor : public ISensor {
-public:
-  const char* name() const override { return "fake"; }
-  float read() override { t_ += 0.1f; return 50.0f + 40.0f * sinf(t_); }
-private:
-  float t_ = 0;
-};
-
-PotSensor pot(A0);
-FakeSensor fake;
-ISensor* sensors[] = {&pot, &fake};
-
-void setup() { Serial.begin(115200); }
-
-void loop() {
-  for (ISensor* s : sensors) {
-    Serial.print(s->name()); Serial.print(':');
-    Serial.print(s->read()); Serial.print(' ');
-  }
-  Serial.println();
-  delay(50);
-}''', 'sensors.ino', en={'// pure virtual = ต้อง override': '// pure virtual = must override'})
-   + T('<p>เปิด Tools → Serial Plotter จะเห็นกราฟ 2 เส้น หมุน pot เทียบกับคลื่น sine</p>', '<p>Open Tools → Serial Plotter to see two lines: the pot as you turn it, and a sine wave.</p>')
-   + qa([(T('ทำไม base class ต้องมี virtual destructor?', 'Why does the base class need a virtual destructor?'),
-          T('ถ้า delete object ผ่าน pointer ของ base แล้ว destructor ไม่ virtual destructor ของ derived จะไม่ถูกเรียก resource รั่ว', 'If you delete an object through a base pointer and the destructor is not virtual, the derived destructor never runs and resources leak.')),
-         (T('ถ้าไม่อยากจ่ายต้นทุน virtual มีทางเลือกอะไร?', 'What can you use if you do not want to pay for virtual?'),
-          T('ใช้ template (static polymorphism / CRTP) ให้ compiler รู้ชนิดตอน compile แล้ว inline ได้ แลกกับ code size ที่อาจเพิ่มขึ้น', 'Templates (static polymorphism / CRTP): the compiler knows the type at compile time and can inline, at the cost of possibly larger code.'))])
-   + iv(T('เวลาทีมถกกันว่า "virtual ช้าไหม" ให้คุยด้วยตัวเลข: เพิ่ม load 2 ครั้ง + indirect branch ต่อ call บน Cortex-M4 ราวไม่กี่ cycle ต้นทุนจริงคือ inline ไม่ได้ จึงควรเลี่ยงเฉพาะใน hot loop หรือ ISR',
-          'When a team debates "is virtual slow?", talk numbers: two extra loads plus an indirect branch per call, a few cycles on a Cortex-M4. The real cost is lost inlining, so avoid it only in hot loops and ISRs.')))
-
-lesson('08', 'A', 'Template: RingBuffer<T, N>', 30, POT, goal(T('เขียน container ขนาดคงที่ใช้ซ้ำได้ทุกชนิด โดยไม่ใช้ heap', 'Write a reusable fixed-size container for any type, without the heap'))
-   + vs(T('ทำ buffer สำหรับ int, float แยกกัน หรือใช้ <code class="il">void*</code> + macro ซึ่งไม่มี type safety', 'Write separate buffers for int and float, or use <code class="il">void*</code> + macros with no type safety.'),
-        T('template ให้ compiler สร้างโค้ดเฉพาะชนิดให้ ขนาด N เป็นค่าตอน compile ตรวจได้ด้วย <code class="il">static_assert</code>', 'A template lets the compiler generate code for each type. N is a compile-time value you can check with <code class="il">static_assert</code>.'))
-   + fig(SVG_RING, T('ring buffer: head เขียน tail อ่าน วนรอบด้วย modulo', 'Ring buffer: head writes, tail reads, both wrap around with modulo')) + '''
-<h3>Hands-on</h3>''' + T('<p>สร้าง <code class="il">src/RingBuffer.h</code></p>', '<p>Create <code class="il">src/RingBuffer.h</code>.</p>') + code(RING, 'src/RingBuffer.h') + code('''#include "src/RingBuffer.h"
-
-RingBuffer<uint16_t, 16> samples;   // 16 ค่าล่าสุด
-
-void setup() { Serial.begin(115200); }
-
-void loop() {
-  uint16_t raw = analogRead(A0);
-  samples.pushOverwrite(raw);
-  Serial.print("raw:"); Serial.print(raw);
-  Serial.print(" avg:"); Serial.println(average(samples));
-  delay(20);
-}''', 'moving_average.ino', en={'// 16 ค่าล่าสุด': '// last 16 values'})
-   + T('<p>เปิด Serial Plotter เทียบเส้น raw กับ avg ลองเปลี่ยน N เป็น 4 และ 64 สังเกตความหน่วงและความเรียบ (moving average N จุด = delay ราว N/2 sample)</p>',
-       '<p>Open Serial Plotter and compare the raw and avg lines. Try N = 4 and N = 64 and watch the lag and smoothness (an N-point moving average delays the signal by about N/2 samples).</p>')
-   + qa([(T('ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?', 'What happens to flash if you use RingBuffer&lt;uint16_t,16&gt; and RingBuffer&lt;float,16&gt;?'),
-          T('compiler สร้างโค้ด 2 ชุด (template instantiation) flash เพิ่มขึ้น ถ้ามีหลายชนิดเกินไปเรียกว่า code bloat', 'The compiler generates two copies of the code (template instantiation), so flash grows. Too many types leads to code bloat.')),
-         (T('ถ้า ISR เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?', 'Is it safe if an ISR pushes and loop pops?'),
-          T('ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ต้องครอบด้วย CriticalSection หรือออกแบบ SPSC ที่ฝั่ง producer แก้แค่ head ฝั่ง consumer แก้แค่ tail', 'Not yet, because count_ is changed from both sides. Wrap it in a CriticalSection, or design an SPSC buffer where the producer only touches head and the consumer only touches tail.'))]))
-
-lesson('09', 'A', T('หน่วยความจำใน embedded', 'Memory in embedded systems'), 25, BOARD, goal(T('รู้ว่าตัวแปรแต่ละแบบไปอยู่ส่วนไหน และกฎที่ทีม firmware ใช้จริง', 'Know where each kind of variable lives, and the rules real firmware teams follow'))
-   + fig(SVG_MEM, T('memory map แบบย่อของ nRF52840 (ตัวเลขประมาณ ขึ้นกับ SoftDevice และ bootloader)', 'Simplified nRF52840 memory map (approximate; depends on the SoftDevice and bootloader)')) + '''
-<h3>Hands-on</h3>''' + code('''uint8_t bigStatic[8192];        // .bss  → นับใน "Global variables use"
-const char kMsg[] = "hello";    // .rodata → อยู่ใน flash
-
-void setup() {
-  Serial.begin(115200);
-  while (!Serial) {}
-  uint8_t onStack[256];         // stack → ไม่อยู่ในตัวเลขตอน compile
-  onStack[0] = 1;
-  bigStatic[0] = onStack[0];
-  Serial.print("flash  : 0x"); Serial.println((uintptr_t)kMsg, HEX);
-  Serial.print("static : 0x"); Serial.println((uintptr_t)bigStatic, HEX);
-  Serial.print("stack  : 0x"); Serial.println((uintptr_t)onStack, HEX);
-}
-
-void loop() {}''', 'memmap.ino', en={'// .bss  → นับใน "Global variables use"': '// .bss  → counted in "Global variables use"',
-                                     '// .rodata → อยู่ใน flash': '// .rodata → lives in flash',
-                                     '// stack → ไม่อยู่ในตัวเลขตอน compile': '// stack → not in the compile-time numbers'}) + T('''
-<p>ดูว่า address ขึ้นต้น 0x000… (flash) หรือ 0x2000… (RAM) ตามรูปไหม จากนั้นเปลี่ยน <code class="il">bigStatic</code> เป็น 32768 แล้วดูตัวเลข RAM ตอน compile เปลี่ยน</p>
-<h3>กฎที่ใช้ในทีมจริง</h3>
-<ul>
-<li>จอง memory ตอน init เท่านั้น หลังจากนั้นห้าม <code class="il">new</code>/<code class="il">malloc</code> ใน loop เพราะ heap fragment แล้วพังหลังรันหลายวัน</li>
-<li>เลี่ยง <code class="il">String</code> ของ Arduino ใช้ <code class="il">char buf[32]</code> + <code class="il">snprintf</code> แทน</li>
-<li>ใช้ <code class="il">std::array</code> / buffer ขนาดคงที่ หลีกเลี่ยง <code class="il">std::vector</code>, <code class="il">std::function</code> ที่อาจจอง heap เอง</li>
-<li>embedded มักปิด exceptions และ RTTI (<code class="il">-fno-exceptions -fno-rtti</code>) จึงจัดการ error ด้วยค่าที่ return</li>
-</ul>
-''', '''
-<p>Check that the addresses start with 0x000… (flash) or 0x2000… (RAM) as in the diagram. Then change <code class="il">bigStatic</code> to 32768 and watch the RAM figure change at compile time.</p>
-<h3>Rules real teams use</h3>
-<ul>
-<li>Allocate memory at init only. Never <code class="il">new</code>/<code class="il">malloc</code> in the loop afterwards: the heap fragments and the device fails after days of running.</li>
-<li>Avoid Arduino's <code class="il">String</code>; use <code class="il">char buf[32]</code> + <code class="il">snprintf</code> instead.</li>
-<li>Use <code class="il">std::array</code> / fixed-size buffers, and avoid <code class="il">std::vector</code> and <code class="il">std::function</code>, which may allocate on the heap.</li>
-<li>Embedded builds often disable exceptions and RTTI (<code class="il">-fno-exceptions -fno-rtti</code>), so errors are handled with return values.</li>
-</ul>
-''') + qa([(T('ตัวแปร static ภายในฟังก์ชันอยู่ส่วนไหน?', 'Where does a static variable inside a function live?'),
-           T('.data หรือ .bss เหมือน global แต่ scope จำกัดในฟังก์ชัน จึงคงค่าระหว่างการเรียก', 'In .data or .bss like a global, but its scope is limited to the function, so it keeps its value between calls.')),
-          (T('stack overflow บน MCU ไม่มี OS แสดงอาการอย่างไร?', 'What does a stack overflow look like on an MCU without an OS?'),
-           T('stack โตลงไปทับ heap หรือ .bss ทำให้ค่าตัวแปรเพี้ยนแบบสุ่มหรือ HardFault วิธีตรวจคือ stack painting (เติม pattern แล้วดูว่าถูกเขียนลึกแค่ไหน) หรือเปิด MPU guard', 'The stack grows down into the heap or .bss, causing random variable corruption or a HardFault. Detect it with stack painting (fill a pattern and see how deep it gets overwritten) or an MPU guard region.'))])
-   + iv(T('ใช้ memory map นี้ทุกครั้งที่เจอ HardFault หรือ RAM ไม่พอ: ดูว่า address ที่พังอยู่ใน .text / .data / .bss / heap / stack ส่วนไหน และเปิดไฟล์ .map จาก linker ดูว่าอะไรกินที่มากที่สุด',
-          'Reach for this memory map whenever you hit a HardFault or run out of RAM: find which of .text / .data / .bss / heap / stack the faulting address falls in, and open the linker .map file to see what uses the most space.')))
-
-lesson('10', 'A', T('Interrupt, volatile และ lambda', 'Interrupts, volatile and lambdas'), 25, BTN, goal(T('เขียน ISR ที่ถูกต้อง และแชร์ข้อมูลระหว่าง ISR กับ loop อย่างปลอดภัย', 'Write a correct ISR, and share data between the ISR and loop safely'))
-   + fig(SVG_ISR, T('ISR แทรกกลาง loop ได้ทุกเมื่อ', 'An ISR can cut into loop at any moment')) + '''
-<h3>Hands-on</h3>''' + code('''constexpr uint8_t kButtonPin = D1;
-volatile uint32_t pressCount = 0;   // volatile: ค่าเปลี่ยนนอก flow ปกติ ห้าม cache
-
-void setup() {
-  Serial.begin(115200);
-  pinMode(kButtonPin, INPUT_PULLUP);
-  // lambda ที่ไม่ capture อะไร แปลงเป็น function pointer ได้
-  attachInterrupt(digitalPinToInterrupt(kButtonPin), [] {
-    pressCount = pressCount + 1;
-  }, FALLING);
-}
-
-void loop() {
-  uint32_t count;
-  noInterrupts();          // copy ออกมาแบบ atomic
-  count = pressCount;
-  interrupts();
-  Serial.println(count);
-  delay(500);
-}''', 'isr_count.ino', en={'// volatile: ค่าเปลี่ยนนอก flow ปกติ ห้าม cache': '// volatile: changes outside normal flow, never cache',
-                          '// lambda ที่ไม่ capture อะไร แปลงเป็น function pointer ได้': '// a capture-less lambda converts to a function pointer',
-                          '// copy ออกมาแบบ atomic': '// copy it out atomically'}) + T('''
-<p>กดปุ่ม 1 ครั้ง ตัวเลขมักเพิ่มมากกว่า 1 นั่นคือ bounce ที่เห็นในบท 6 ข้อสรุป: ISR บนปุ่มกลไกต้อง debounce ด้วยเวลา (เช่นเช็ก <code class="il">millis()</code> ใน ISR หรือส่ง event ให้ loop จัดการ)</p>
-''', '''
-<p>Press the button once and the number often goes up by more than 1. That is the bounce from lesson 6. Conclusion: an ISR on a mechanical button still needs time-based debounce (e.g. check <code class="il">millis()</code> in the ISR, or send an event for loop to handle).</p>
-''') + qa([(T('volatile ทำให้ pressCount++ เป็น atomic ไหม?', 'Does volatile make pressCount++ atomic?'),
-           T('ไม่ volatile แค่บังคับให้อ่าน/เขียน memory จริงทุกครั้ง แต่ ++ คือ load-add-store 3 คำสั่ง ถูกแทรกกลางได้ ต้องใช้ critical section หรือ std::atomic', 'No. volatile only forces a real memory read/write every time, but ++ is load-add-store, three instructions that can be interrupted. Use a critical section or std::atomic.')),
-          (T('อะไรห้ามทำใน ISR?', 'What must you never do in an ISR?'),
-           T('delay(), Serial.print(), malloc/new, ทำงานนาน และเรียกฟังก์ชันที่ไม่ reentrant ให้ ISR ตั้ง flag หรือ push ลง buffer แล้วกลับเร็วที่สุด', 'delay(), Serial.print(), malloc/new, long work, or calling non-reentrant functions. Let the ISR set a flag or push into a buffer, and return as fast as possible.'))])
-   + iv(T('การลืม volatile เป็นสาเหตุอันดับต้น ๆ ของอาการ "build debug ทำงาน แต่ build release พัง" จำ 3 กรณีที่ต้องใช้: ตัวแปรที่ ISR แก้, memory-mapped register, ตัวแปรที่แชร์ระหว่าง thread และจำไว้ว่ามันไม่ใช่ synchronization',
-          'A missing volatile is a top cause of "works in debug, breaks in release". Remember the three cases that need it: variables changed by an ISR, memory-mapped registers and variables shared between threads, and remember that it is not synchronization.')))
-
-lesson('11', 'A', 'Mini project: cooperative scheduler', 30, T('LED + ปุ่ม + Pot', 'LED + button + pot'), goal(T('รวมทุกอย่างเป็น firmware ที่ไม่มี delay() เลย โครงสร้างแบบนี้ใช้จริงก่อนจะขึ้น RTOS', 'Combine everything into firmware with no delay() at all. Real products use this structure before moving to an RTOS'))
-   + fig(SVG_SCHED, T('แต่ละ task มีรอบของตัวเอง loop แค่ตรวจว่าถึงเวลาหรือยัง', 'Each task has its own period; loop only checks whether it is due')) + '''
-<h3>Hands-on</h3>''' + T('<p>ตั้งชื่อโฟลเดอร์ <code class="il">firmware/</code> และไฟล์ <code class="il">firmware.ino</code> (Arduino บังคับให้ชื่อตรงกัน) ใน <code class="il">src/</code> มี Led.h, Debouncer.h, RingBuffer.h จากบทก่อน</p>',
-                         '<p>Name the folder <code class="il">firmware/</code> and the file <code class="il">firmware.ino</code> (Arduino requires matching names). <code class="il">src/</code> holds Led.h, Debouncer.h and RingBuffer.h from earlier lessons.</p>') + code('''#include "src/Led.h"
-#include "src/Debouncer.h"
-#include "src/RingBuffer.h"
-
-#if __has_include("src/version.h")
-#include "src/version.h"          // CI สร้างไฟล์นี้ (บท 17)
-#else
-#define FW_VERSION "dev"
-#endif
-
-constexpr uint8_t kButtonPin = D1;
-constexpr uint8_t kPotPin    = A0;
-
-Led status(LED_GREEN, true);
-Led ext(D2, false);
-Debouncer button;
-RingBuffer<uint16_t, 16> samples;
-bool paused = false;
-
-struct Task {
-  uint32_t periodMs;
-  uint32_t lastRunMs;
-  void (*run)();
-};
-
-void blinkTask() { if (!paused) status.toggle(); }
-
-void buttonTask() {
-  bool pressed = digitalRead(kButtonPin) == LOW;
-  if (button.update(pressed, millis()) == Debouncer::Event::Pressed) {
-    paused = !paused;
-    ext.toggle();
-  }
-}
-
-void sensorTask() { samples.pushOverwrite(analogRead(kPotPin)); }
-
-void reportTask() {
-  Serial.print("avg:");     Serial.print(average(samples));
-  Serial.print(" paused:"); Serial.println(paused ? 1 : 0);
-}
-
-Task tasks[] = {
-  {500, 0, blinkTask},
-  {5,   0, buttonTask},
-  {20,  0, sensorTask},
-  {200, 0, reportTask},
-};
-
-// พิมพ์ตัวเลข 50–5000 แล้ว Enter เพื่อเปลี่ยนรอบกระพริบ
-void handleSerial() {
-  static char buf[16];
-  static size_t len = 0;
-  while (Serial.available()) {
-    char c = Serial.read();
-    if (c == '\\n' || c == '\\r') {
-      if (len > 0) {
-        buf[len] = '\\0';
-        long ms = atol(buf);
-        if (ms >= 50 && ms <= 5000) tasks[0].periodMs = ms;
-        len = 0;
-      }
-    } else if (len < sizeof(buf) - 1) {
-      buf[len++] = c;
-    }
-  }
-}
-
-void setup() {
-  Serial.begin(115200);
-  pinMode(kButtonPin, INPUT_PULLUP);
-  status.begin();
-  ext.begin();
-  Serial.print("fw "); Serial.println(FW_VERSION);
-}
-
-void loop() {
-  uint32_t now = millis();
-  for (Task& t : tasks) {
-    if (now - t.lastRunMs >= t.periodMs) {
-      t.lastRunMs = now;
-      t.run();
-    }
-  }
-  handleSerial();
-}''', 'firmware/firmware.ino', en={'// CI สร้างไฟล์นี้ (บท 17)': '// generated by CI (lesson 17)',
-                                  '// พิมพ์ตัวเลข 50–5000 แล้ว Enter เพื่อเปลี่ยนรอบกระพริบ': '// type 50–5000 and press Enter to change the blink period'}) + T('''
-<p>ทดสอบ: กดปุ่ม → LED เขียวหยุด LED ภายนอกติด, หมุน pot ดู avg ใน Plotter, พิมพ์ 100 ใน Serial Monitor → กระพริบเร็วขึ้น ทั้งหมดทำงานพร้อมกันโดยไม่มี delay()</p>
-''', '''
-<p>Test it: press the button → the green LED stops and the external LED turns on; turn the pot and watch avg in the Plotter; type 100 in Serial Monitor → faster blinking. Everything runs at once with no delay().</p>
-''') + qa([(T('ถ้า reportTask ใช้เวลา 30 ms จะเกิดอะไรกับ buttonTask?', 'If reportTask takes 30 ms, what happens to buttonTask?'),
-           T('buttonTask ถูกเลื่อนไปจน reportTask จบ เพราะเป็น cooperative (ไม่มี preemption) ทุก task ต้องสั้น ถ้าทำไม่ได้คือสัญญาณว่าถึงเวลาใช้ RTOS', 'buttonTask waits until reportTask finishes, because scheduling is cooperative (no preemption). Every task must be short; when that is no longer possible, it is time for an RTOS.')),
-          (T('ทำไม Task ใช้ function pointer ไม่ใช้ std::function?', 'Why does Task use a function pointer instead of std::function?'),
-           T('function pointer ขนาด 4 byte ไม่จอง heap และคาดเดาได้ std::function อาจจอง heap เมื่อ capture ข้อมูล', 'A function pointer is 4 bytes, never allocates and is predictable. std::function may allocate on the heap when it captures data.'))]))
-
-PC = T('คอมพิวเตอร์', 'Computer')
-
-lesson('12', 'B', T('Git พื้นฐาน: add, commit, log', 'Git basics: add, commit, log'), 25, PC, goal(T('เก็บงานทั้งหมดที่ทำมาลง Git พร้อม commit message ที่อ่านแล้วรู้เรื่อง', 'Put all your work so far into Git, with commit messages that make sense'))
-   + fig(SVG_GITAREA, T('ไฟล์เดินทางผ่าน 3 พื้นที่ในเครื่องก่อนขึ้น GitHub', 'Files pass through three local areas before reaching GitHub')) + '''
-<h3>Hands-on</h3>''' + code('''git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-git config --global init.defaultBranch main
-
-mkdir xiao-embedded-cpp && cd xiao-embedded-cpp
-git init
-# ย้ายโฟลเดอร์ firmware/ จากบท 11 มาไว้ที่นี่ และสร้าง .gitignore
-git status
-git add .gitignore firmware/
-git commit -m "feat: led, debouncer, ring buffer and task scheduler"
-git log --oneline
-
-# แก้ไฟล์แล้วลอง:
-git diff              # สิ่งที่แก้ แต่ยังไม่ add
-git add -p            # เลือก add ทีละก้อน
-git restore <file>    # ทิ้งการแก้ไขที่ยังไม่ add''', 'terminal', en={'# ย้ายโฟลเดอร์ firmware/ จากบท 11 มาไว้ที่นี่ และสร้าง .gitignore': '# move the firmware/ folder from lesson 11 here and create .gitignore',
-                                                    '# แก้ไฟล์แล้วลอง:': '# edit a file, then try:', '# สิ่งที่แก้ แต่ยังไม่ add': '# changes not yet added',
-                                                    '# เลือก add ทีละก้อน': '# add chunk by chunk', '# ทิ้งการแก้ไขที่ยังไม่ add': '# discard changes not yet added'}) + code('''build/
-*.hex
-*.zip
-*.uf2
-firmware/src/version.h
-.vscode/''', '.gitignore') + T('''
-<p>รูปแบบ commit message ที่ทีมนิยม (Conventional Commits): <code class="il">feat:</code> ฟีเจอร์ใหม่, <code class="il">fix:</code> แก้บั๊ก, <code class="il">docs:</code>, <code class="il">test:</code>, <code class="il">ci:</code>, <code class="il">refactor:</code> หนึ่ง commit = หนึ่งเรื่อง</p>
-''', '''
-<p>The commit message style most teams use (Conventional Commits): <code class="il">feat:</code> new feature, <code class="il">fix:</code> bug fix, <code class="il">docs:</code>, <code class="il">test:</code>, <code class="il">ci:</code>, <code class="il">refactor:</code>. One commit = one topic.</p>
-''') + qa([(T('ทำไมไม่ควร commit ไฟล์ .hex?', 'Why should you not commit .hex files?'),
-           T('เป็นผลลัพธ์ที่สร้างซ้ำได้จาก source เปลี่ยนทุก build ทำให้ repo บวมและ diff อ่านไม่ได้ ไฟล์ binary ควรอยู่ใน GitHub Release (บท 17)', 'They are build output you can regenerate from source. They change on every build, bloat the repo and make diffs unreadable. Binaries belong in a GitHub Release (lesson 17).')),
-          (T('git add . กับ git add -p ต่างกันอย่างไร?', 'How do git add . and git add -p differ?'),
-           T('add . เอาทุกการเปลี่ยนแปลง -p ให้เลือกทีละ hunk ช่วยแยก commit ตามเรื่องได้ แม้แก้หลายเรื่องในไฟล์เดียว', 'add . takes every change; -p lets you pick hunk by hunk, so you can split commits by topic even when one file has several changes.'))]))
-
-lesson('13', 'B', T('Branch, merge และแก้ conflict', 'Branch, merge and resolve conflicts'), 25, PC, goal(T('แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก', 'Split work into branches, and resolve merge conflicts without panic'))
-   + fig(SVG_BRANCH, T('feature branch แตกจาก main แล้ว merge กลับ', 'A feature branch splits off main, then merges back')) + T('''
-<h3>Hands-on: สร้าง conflict เองแล้วแก้</h3>''', '''
-<h3>Hands-on: create a conflict, then resolve it</h3>''') + code('''git switch -c feature/fast-blink
-# ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}
-git commit -am "feat: faster default blink"
-
-git switch main
-# แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}
-git commit -am "chore: slower default blink"
-
-git merge feature/fast-blink      # → CONFLICT''', 'terminal', en={'# ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}': '# in firmware.ino change {500, 0, blinkTask} to {250, 0, blinkTask}',
-                                                       '# แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}': '# change the same line to {1000, 0, blinkTask}'}) + code('''<<<<<<< HEAD
-  {1000, 0, blinkTask},
-=======
-  {250, 0, blinkTask},
->>>>>>> feature/fast-blink''', T('firmware.ino ตอน conflict', 'firmware.ino during the conflict')) + code('''# แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย <<< === >>> ออก
-git add firmware/firmware.ino
-git commit                         # ปิด merge
-git log --oneline --graph --all
-git branch -d feature/fast-blink''', 'terminal', en={'# แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย <<< === >>> ออก': '# keep the line you want and delete the <<< === >>> markers',
-                                                     '# ปิด merge': '# completes the merge'}) + T('''
-<p class="note">merge เก็บประวัติตามจริง (มี merge commit) ส่วน <code class="il">git rebase main</code> ย้าย commit ของ branch ไปต่อท้าย main ทำให้ประวัติเป็นเส้นตรง กฎ: ห้าม rebase branch ที่คนอื่นดึงไปแล้ว</p>
-''', '''
-<p class="note">merge keeps the real history (with a merge commit), while <code class="il">git rebase main</code> replays the branch's commits on top of main for a straight-line history. Rule: never rebase a branch someone else has already pulled.</p>
-''') + qa([(T('ถ้าแก้ conflict ผิดแล้วอยากเริ่มใหม่ทำอย่างไร?', 'You resolved a conflict wrongly and want to start over. What do you do?'),
-           T('git merge --abort ก่อน commit จะกลับไปสถานะก่อน merge', 'git merge --abort before you commit takes you back to the state before the merge.')),
-          (T('ทำไมทีมไม่ commit ตรงเข้า main?', 'Why do teams not commit straight to main?'),
-           T('main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย', 'main should always build and pass its tests. Going through a branch + PR lets CI and teammates check first, and makes changes easy to revert.'))]))
-
-lesson('14', 'B', T('GitHub: push และ Pull Request', 'GitHub: push and Pull Requests'), 25, PC, goal(T('ขึ้น repo บน GitHub และทำงานผ่าน PR แบบทีมจริง', 'Put the repo on GitHub, and work through PRs like a real team'))
-   + fig(SVG_PR, T('GitHub flow ที่บริษัทส่วนใหญ่ใช้', 'The GitHub flow most companies use')) + '''
-<h3>Hands-on</h3>''' + code('''# ติดตั้ง GitHub CLI (gh) แล้ว login ครั้งเดียว
-gh auth login
-
-# สร้าง repo บน GitHub จากโฟลเดอร์นี้ แล้ว push
-gh repo create xiao-embedded-cpp --public --source=. --remote=origin --push
-
-# งานใหม่ผ่าน PR
-git switch -c docs/readme
-# เขียน README.md: รูป wiring, วิธี build, ขาที่ใช้
-git add README.md
-git commit -m "docs: add README with wiring and build steps"
-git push -u origin docs/readme
-gh pr create --fill
-# เปิดดู PR บนเว็บ ลอง comment โค้ดตัวเอง 1 จุด
-gh pr merge --squash --delete-branch
-git switch main && git pull''', 'terminal', en={'# ติดตั้ง GitHub CLI (gh) แล้ว login ครั้งเดียว': '# install the GitHub CLI (gh) and log in once',
-                                               '# สร้าง repo บน GitHub จากโฟลเดอร์นี้ แล้ว push': '# create a GitHub repo from this folder and push',
-                                               '# งานใหม่ผ่าน PR': '# new work goes through a PR',
-                                               '# เขียน README.md: รูป wiring, วิธี build, ขาที่ใช้': '# write README.md: wiring photo, build steps, pins used',
-                                               '# เปิดดู PR บนเว็บ ลอง comment โค้ดตัวเอง 1 จุด': '# open the PR on the web and leave one review comment on your own code'}) + T('''
-<p>ตั้งค่าเพิ่มบนเว็บ: Settings → Branches → เพิ่ม rule ให้ <code class="il">main</code> ต้องผ่าน PR (เปิด required status checks หลังบท 16)</p>
-''', '''
-<p>One more setting on the web: Settings → Branches → add a rule so <code class="il">main</code> only changes through PRs (turn on required status checks after lesson 16).</p>
-''') + qa([(T('fetch กับ pull ต่างกันอย่างไร?', 'How do fetch and pull differ?'),
-           T('fetch ดึงข้อมูล remote มาเก็บไว้ (origin/main) แต่ยังไม่แตะ branch ของเรา pull = fetch + merge (หรือ rebase) เข้ามา', 'fetch downloads the remote state (origin/main) without touching your branch. pull = fetch + merge (or rebase) into your branch.')),
-          (T('squash merge ดีอย่างไร?', 'What is good about a squash merge?'),
-           T('รวม commit ย่อยใน PR เป็น commit เดียวบน main ประวัติอ่านง่าย 1 commit = 1 ฟีเจอร์ ย้อน (revert) ง่าย', 'It combines the PR\'s small commits into one commit on main: readable history, 1 commit = 1 feature, easy to revert.'))])
-   + iv(T('ในทีม README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด ช่วยให้เพื่อนร่วมทีมหรือคนที่มารับงานต่อ setup และเข้าใจโปรเจกต์ได้ในไม่กี่นาที ไม่ต้องมาถามทีละเรื่อง',
-          'On a team, a README with a wiring photo, a green CI badge and a clean commit history lets teammates, or whoever takes over the project, set up and understand it in minutes instead of asking one question at a time.')))
-
-lesson('15', 'C', T('แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC', 'Separate logic from hardware + unit tests on a PC'), 30, PC, goal(T('รัน test ของ Debouncer และ RingBuffer บน PC ได้ในไม่กี่วินาที โดยไม่ต้องเสียบบอร์ด', 'Run the Debouncer and RingBuffer tests on a PC in seconds, with no board plugged in'))
-   + fig(SVG_LAYERS, T('ยิ่ง logic อยู่ชั้นที่ไม่รู้จักฮาร์ดแวร์มาก ยิ่ง test อัตโนมัติได้มาก', 'The more logic lives in layers that know nothing about hardware, the more you can test automatically')) + T('''
-<p>Debouncer รับเวลาเป็นพารามิเตอร์ (<code class="il">nowMs</code>) แทนการเรียก <code class="il">millis()</code> เอง นี่คือเทคนิค dependency injection แบบง่ายที่สุด ทำให้ test ควบคุมเวลาได้ทุกมิลลิวินาที</p>
-''', '''
-<p>The Debouncer takes the time as a parameter (<code class="il">nowMs</code>) instead of calling <code class="il">millis()</code> itself. This is the simplest form of dependency injection, and it lets a test control time down to the millisecond.</p>
-''') + '''<h3>Hands-on</h3>''' + code(TEST, 'test/test_main.cpp') + code('''# Linux / macOS / WSL (Windows: ติดตั้ง g++ ผ่าน MSYS2 หรือใช้ WSL)
-g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_runner
-./test_runner
-# ALL TESTS PASSED''', 'terminal', en={'ติดตั้ง g++ ผ่าน MSYS2 หรือใช้ WSL': 'install g++ via MSYS2, or use WSL'}) + T('''
-<p>ทดลองทำให้ test แดง: แก้ <code class="il">&gt;= stableMs_</code> ใน Debouncer.h เป็น <code class="il">&gt;</code> แล้วรันใหม่ ดูว่าบรรทัดไหน FAIL จากนั้นแก้กลับ แล้ว commit ด้วย <code class="il">test: add host unit tests</code></p>
-<p class="note">ในงานจริงใช้ framework เช่น GoogleTest, Catch2 หรือ Unity (สำหรับ C) แต่หลักการเหมือนกัน: CHECK เงื่อนไข, รายงานบรรทัดที่พัง, exit code ≠ 0 เมื่อ fail เพื่อให้ CI รู้</p>
-''', '''
-<p>Make a test fail on purpose: change <code class="il">&gt;= stableMs_</code> in Debouncer.h to <code class="il">&gt;</code>, run again and see which line FAILs. Then change it back and commit with <code class="il">test: add host unit tests</code>.</p>
-<p class="note">Real projects use a framework such as GoogleTest, Catch2 or Unity (for C), but the idea is the same: CHECK a condition, report the failing line, and exit with a non-zero code on failure so CI knows.</p>
-''') + qa([(T('ทำไม exit code สำคัญ?', 'Why does the exit code matter?'),
-           T('CI ตัดสินผ่าน/ไม่ผ่านจาก exit code ของคำสั่ง 0 = ผ่าน อย่างอื่น = fail และหยุด pipeline', 'CI decides pass/fail from each command\'s exit code: 0 = pass, anything else = fail, which stops the pipeline.')),
-          (T('จะ test โค้ดที่เรียก digitalRead() ได้อย่างไร?', 'How do you test code that calls digitalRead()?'),
-           T('ซ่อนการเข้าถึงฮาร์ดแวร์ไว้หลัง interface (เช่น ISensor บท 7) แล้วใส่ fake/mock ตอน test หรือส่งค่าที่อ่านได้เข้าฟังก์ชันแทนให้ฟังก์ชันไปอ่านเอง', 'Hide hardware access behind an interface (like ISensor in lesson 7) and plug in a fake/mock for tests, or pass the value in instead of letting the function read it.'))])
-   + iv(T('ทีม firmware ส่วนใหญ่ test เป็นชั้น: unit test บน host สำหรับ logic, HIL test บนบอร์ดจริงสำหรับ driver, system test สำหรับฟีเจอร์ ชั้นแรกเร็วและถูกที่สุด จึงรันใน CI ทุก commit',
-          'Most firmware teams test in layers: host unit tests for logic, HIL tests on real boards for drivers, and system tests for features. The first layer is the fastest and cheapest, so it runs in CI on every commit.')))
-
-CI_YML = '''name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-env:
-  BOARD_URL: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-  FQBN: Seeeduino:nrf52:xiaonRF52840Sense   # ใช้ค่าที่ได้จาก board listall
-
-jobs:
-  host-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build tests
-        run: g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_runner
-      - name: Run tests
-        run: ./test_runner
-      - name: Static analysis
-        run: |
-          sudo apt-get update && sudo apt-get install -y cppcheck
-          cppcheck --error-exitcode=1 --enable=warning,performance --std=c++17 -Ifirmware/src test/test_main.cpp
-
-  build-firmware:
-    needs: host-tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install adafruit-nrfutil   # core ใช้ตอนแพ็ก .zip บน Linux
-      - uses: arduino/setup-arduino-cli@v2
-      - name: Install board core
-        run: |
-          arduino-cli core update-index --additional-urls "$BOARD_URL"
-          arduino-cli core install Seeeduino:nrf52 --additional-urls "$BOARD_URL"
-      - name: Compile
-        run: arduino-cli compile --fqbn "$FQBN" --additional-urls "$BOARD_URL" --output-dir out firmware
-      - uses: actions/upload-artifact@v4
-        with:
-          name: firmware
-          path: out/'''
-
-lesson('16', 'C', T('CI ด้วย GitHub Actions', 'CI with GitHub Actions'), 30, PC, goal(T('ทุก push และทุก PR ถูก test และ compile firmware อัตโนมัติ', 'Every push and every PR is tested and the firmware compiled automatically'))
-   + fig(SVG_CI, T('workflow 2 job: test ก่อน ผ่านแล้วค่อย build', 'A 2-job workflow: test first, build only after the tests pass')) + '''
-<h3>Hands-on</h3>''' + T('<p>สร้างไฟล์ตาม path นี้ใน repo</p>', '<p>Create this file at this path in the repo.</p>')
-   + code(CI_YML, '.github/workflows/ci.yml', en={'# ใช้ค่าที่ได้จาก board listall': '# use the value from board listall', '# core ใช้ตอนแพ็ก .zip บน Linux': '# the core needs it to package the .zip on Linux'}) + code('''git switch -c ci/github-actions
-git add .github/ test/
-git commit -m "ci: run host tests and compile firmware"
-git push -u origin ci/github-actions
-gh pr create --fill
-gh pr checks --watch        # ดูสถานะ job แบบ live''', 'terminal', en={'# ดูสถานะ job แบบ live': '# watch job status live'}) + T('''
-<ol>
-<li>เปิดแท็บ Actions บน GitHub ดู log ของแต่ละ step เมื่อเขียวแล้ว ดาวน์โหลด artifact <i>firmware</i> ดูว่ามี .hex</li>
-<li>ทำ PR อีกอันที่ตั้งใจให้ test fail ดูว่า PR ขึ้นกากบาทแดงและบอกบรรทัดที่พัง</li>
-<li>ไปที่ Settings → Branches เปิด required status checks ให้ <code class="il">host-tests</code> และ <code class="il">build-firmware</code></li>
-<li>ใส่ badge ใน README: <code class="il">![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></li>
-</ol>
-<p class="note">ความเสี่ยงที่ควรรู้: ถ้า compile ใน CI ล้มที่ขั้น packaging ให้ดูว่าติดตั้ง adafruit-nrfutil แล้ว และ FQBN ตรงกับที่ <code class="il">arduino-cli board listall xiao</code> แสดง เวอร์ชัน core ควร pin ด้วย <code class="il">Seeeduino:nrf52@x.y.z</code> เพื่อให้ build ซ้ำได้เหมือนเดิม</p>
-''', '''
-<ol>
-<li>Open the Actions tab on GitHub and read each step's log. When it is green, download the <i>firmware</i> artifact and check that it contains a .hex.</li>
-<li>Open another PR with a test that fails on purpose, and see the PR get a red cross that points to the failing line.</li>
-<li>Go to Settings → Branches and turn on required status checks for <code class="il">host-tests</code> and <code class="il">build-firmware</code>.</li>
-<li>Add a badge to the README: <code class="il">![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></li>
-</ol>
-<p class="note">Known risk: if the CI compile fails at the packaging step, check that adafruit-nrfutil is installed and that the FQBN matches what <code class="il">arduino-cli board listall xiao</code> shows. Pin the core version with <code class="il">Seeeduino:nrf52@x.y.z</code> so builds are reproducible.</p>
-''') + qa([(T('needs: host-tests มีไว้ทำไม?', 'What is needs: host-tests for?'),
-           T('ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน', 'build-firmware runs only after the tests pass, which saves time and makes the order of priority clear. Without it, the two jobs run in parallel.')),
-          (T('ทำไมต้อง pin เวอร์ชัน core / action?', 'Why pin the core and action versions?'),
-           T('ให้ build reproducible ถ้า core อัปเดตเอง firmware อาจเปลี่ยนพฤติกรรมโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับ BOM lock ในฮาร์ดแวร์', 'For reproducible builds. If the core updates itself, the firmware may change behavior without anyone touching the code. It is the same idea as a locked BOM in hardware.'))])
-   + iv(T('ในทีม CI กับ CD มักถูกพูดปนกัน: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป) แยกให้ชัดแล้วจะคุยเรื่อง pipeline กันง่ายขึ้น',
-          'Teams often mix up CI and CD: CI = integrate code often and check it automatically every time; CD = deliver ready-to-use artifacts automatically (next lesson). Keeping them apart makes pipeline discussions easier.')))
-
-REL_YML = '''name: Release
-
-on:
-  push:
-    tags: ['v*.*.*']
-
-permissions:
-  contents: write
-
-env:
-  BOARD_URL: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-  FQBN: Seeeduino:nrf52:xiaonRF52840Sense
-
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install adafruit-nrfutil
-      - uses: arduino/setup-arduino-cli@v2
-      - run: |
-          arduino-cli core update-index --additional-urls "$BOARD_URL"
-          arduino-cli core install Seeeduino:nrf52 --additional-urls "$BOARD_URL"
-      - name: Stamp version
-        run: echo "#define FW_VERSION \\"${GITHUB_REF_NAME}\\"" > firmware/src/version.h
-      - name: Compile
-        run: arduino-cli compile --fqbn "$FQBN" --additional-urls "$BOARD_URL" --output-dir out firmware
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            out/*.hex
-            out/*.zip
-          generate_release_notes: true'''
-
-lesson('17', 'C', T('CD: release firmware อัตโนมัติด้วย tag', 'CD: automatic firmware releases from tags'), 25, T('บอร์ด + คอมพิวเตอร์', 'Board + computer'), goal(T('push tag แล้วได้ GitHub Release ที่มีไฟล์ firmware และเลขเวอร์ชันฝังในตัว', 'Push a tag and get a GitHub Release with the firmware files and the version number built in'))
-   + fig(SVG_REL, T('จาก tag ถึงไฟล์ที่ QA ดาวน์โหลดไปแฟลช', 'From a tag to the file QA downloads and flashes')) + '''
-<h3>Hands-on</h3>''' + code(REL_YML, '.github/workflows/release.yml') + code('''git add .github/workflows/release.yml
-git commit -m "ci: release firmware on version tag"
-git push
-
-git tag -a v0.1.0 -m "first release: scheduler, debounce, moving average"
-git push origin v0.1.0''', 'terminal') + T('''
-<p>เปิดหน้า Releases ดาวน์โหลด .hex แฟลชลงบอร์ด เปิด Serial Monitor ต้องเห็น <code class="il">fw v0.1.0</code> (ถ้า build ในเครื่องจะเห็น <code class="il">fw dev</code>) นี่คือ traceability: รู้เสมอว่าบอร์ดตัวไหนรัน firmware commit ไหน</p>
-<p class="note">SemVer: MAJOR.MINOR.PATCH — แก้บั๊ก +PATCH, ฟีเจอร์ใหม่ที่เข้ากันได้ +MINOR, เปลี่ยนแบบเข้ากันไม่ได้ (เช่น protocol) +MAJOR ถ้าต้องการไฟล์ .uf2 สำหรับลากวางตอน double-tap reset ให้แปลงจาก .hex ด้วย uf2conv.py (family 0xADA52840)</p>
-''', '''
-<p>Open the Releases page, download the .hex and flash it. Serial Monitor must show <code class="il">fw v0.1.0</code> (a local build shows <code class="il">fw dev</code>). This is traceability: you always know which firmware commit each board runs.</p>
-<p class="note">SemVer: MAJOR.MINOR.PATCH. Bug fix → +PATCH, backward-compatible feature → +MINOR, breaking change (e.g. a protocol) → +MAJOR. If you want a .uf2 to drag and drop after a double-tap reset, convert the .hex with uf2conv.py (family 0xADA52840).</p>
-''') + qa([(T('ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?', 'Why generate version.h in CI instead of writing the version in the code?'),
-           T('ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release', 'The tag becomes the single source of truth, so you cannot forget to bump the number, and local builds say "dev", clearly not a release.')),
-          (T('permissions: contents: write จำเป็นไหม?', 'Is permissions: contents: write required?'),
-           T('จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release', 'Yes. In many repos the default GITHUB_TOKEN is read-only, and creating a Release needs write access.'))]))
-
-lesson('18', 'C', T('Capstone และทบทวน', 'Capstone and review'), 30, T('ทั้งหมด', 'Everything'), goal(T('ปิด repo ให้สมบูรณ์ และทบทวนแนวคิดหลักของทั้งคอร์ส', 'Finish the repo, and review the key ideas of the whole course')) + T('''
-<h3>Checklist ของ repo</h3>
-<ul class="check">
-<li>README: รูป wiring, ตารางขา, วิธี build ในเครื่อง, วิธีรัน test, badge CI</li>
-<li>โครงสร้าง <code class="il">firmware/</code>, <code class="il">firmware/src/</code>, <code class="il">test/</code>, <code class="il">.github/workflows/</code></li>
-<li>อย่างน้อย 1 release (v0.1.0) และประวัติ commit ที่ใช้ Conventional Commits</li>
-<li>เพิ่ม test ของคุณเอง 1 ชุด เช่น ทดสอบ <code class="il">average()</code> ตอน buffer ว่าง</li>
-<li>ฟีเจอร์ต่อยอด 1 อย่าง: กดค้าง 1 วินาที = reset ค่า (เพิ่ม Event::LongPress ใน Debouncer พร้อม test)</li>
-</ul>
-<h3>คำถามทบทวนก่อนจบคอร์ส</h3>
-''', '''
-<h3>Repo checklist</h3>
-<ul class="check">
-<li>README: wiring photo, pin table, how to build locally, how to run the tests, CI badge</li>
-<li>Layout: <code class="il">firmware/</code>, <code class="il">firmware/src/</code>, <code class="il">test/</code>, <code class="il">.github/workflows/</code></li>
-<li>At least one release (v0.1.0) and a commit history that uses Conventional Commits</li>
-<li>One test suite of your own, e.g. testing <code class="il">average()</code> on an empty buffer</li>
-<li>One extra feature: hold for 1 second = reset (add Event::LongPress to the Debouncer, with tests)</li>
-</ul>
-<h3>Review questions</h3>
-''') + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in [
- (T('C++ ต่างจาก C ในงาน embedded อย่างไร มีต้นทุนอะไรบ้าง?', 'How does C++ differ from C in embedded work, and what does it cost?'),
-  T('ได้ class, RAII, reference, template, constexpr, enum class, namespace ที่ส่วนใหญ่ไม่มี runtime cost ส่วนที่มีต้นทุนคือ virtual (vtable), exceptions, RTTI, heap ผ่าน STL บางตัว จึงเลือกใช้เป็น subset', 'You get classes, RAII, references, templates, constexpr, enum class and namespaces, mostly with no runtime cost. The costly parts are virtual (vtables), exceptions, RTTI and heap use through some STL types, so teams use a subset.')),
- (T('volatile ใช้เมื่อไหร่ และไม่ได้ช่วยอะไร?', 'When do you use volatile, and what does it not do?'),
-  T('ตัวแปรที่ ISR แก้, register ของ peripheral, ข้อมูลที่แชร์ระหว่าง context ไม่ได้ทำให้ atomic และไม่ใช่ memory barrier', 'For variables changed by an ISR, peripheral registers and data shared between contexts. It does not make anything atomic and it is not a memory barrier.')),
- (T('ISR ที่ดีเป็นอย่างไร?', 'What makes a good ISR?'),
-  T('สั้น, ไม่ block, ไม่จอง memory, ตั้ง flag หรือ push ลง ring buffer แล้วให้ main/task ประมวลผล ข้อมูลที่แชร์ต้องป้องกันด้วย critical section', 'Short, non-blocking, no allocation. It sets a flag or pushes into a ring buffer and leaves the processing to main or a task. Shared data must be protected with a critical section.')),
- (T('ทำไมเลี่ยง dynamic allocation หลัง init?', 'Why avoid dynamic allocation after init?'),
-  T('fragmentation, เวลาไม่แน่นอน, และ fail ได้ตอนรันไปนาน ๆ ระบบที่ต้องทำงานต่อเนื่องจึงจองทุกอย่างแบบ static', 'Fragmentation, unpredictable timing, and failures after long run times. Systems that must run continuously allocate everything statically.')),
- (T('อธิบาย RAII พร้อมตัวอย่าง', 'Explain RAII with an example'),
-  T('ผูกอายุ resource กับ object: CriticalSection ปิด interrupt ใน ctor คืนค่าใน dtor ออกจาก scope ทางไหนก็คืนเสมอ', 'Tie a resource\'s lifetime to an object: CriticalSection disables interrupts in its ctor and restores them in its dtor, however you leave the scope.')),
- (T('debounce มีกี่วิธี?', 'What are the ways to debounce?'),
-  T('ฮาร์ดแวร์ (RC + Schmitt trigger) และซอฟต์แวร์ (รอให้นิ่งตามเวลา หรือ sample หลายครั้ง) เลือกตามต้นทุน BOM กับ CPU', 'Hardware (RC + Schmitt trigger) and software (wait until stable for a set time, or sample several times). Choose based on BOM cost versus CPU time.')),
- (T('merge กับ rebase เลือกอย่างไร?', 'How do you choose between merge and rebase?'),
-  T('merge เก็บประวัติจริงและปลอดภัยกับ branch ที่แชร์ rebase ทำประวัติเส้นตรง ใช้กับ branch ส่วนตัวก่อนเปิด PR', 'merge keeps the real history and is safe on shared branches. rebase gives a straight-line history; use it on private branches before opening a PR.')),
- (T('pipeline CI/CD ของ firmware ควรมีอะไร?', 'What should a firmware CI/CD pipeline include?'),
-  T('build ทุก target, unit test บน host, static analysis, เก็บ artifact, release ตาม tag พร้อมเวอร์ชันฝังใน binary, ขั้นต่อไปคือ HIL test บน runner ที่ต่อบอร์ดจริง', 'Builds for every target, host unit tests, static analysis, stored artifacts, and tag-based releases with the version built into the binary. The next step is HIL tests on a runner wired to real boards.')),
-]) + fig(SVG_ROAD, T('เส้นทางต่อหลังจบคอร์ส', 'Where to go after this course'))
-   + iv(T('ประสบการณ์ PCB, failure analysis และ V&amp;V ช่วยงาน firmware ได้มาก ใน README หรือ design note ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร คนที่มาอ่านโค้ดทีหลังจะเข้าใจเหตุผล ไม่ใช่เห็นแค่ตัวเลข',
-          'PCB, failure analysis and V&amp;V experience helps firmware work a lot. Connect both sides in the README or a design note, e.g. explain how you chose the LED resistor and the debounce time, so later readers understand the reasoning, not just the numbers.')))
-
-# ---------------- page ----------------
-WK = T('สัปดาห์', 'Week')
-WEEKS = [(f'{WK} 1', ['00', '01', '02', '03', '04']), (f'{WK} 2', ['05', '06', '07', '08', '09']),
-         (f'{WK} 3', ['10', '11', '12', '13', '14']), (f'{WK} 4', ['15', '16', '17', '18'])]
-byn = {l['num']: l for l in LESSONS}
-plan = ''
-for w, nums in WEEKS:
-    items = ''.join(f'<li><a href="#l{n}"><span class="pn2 m">{n}</span><span class="pt">{html.escape(byn[n]["title"])}</span><span class="pm2">{byn[n]["mins"]}′</span></a><span class="dot" data-for="l{n}"></span></li>' for n in nums)
-    plan += f'<div class="wk"><h3>{w}</h3><ol>{items}</ol></div>'
-
-opts = ''.join(f'<option value="l{l["num"]}">{l["num"]} · {html.escape(l["title"])}</option>' for l in LESSONS)
-secs = ''
-for l in LESSONS:
-    secs += f'''<section class="lesson" id="l{l["num"]}">
-<header class="lh"><span class="big m">{l["num"]}</span><div class="lhm"><p class="mod">{MODS[l["mod"]]}</p><h2>{html.escape(l["title"])}</h2><p class="meta">{l["mins"]} {T("นาที · ฮาร์ดแวร์", "min · Hardware")}: {l["hw"]}</p></div></header>
-{l["body"]}
-<label class="done"><input type="checkbox" id="done-l{l["num"]}" data-l="l{l["num"]}"> {T("เรียนบทนี้จบแล้ว", "I finished this lesson")}</label>
-</section>'''
-
-CSS = open(os.path.join(D, 'style.css'), encoding='utf-8').read()
-JS = open(os.path.join(D, 'app.js'), encoding='utf-8').read()
-# th lives at the site root, en under /en/
-OTHER = {'th': ('en/', 'EN', 'Read in English'), 'en': ('../', 'ไทย', 'อ่านภาษาไทย')}[LANG]
-page = f'''<title>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+# Lesson content lives in lessons/lNN.py, one file per lesson, run in file order.
+for _f in sorted(os.listdir(os.path.join(D, 'lessons'))):
+    if re.fullmatch(r'l\d\d\.py', _f):
+        exec(compile(open(os.path.join(D, 'lessons', _f), encoding='utf-8').read(), _f, 'exec'))
+
+# ---------------- pages ----------------
+# Site layout (th at the root, en under en/):
+#   index.html, lesson/NN/index.html, assets/style.css, assets/app.js (assets shared by both languages)
+N = len(LESSONS)
+OUT = os.path.join(D, 'pages')
+LROOT = '' if LANG == 'th' else '../'          # from this language's home to the site root
+TITLE = T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')
+MINS = T('นาที', 'min')
+
+def strip(s): return html.unescape(re.sub(r'<[^>]+>', '', s)).strip()
+
+def add_toc(body):
+    """Give every h3 an id (s1, s2, ...) and return (body, toc links)."""
+    heads = []
+    def rep(m):
+        heads.append(strip(m.group(1)))
+        return f'<h3 id="s{len(heads)}">{m.group(1)}</h3>'
+    body = re.sub(r'<h3>(.*?)</h3>', rep, body)
+    links = ''.join(f'<li><a href="#s{i}">{html.escape(h)}</a></li>' for i, h in enumerate(heads, 1))
+    return body, heads, links
+
+def doc(title, depth, other_href, body, page_class):
+    """depth = folders below this language's home (0 for home, 2 for lesson/NN/)."""
+    up = '../' * depth
+    root = up + LROOT
+    th_href, en_href = ('./', other_href) if LANG == 'th' else (other_href, './')
+    lang_label, lang_aria, lang_code = (('EN', 'Read in English', 'en') if LANG == 'th' else ('ไทย', 'อ่านภาษาไทย', 'th'))
+    opts = ''.join(f'<option value="{up}lesson/{l["num"]}/">{l["num"]} · {html.escape(l["title"])}</option>' for l in LESSONS)
+    return f'''<!doctype html>
+<html lang="{LANG}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{html.escape(title)}</title>
+<link rel="alternate" hreflang="th" href="{th_href}"><link rel="alternate" hreflang="en" href="{en_href}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>{CSS}</style>
+<link rel="stylesheet" href="{root}assets/style.css">
+</head>
+<body class="{page_class}">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
 <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
 </defs></svg>
 <div class="bar"><div class="barin">
-<a href="#top" class="brand m">XIAO·C++</a>
-<select id="jump" aria-label="{T('ไปที่บทเรียน', 'Go to lesson')}"><option value="top">{T('สารบัญ', 'Contents')}</option>{opts}</select>
-<div class="prog" aria-label="{T('ความคืบหน้า', 'Progress')}"><div class="pf" id="pf"></div></div><span class="pc m" id="pc">0/19</span>
-<a href="{OTHER[0]}" class="lang" id="lang" hreflang="{'en' if LANG == 'th' else 'th'}" aria-label="{OTHER[2]}">{OTHER[1]}</a>
+<a href="{up or './'}" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="{T('ไปที่บทเรียน', 'Go to lesson')}"><option value="{up or './'}">{T('สารบัญ', 'Contents')}</option>{opts}</select>
+<div class="prog" aria-label="{T('ความคืบหน้า', 'Progress')}"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="{N}">0/{N}</span>
+<a href="{other_href}" class="lang" id="lang" hreflang="{lang_code}" aria-label="{lang_aria}">{lang_label}</a>
 </div></div>
-<main class="wrap" id="top">
+{body}
+<script src="{root}assets/app.js"></script>
+</body>
+</html>
+'''
+
+def write(rel, text):
+    path = os.path.join(OUT, '' if LANG == 'th' else 'en', rel)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, 'w', encoding='utf-8').write(text)
+
+# ---- lesson pages ----
+search = []
+for i, l in enumerate(LESSONS):
+    n = l['num']
+    body, heads, toc = add_toc(l['body'])
+    m = re.search(r'<p class="goal"><b>.*?</b> (.*?)</p>', body)
+    search.append(dict(n=n, t=strip(l['title']), g=strip(m.group(1)) if m else '', h=heads, u=f'lesson/{n}/', m=MODS[l['mod']]))
+    prev = LESSONS[i - 1] if i else None
+    nxt = LESSONS[i + 1] if i + 1 < N else None
+    def pager_link(x, cls, label):
+        if not x:
+            return f'<span class="{cls} none"></span>'
+        return f'<a class="{cls}" href="../{x["num"]}/"><small>{label}</small><span>{x["num"]} · {html.escape(x["title"])}</span></a>'
+    other = (f'../../en/lesson/{n}/' if LANG == 'th' else f'../../../lesson/{n}/')
+    page_body = f'''<main class="wrap">
+<nav class="crumb"><a href="../../">← {T('สารบัญ', 'Contents')}</a><span class="m">{n} / {N - 1:02d}</span></nav>
+<article class="lesson" id="l{n}">
+<header class="lh"><span class="big m">{n}</span><div class="lhm"><p class="mod">{MODS[l["mod"]]}</p><h1>{html.escape(l["title"])}</h1><p class="meta">{l["mins"]} {T("นาที · ฮาร์ดแวร์", "min · Hardware")}: {l["hw"]}</p></div></header>
+<nav class="toc" aria-label="{T('ในบทนี้', 'In this lesson')}"><b>{T('ในบทนี้', 'In this lesson')}</b><ol>{toc}</ol></nav>
+{body}
+<label class="done"><input type="checkbox" id="done-l{n}" data-l="l{n}"> {T("เรียนบทนี้จบแล้ว", "I finished this lesson")}</label>
+</article>
+<nav class="pager">{pager_link(prev, 'prev', T('← บทก่อนหน้า', '← Previous'))}{pager_link(nxt, 'next', T('บทถัดไป →', 'Next →'))}</nav>
+</main>'''
+    write(f'lesson/{n}/index.html', doc(f'{n} · {strip(l["title"])} · {TITLE}', 2, other, page_body, 'lesson-page'))
+
+# ---- home ----
+total_h = sum(l['mins'] for l in LESSONS) / 60
+mods = ''
+for key, name in MODS.items():
+    ls = [l for l in LESSONS if l['mod'] == key]
+    rows = ''.join(f'<li><a href="lesson/{l["num"]}/"><span class="pn2 m">{l["num"]}</span><span class="pt">{html.escape(l["title"])}</span><span class="pm2">{l["mins"]}′</span></a><span class="dot" data-for="l{l["num"]}"></span></li>' for l in ls)
+    mods += f'''<section class="modblock">
+<div class="modhead"><h2>{name}</h2><span class="mc m">0/{len(ls)}</span></div>
+<div class="mprog"><div class="mpf"></div></div>
+<ol>{rows}</ol>
+</section>'''
+home_body = f'''<main class="wrap" id="top">
 <header class="hero">
-<p class="eyebrow m">nRF52840 · Cortex-M4F · {T('19 บท · วันละ 20–30 นาที', '19 lessons · 20–30 min a day')}</p>
-<h1>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</h1>
+<p class="eyebrow m">nRF52840 · Cortex-M4F · {N} {T('บท · วันละ 20–30 นาที', 'lessons · 20–30 min a day')}</p>
+<h1>{TITLE}</h1>
 <p class="lede">{T('ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้โปรเจกต์ firmware ที่สมบูรณ์ มีทั้ง test, CI และ release อัตโนมัติ',
  'C++ foundations for people who already write C, learned hands-on with a real board, followed by Git, GitHub and CI/CD, ending with a complete firmware project with tests, CI and automated releases.')}</p>
+<div class="start">
+<a class="cta" id="continue" href="lesson/00/" data-start="{T('เริ่มเรียนบท 00', 'Start with lesson 00')}" data-resume="{T('เรียนต่อ: บท', 'Continue: lesson')}" data-done="{T('ทบทวนบท', 'Review lesson')}">{T('เริ่มเรียนบท 00', 'Start with lesson 00')}</a>
+<div class="search"><input type="search" id="q" placeholder="{T('ค้นหาบทเรียน เช่น volatile, Git, ปุ่ม', 'Search lessons, e.g. volatile, Git, button')}" aria-label="{T('ค้นหาบทเรียน', 'Search lessons')}" autocomplete="off">
+<ol id="results" hidden></ol><p id="noresults" class="note" hidden>{T('ไม่พบบทที่ตรงกับคำค้น', 'No lessons match your search')}</p></div>
+</div>
 </header>
 <section class="ov">
 <div class="ovg">
-<div><h2>{T('วิธีเรียน', 'How to study')}</h2><p>{T('เรียนวันละบทตามลำดับ แต่ละบทมี เป้าหมาย → แนวคิด + diagram → hands-on → คำถามเช็ก ทุกบทต่อยอดจากบทก่อน โค้ดในบท 6, 8, 11 จะถูกนำไป test และ build ใน CI ช่วงท้าย',
- 'Take one lesson a day, in order. Each lesson goes goal → concept + diagram → hands-on → check questions, and builds on the one before. The code from lessons 6, 8 and 11 is tested and built in CI near the end.')}</p>
-<p>{T('บท 00–11 ใช้ Arduino IDE 2 + core Seeed nRF52 (non-mbed) เพราะเร็วที่สุดในการเห็นผล หลักภาษาเหมือนกันทุก framework เมื่อจบแล้วย้ายไป nRF Connect SDK / Zephyr ได้ทันที',
- 'Lessons 00–11 use Arduino IDE 2 with the Seeed nRF52 (non-mbed) core, the fastest way to see results. The language rules are the same in every framework, so you can move to nRF Connect SDK / Zephyr right after.')}</p></div>
+<div><h2>{T('วิธีเรียน', 'How to study')}</h2><p>{T(f'เรียนวันละบทตามลำดับ รวม {N} บท ประมาณ {total_h:.0f} ชั่วโมง แต่ละบทมี เป้าหมาย → แนวคิด + diagram → hands-on → คำถามเช็ก ทุกบทต่อยอดจากบทก่อน โค้ดในบท 07, 10 และ 13–14 จะถูกนำไป test และ build ใน CI ช่วงท้าย',
+ f'Take one lesson a day, in order: {N} lessons, about {total_h:.0f} hours in total. Each lesson goes goal → concept + diagram → hands-on → check questions, and builds on the one before. The code from lessons 07, 10 and 13–14 is tested and built in CI near the end.')}</p>
+<p>{T('บท 00–14 ใช้ Arduino IDE 2 + core Seeed nRF52 (non-mbed) เพราะเร็วที่สุดในการเห็นผล หลักภาษาเหมือนกันทุก framework เมื่อจบแล้วย้ายไป nRF Connect SDK / Zephyr ได้ทันที',
+ 'Lessons 00–14 use Arduino IDE 2 with the Seeed nRF52 (non-mbed) core, the fastest way to see results. The language rules are the same in every framework, so you can move to nRF Connect SDK / Zephyr right after.')}</p>
+<p>{T('ความคืบหน้าและบทล่าสุดที่เปิดจะถูกจำไว้ในเบราว์เซอร์นี้ ใช้ร่วมกันทั้งภาษาไทยและอังกฤษ', 'Your progress and last opened lesson are remembered in this browser, shared between Thai and English.')}</p></div>
 <div><h2>{T('อุปกรณ์', 'Parts')}</h2><ul class="kit">
 <li><b>1</b> Seeed XIAO nRF52840 (Sense) + {T('สาย USB-C แบบ data', 'USB-C data cable')}</li>
 <li><b>1</b> breadboard + {T('สาย jumper', 'jumper wires')}</li>
 <li><b>1</b> LED 5 mm + R 1 kΩ</li>
 <li><b>1</b> {T('ปุ่มกด tactile', 'tactile push button')}</li>
 <li><b>1</b> potentiometer 10 kΩ</li>
-<li><b>—</b> Git, Arduino IDE 2, arduino-cli, {T('บัญชี GitHub', 'GitHub account')}</li></ul></div>
+<li><b>—</b> Arduino IDE 2, Git, {T('บัญชี GitHub (ติดตั้งในบทที่ใช้)', 'GitHub account (set up in the lessons that use them)')}</li></ul></div>
 </div>
-<div class="plan">{plan}</div>
 </section>
-{secs}
+<section class="mods">{mods}</section>
 <section class="author" id="author">
 <p class="mod">{T('ผู้จัดทำ', 'Author')}</p>
 <p>{T('Hardware &amp; firmware engineer ประสบการณ์กว่า 13 ปีในงานออกแบบวงจร, PCB, firmware C/C++, การทดสอบ V&amp;V และ failure analysis ของอุปกรณ์ wearable และ IoT เขียนคอร์สนี้จากการเรียนจริงบนบอร์ด XIAO nRF52840 เพื่อแบ่งปันให้คนที่อยากเริ่มสาย embedded',
  'Hardware &amp; firmware engineer with over 13 years in circuit design, PCB, C/C++ firmware, V&amp;V testing and failure analysis for wearable and IoT devices. I wrote this course while learning on the XIAO nRF52840 myself, to share it with anyone starting out in embedded.')}</p>
 <p class="links"><span>GitHub: <a href="https://github.com/wiputpong-k">github.com/wiputpong-k</a></span><span>{T('ข้อเสนอแนะ', 'Feedback')}: <a href="https://github.com/wiputpong-k/embedded-cpp-xiao/issues">{T('เปิด Issue ใน repo ของคอร์ส', 'open an issue in the course repo')}</a></span></p>
 </section>
-<footer class="ft"><p>{T('ตรวจแล้ว: Debouncer.h, RingBuffer.h และ test_main.cpp คอมไพล์ด้วย g++ 13 (-Wall -Wextra -Werror) และ test ผ่านทั้งหมด ส่วนโค้ดบนบอร์ดและ workflow ให้ยืนยัน FQBN กับเวอร์ชัน core ในเครื่องของคุณ',
- 'Verified: Debouncer.h, RingBuffer.h and test_main.cpp compile with g++ 13 (-Wall -Wextra -Werror) and all tests pass. For the on-board code and workflows, confirm the FQBN and core version on your own machine.')}</p></footer>
+<footer class="ft"><p>{T('ตรวจแล้ว: Debouncer.h, RingBuffer.h และ test_main.cpp คอมไพล์ด้วย g++ (-Wall -Wextra -Werror) และ test ผ่านทั้งหมด ส่วนโค้ดบนบอร์ดและ workflow ให้ยืนยัน FQBN กับเวอร์ชัน core ในเครื่องของคุณ',
+ 'Verified: Debouncer.h, RingBuffer.h and test_main.cpp compile with g++ (-Wall -Wextra -Werror) and all tests pass. For the on-board code and workflows, confirm the FQBN and core version on your own machine.')}</p></footer>
 </main>
-<script>{JS}</script>'''
-sfx = '' if LANG == 'th' else '-en'
-open(os.path.join(D, f'course{sfx}.html'), 'w', encoding='utf-8').write(page)
-print(LANG, len(page))
-alt = {'th': ('./', 'en/'), 'en': ('../', './')}[LANG]
-std = (f'<!doctype html>\n<html lang="{LANG}">\n<head>\n<meta charset="utf-8">\n'
-       '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-       f'<link rel="alternate" hreflang="th" href="{alt[0]}"><link rel="alternate" hreflang="en" href="{alt[1]}">\n'
-       '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n'
-       + page.replace('<div class="bar">', '</head>\n<body>\n<div class="bar">', 1) + '\n</body>\n</html>\n')
-out = os.path.join(D, 'pages', '' if LANG == 'th' else 'en')
-os.makedirs(out, exist_ok=True)
-open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(std)
+<script type="application/json" id="lessons-index">{json.dumps(search, ensure_ascii=False).replace('</', '<\\/')}</script>'''
+write('index.html', doc(TITLE, 0, 'en/' if LANG == 'th' else '../', home_body, 'home-page'))
+
+if LANG == 'th':  # shared assets, written once
+    os.makedirs(os.path.join(OUT, 'assets'), exist_ok=True)
+    for f in ('style.css', 'app.js'):
+        shutil.copyfile(os.path.join(D, f), os.path.join(OUT, 'assets', f))
+print(LANG, N, 'lessons')

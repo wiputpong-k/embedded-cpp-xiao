@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>04 · class: encapsulation and constructors · Embedded C++ on XIAO</title>
+<link rel="alternate" hreflang="th" href="../../../lesson/04/"><link rel="alternate" hreflang="en" href="./">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../../assets/style.css">
+</head>
+<body class="lesson-page">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+<marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mka"/></marker>
+</defs></svg>
+<div class="bar"><div class="barin">
+<a href="../../" class="brand m">XIAO·C++</a>
+<select id="jump" aria-label="Go to lesson"><option value="../../">Contents</option><option value="../../lesson/00/">00 · Install the tools + first Blink</option><option value="../../lesson/01/">01 · .ino is C++, and the path from code to board</option><option value="../../lesson/02/">02 · Reference, const and constexpr instead of #define</option><option value="../../lesson/03/">03 · namespace, overloading, enum class</option><option value="../../lesson/04/">04 · class: encapsulation and constructors</option><option value="../../lesson/05/">05 · Split code into files: headers and src/</option><option value="../../lesson/06/">06 · RAII and destructors</option><option value="../../lesson/07/">07 · Buttons and debounce</option><option value="../../lesson/08/">08 · State machine</option><option value="../../lesson/09/">09 · Inheritance, virtual and interfaces</option><option value="../../lesson/10/">10 · Template: RingBuffer&lt;T, N&gt;</option><option value="../../lesson/11/">11 · Memory in embedded systems</option><option value="../../lesson/12/">12 · Interrupts, volatile and lambdas</option><option value="../../lesson/13/">13 · Mini project 1: cooperative scheduler</option><option value="../../lesson/14/">14 · Mini project 2: commands over Serial</option><option value="../../lesson/15/">15 · Install Git and make your first commit</option><option value="../../lesson/16/">16 · Branch, merge and resolve conflicts</option><option value="../../lesson/17/">17 · GitHub: create a repo and push</option><option value="../../lesson/18/">18 · Pull Request</option><option value="../../lesson/19/">19 · Separate logic from hardware + run tests on a PC</option><option value="../../lesson/20/">20 · Write your own unit tests</option><option value="../../lesson/21/">21 · CI 1: run tests automatically with GitHub Actions</option><option value="../../lesson/22/">22 · CI 2: compile the firmware in CI</option><option value="../../lesson/23/">23 · CD: automatic firmware releases from tags</option><option value="../../lesson/24/">24 · Capstone and review</option></select>
+<div class="prog" aria-label="Progress"><div class="pf" id="pf"></div></div><span class="pc m" id="pc" data-total="25">0/25</span>
+<a href="../../../lesson/04/" class="lang" id="lang" hreflang="th" aria-label="อ่านภาษาไทย">ไทย</a>
+</div></div>
+<main class="wrap">
+<nav class="crumb"><a href="../../">← Contents</a><span class="m">04 / 24</span></nav>
+<article class="lesson" id="l04">
+<header class="lh"><span class="big m">04</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>class: encapsulation and constructors</h1><p class="meta">30 min · Hardware: LED + R 1 kΩ</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Wire it up</a></li><li><a href="#s2">Hands-on</a></li><li><a href="#s3">Check your understanding</a></li></ol></nav>
+<p class="goal"><b>Goal</b> Wire an external LED, and write a Led class that hides the active-LOW detail inside</p><div class="vs"><div><span class="tag">C</span><p>A struct holds the data and a separate function <code class="il">led_on(&amp;led)</code> acts on it. Anyone can change the fields.</p></div><div><span class="tag t2">C++</span><p>Data (private) and behavior (public) live together. The compiled code is about the same size, because <code class="il">this</code> is just a hidden pointer argument.</p></div></div>
+<h3 id="s1">Wire it up</h3>
+<p>A breadboard lets you connect parts without soldering. The 5 holes in each short row (across the center gap) are connected inside. The long rows along the edges, marked red and blue, are the power and GND rails.</p>
+<ol>
+<li>Always unplug the USB cable before you change the wiring.</li>
+<li>Press the XIAO into the breadboard across the center gap, so the two rows of pins are on opposite sides. (If the board has no header pins soldered yet, solder them first.)</li>
+<li>Find the LED polarity: the long leg is positive (anode), the short leg is negative (cathode), and the flat edge on the LED rim marks the negative side.</li>
+<li>Run a jumper wire from pin D2 to one leg of the 1 kΩ resistor (resistors have no polarity).</li>
+<li>Connect the other resistor leg to the LED's long leg.</li>
+<li>Connect the LED's short leg to the board's GND pin.</li>
+</ol>
+<p class="note">If the LED does not light, try flipping it first; that is the most common cause. The 1 kΩ resistor limits the current. Never connect an LED straight to a pin without it.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 160" role="img">
+<rect x="8" y="50" width="78" height="50" rx="8" class="bm"/><text x="47" y="72" text-anchor="middle" class="tt m">XIAO</text><text x="47" y="89" text-anchor="middle" class="sub m">D2</text>
+<line x1="86" y1="75" x2="126" y2="75" class="w"/>
+<polyline points="126,75 132,63 144,87 156,63 168,87 180,63 186,75" class="w acc"/>
+<text x="156" y="52" text-anchor="middle" class="tt m acc">1 kΩ</text>
+<line x1="186" y1="75" x2="226" y2="75" class="w"/>
+<polygon points="226,60 226,90 254,75" class="ba"/><line x1="256" y1="60" x2="256" y2="90" class="w"/>
+<line x1="246" y1="56" x2="256" y2="46" class="ln" marker-end="url(#ah)"/><line x1="236" y1="54" x2="246" y2="44" class="ln" marker-end="url(#ah)"/>
+<text x="240" y="112" text-anchor="middle" class="sub">LED (long leg = +)</text>
+<line x1="256" y1="75" x2="320" y2="75" class="w"/><line x1="320" y1="75" x2="320" y2="104" class="w"/>
+<line x1="304" y1="104" x2="336" y2="104" class="w"/><line x1="309" y1="111" x2="331" y2="111" class="w"/><line x1="314" y1="118" x2="326" y2="118" class="w"/>
+<text x="344" y="114" class="tt m">GND</text>
+<text x="8" y="148" class="sub">I ≈ (3.3 − 2.0) V / 1 kΩ ≈ 1.3 mA : bright enough, safe for GPIO</text>
+</svg></div><figcaption>External LED on D2 through 1 kΩ to GND (active-HIGH)</figcaption></figure>
+<h3 id="s2">Hands-on</h3>
+<ol>
+<li>Plug the USB cable back in and open <b>File → New Sketch</b>.</li>
+<li>Copy the code below over the starter code, then <b>File → Save As…</b> and name it <code class="il">led_class</code>.</li>
+<li>Click <b>Upload</b>. Both the red on-board LED and the external LED should blink together every 0.3 s.</li>
+</ol><div class="code"><div class="cl">led_class.ino</div><pre><code>class Led {
+public:
+  Led(uint8_t pin, bool activeLow) : pin_(pin), activeLow_(activeLow) {}
+
+  void begin() { pinMode(pin_, OUTPUT); off(); }
+  void on()     { write(true); }
+  void off()    { write(false); }
+  void toggle() { write(!isOn_); }
+  bool isOn() const { return isOn_; }   // const method: does not change state
+
+private:
+  void write(bool on) {
+    isOn_ = on;
+    digitalWrite(pin_, (on != activeLow_) ? HIGH : LOW);
+  }
+  uint8_t pin_;
+  bool activeLow_;
+  bool isOn_ = false;
+};
+
+Led red(LED_RED, true);   // on-board: active-LOW
+Led ext(D2, false);       // external: active-HIGH
+
+void setup() {
+  red.begin();
+  ext.begin();
+}
+
+void loop() {
+  red.toggle();
+  ext.toggle();
+  delay(300);
+}</code></pre></div>
+<p>Notice that both LEDs light at the same time, even though the on-board LED is active-LOW and the external one is active-HIGH. The class handles that inside <code class="il">write()</code>; callers just use <code class="il">on()</code> or <code class="il">toggle()</code> without knowing how the LED is wired.</p>
+<p class="note">Why a separate <code class="il">begin()</code> instead of calling <code class="il">pinMode</code> in the constructor? Global objects are constructed before <code class="il">main()</code> and before <code class="il">init()</code>, so the hardware may not be ready yet. This is a standard embedded C++ pattern.</p>
+<h3 id="s3">Check your understanding</h3><details><summary>Why is a member initializer list (: pin_(pin)) better than assigning in the body?</summary><p>Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.</p></details><details><summary>Roughly how many bytes of RAM does a Led object use?</summary><p>About 3–4 bytes (pin_, activeLow_, isOn_ + padding). Member functions cost no RAM per object; they live in flash and are shared.</p></details>
+<label class="done"><input type="checkbox" id="done-l04" data-l="l04"> I finished this lesson</label>
+</article>
+<nav class="pager"><a class="prev" href="../03/"><small>← Previous</small><span>03 · namespace, overloading, enum class</span></a><a class="next" href="../05/"><small>Next →</small><span>05 · Split code into files: headers and src/</span></a></nav>
+</main>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>
