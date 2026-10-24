@@ -26,7 +26,7 @@ enum class Mode : uint8_t { Off, Slow, Fast };
 Debouncer button;
 Mode mode = Mode::Off;
 uint32_t lastToggle = 0;
-bool ledOn = false;
+bool ledLit = false;
 
 Mode next(Mode m) {
   switch (m) {
@@ -55,8 +55,8 @@ void loop() {
     digitalWrite(LED_GREEN, HIGH);
   } else if (now - lastToggle >= periodMs(mode)) {
     lastToggle = now;
-    ledOn = !ledOn;
-    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
+    ledLit = !ledLit;
+    digitalWrite(LED_GREEN, ledLit ? LOW : HIGH);
   }
 }''', 'button_modes.ino') + T('''
 <p>สังเกตว่าการกระพริบใช้ <code class="il">now - lastToggle &gt;= periodMs(mode)</code> แทน <code class="il">delay()</code> loop จึงวนเร็วตลอดเวลา และตอบสนองต่อปุ่มได้ทันทีแม้อยู่ในโหมด Slow</p>

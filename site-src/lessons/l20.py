@@ -33,7 +33,7 @@ lesson('20', 'C', T('เขียน unit test เอง', 'Write your own unit 
 <h3>Hands-on 2: add your own tests</h3>
 <p>Add the functions below above <code class="il">main()</code> in <code class="il">test/test_main.cpp</code>, then add <code class="il">test_average_empty();</code> and <code class="il">test_debouncer_release();</code> to <code class="il">main()</code> after the existing tests. Make them pass, then commit.</p>
 ''') + code('''static void test_average_empty() {
-  RingBuffer<int, 4> rb;
+  xiao::RingBuffer<int, 4> rb;
   CHECK(average(rb) == 0.0f);      // ว่าง → 0 ไม่หารด้วยศูนย์
 }
 

@@ -13,7 +13,7 @@ static int failures = 0;
   } while (0)
 
 static void test_ringbuffer() {
-  RingBuffer<int, 3> rb;
+  xiao::RingBuffer<int, 3> rb;
   CHECK(rb.size() == 0);
   CHECK(rb.push(1) && rb.push(2) && rb.push(3));
   CHECK(!rb.push(4));          // เต็มแล้ว

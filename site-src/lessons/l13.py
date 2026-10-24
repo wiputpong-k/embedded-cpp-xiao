@@ -14,7 +14,7 @@ constexpr uint8_t kPotPin    = A0;
 Led status(LED_GREEN, true);
 Led ext(D2, false);
 Debouncer button;
-RingBuffer<uint16_t, 16> samples;
+xiao::RingBuffer<uint16_t, 16> samples;
 bool paused = false;
 
 struct Task {

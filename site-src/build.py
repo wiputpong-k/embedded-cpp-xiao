@@ -22,7 +22,8 @@ RING, DEB, TEST = rd('firmware/src/RingBuffer.h'), rd('firmware/src/Debouncer.h'
 DEB = tr(DEB, {'ไม่เรียก Arduino API เลย จึง test บน PC ได้': 'never calls the Arduino API, so it can be tested on a PC',
                'true = กดอยู่ (แปลง active-LOW มาแล้ว), nowMs: เวลาปัจจุบัน': 'true = pressed (already converted from active-LOW), nowMs: current time',
                'ยังเด้งอยู่ → เริ่มจับเวลาใหม่': 'still bouncing → restart the timer'})
-RING = tr(RING, {'FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile': 'Fixed-size FIFO, no heap: N is set at compile time',
+RING = tr(RING, {'core ของ Seeed nRF52 มี class RingBuffer อยู่แล้ว จึงต้องอยู่ใน namespace ไม่ให้ชื่อชนกัน': 'The Seeed nRF52 core already has a class RingBuffer, so this one lives in a namespace to avoid the clash',
+                 'FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile': 'Fixed-size FIFO, no heap: N is set at compile time',
                  '// เต็มแล้วให้ทิ้งตัวเก่าสุด (เหมาะกับ moving average)': '// when full, drop the oldest (good for a moving average)',
                  '// เต็ม': '// full', '// ว่าง': '// empty', '// 0 = เก่าสุด': '// 0 = oldest'})
 TEST = tr(TEST, {'// เต็มแล้ว': '// already full', '// FIFO: ออกตัวแรกก่อน': '// FIFO: first in, first out', '// เต็ม → ทิ้ง 2': '// full → drops 2',

@@ -1,6 +1,9 @@
 #pragma once
 #include <stddef.h>
 
+// core ของ Seeed nRF52 มี class RingBuffer อยู่แล้ว จึงต้องอยู่ใน namespace ไม่ให้ชื่อชนกัน
+namespace xiao {
+
 // FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile
 template <typename T, size_t N>
 class RingBuffer {
@@ -48,3 +51,5 @@ float average(const RingBuffer<T, N>& rb) {
   for (size_t i = 0; i < rb.size(); ++i) sum += rb.at(i);
   return sum / rb.size();
 }
+
+}  // namespace xiao
