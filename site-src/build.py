@@ -379,11 +379,14 @@ def add_toc(body):
     links = ''.join(f'<li><a href="#s{i}">{html.escape(h)}</a></li>' for i, h in enumerate(heads, 1))
     return body, heads, links
 
-def doc(title, depth, other_href, body, page_class):
-    """depth = folders below this language's home (0 for home, 2 for lesson/NN/)."""
+SITE = 'https://wiputpong-k.github.io/embedded-cpp-xiao/'
+def url(lang, path): return SITE + ('' if lang == 'th' else 'en/') + path
+
+def doc(title, depth, other_href, body, page_class, path, desc):
+    """depth = folders below this language's home (0 for home, 2 for lesson/NN/).
+    path = page path below the language root ('' or 'lesson/NN/'); desc = search-result snippet."""
     up = '../' * depth
     root = up + LROOT
-    th_href, en_href = ('./', other_href) if LANG == 'th' else (other_href, './')
     lang_label, lang_aria, lang_code = (('EN', 'Read in English', 'en') if LANG == 'th' else ('ไทย', 'อ่านภาษาไทย', 'th'))
     opts = ''.join(f'<option value="{up}lesson/{l["num"]}/">{l["num"]} · {html.escape(l["title"])}</option>' for l in LESSONS)
     return f'''<!doctype html>
@@ -392,7 +395,9 @@ def doc(title, depth, other_href, body, page_class):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(title)}</title>
-<link rel="alternate" hreflang="th" href="{th_href}"><link rel="alternate" hreflang="en" href="{en_href}">
+<meta name="description" content="{html.escape(desc)}">
+<link rel="canonical" href="{url(LANG, path)}">
+<link rel="alternate" hreflang="th" href="{url('th', path)}"><link rel="alternate" hreflang="en" href="{url('en', path)}"><link rel="alternate" hreflang="x-default" href="{url('th', path)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="{root}assets/style.css?v={ASSET_V}">
@@ -425,7 +430,8 @@ for i, l in enumerate(LESSONS):
     n = l['num']
     body, heads, toc = add_toc(l['body'])
     m = re.search(r'<p class="goal"><b>.*?</b> (.*?)</p>', body)
-    search.append(dict(n=n, t=strip(l['title']), g=strip(m.group(1)) if m else '', h=heads, u=f'lesson/{n}/', m=MODS[l['mod']]))
+    goal_text = strip(m.group(1)) if m else ''
+    search.append(dict(n=n, t=strip(l['title']), g=goal_text, h=heads, u=f'lesson/{n}/', m=MODS[l['mod']]))
     prev = LESSONS[i - 1] if i else None
     nxt = LESSONS[i + 1] if i + 1 < N else None
     def pager_link(x, cls, label):
@@ -443,7 +449,8 @@ for i, l in enumerate(LESSONS):
 </article>
 <nav class="pager">{pager_link(prev, 'prev', T('← บทก่อนหน้า', '← Previous'))}{pager_link(nxt, 'next', T('บทถัดไป →', 'Next →'))}</nav>
 </main>'''
-    write(f'lesson/{n}/index.html', doc(f'{n} · {strip(l["title"])} · {TITLE}', 2, other, page_body, 'lesson-page'))
+    write(f'lesson/{n}/index.html', doc(f'{n} · {strip(l["title"])} · {TITLE}', 2, other, page_body, 'lesson-page', f'lesson/{n}/',
+                                            f'{T("บท", "Lesson")} {n}: {goal_text} · {TITLE}'))
 
 # ---- home ----
 total_h = sum(l['mins'] for l in LESSONS) / 60
@@ -495,9 +502,20 @@ home_body = f'''<main class="wrap" id="top">
  'Verified: Debouncer.h, RingBuffer.h and test_main.cpp compile with g++ (-Wall -Wextra -Werror) and all tests pass. For the on-board code and workflows, confirm the FQBN and core version on your own machine.')}</p></footer>
 </main>
 <script type="application/json" id="lessons-index">{json.dumps(search, ensure_ascii=False).replace('</', '<\\/')}</script>'''
-write('index.html', doc(TITLE, 0, 'en/' if LANG == 'th' else '../', home_body, 'home-page'))
+HOME_DESC = T(f'คอร์สฟรี {N} บท เรียน C++ สำหรับงาน embedded บนบอร์ด Seeed XIAO nRF52840 สำหรับคนที่เขียน C มาแล้ว ลงมือทีละขั้นบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD',
+              f'A free {N}-lesson course on embedded C++ for C programmers, hands-on with the Seeed XIAO nRF52840 board, followed by Git, GitHub and CI/CD.')
+write('index.html', doc(TITLE, 0, 'en/' if LANG == 'th' else '../', home_body, 'home-page', '', HOME_DESC))
 
-if LANG == 'th':  # shared assets, written once
+if LANG == 'th':  # shared assets and sitemap, written once
+    paths = [''] + [f'lesson/{l["num"]}/' for l in LESSONS]
+    def entry(lang, p):
+        alts = ''.join(f'<xhtml:link rel="alternate" hreflang="{a}" href="{url(a, p)}"/>' for a in LANGS)
+        return f'<url><loc>{url(lang, p)}</loc>{alts}</url>'
+    os.makedirs(OUT, exist_ok=True)
+    open(os.path.join(OUT, 'sitemap.xml'), 'w', encoding='utf-8').write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+        + '\n'.join(entry(lang, p) for p in paths for lang in LANGS) + '\n</urlset>\n')
     os.makedirs(os.path.join(OUT, 'assets'), exist_ok=True)
     for f in ('style.css', 'app.js'):
         shutil.copyfile(os.path.join(D, f), os.path.join(OUT, 'assets', f))
