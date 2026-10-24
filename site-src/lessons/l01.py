@@ -1,15 +1,77 @@
-lesson('01', 'A', T('.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด', '.ino is C++, and the path from code to board'), 20, BOARD, goal(T('เข้าใจว่า Arduino ซ่อนอะไรไว้ และเห็น toolchain จริง', 'See what Arduino hides from you, and the real toolchain')) + T('''
-<p>ไฟล์ .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ ส่วน <code class="il">main()</code> อยู่ใน core:</p>
+lesson('01', 'A', T('.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด', '.ino is C++, and the path from code to board'), 25, BOARD, goal(T('เข้าใจว่า Arduino ซ่อนอะไรไว้ และเห็น toolchain จริง', 'See what Arduino hides from you, and the real toolchain')) + T('''
+<p>บนคอมพิวเตอร์ โปรแกรม C/C++ เริ่มที่ <code class="il">main()</code> ซึ่ง OS เป็นคนเรียก แต่บน <b>microcontroller</b> (MCU: ชิปตัวเดียวที่มี CPU, หน่วยความจำ และขา I/O อยู่ในตัว เช่น nRF52840 บน XIAO) ไม่มี OS คอยเรียกให้ แล้วทำไม sketch ของ Arduino ถึงไม่ต้องเขียน <code class="il">main()</code>? เพราะ Arduino ซ่อนไว้ให้</p>
+<p>ไฟล์ .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ คำศัพท์ในย่อหน้านี้:</p>
+<ul>
+<li><b>toolchain</b> ชุดโปรแกรมที่แปลงโค้ดเป็นไฟล์ที่ลงชิปได้ (compiler, linker, เครื่องมือแปลงไฟล์) IDE เรียกให้เองเมื่อกด Verify</li>
+<li><b>arm-none-eabi-g++</b> g++ แบบ <b>cross-compiler</b> คือรันบน PC แต่สร้างโค้ดให้ CPU อื่น: <i>arm</i> = CPU ตระกูล ARM (nRF52840 ใช้ Cortex-M4F), <i>none</i> = ไม่มี OS, <i>eabi</i> = มาตรฐานการเรียกฟังก์ชันและจัดข้อมูลของ ARM สำหรับ embedded</li>
+<li><b>core</b> โค้ดที่ผู้ผลิตเตรียมไว้ให้ชิปรุ่นนั้น มี <code class="il">main()</code>, <code class="il">digitalWrite()</code>, <code class="il">Serial</code> ฯลฯ คือสิ่งที่ติดตั้งจาก Boards Manager ในบท 00</li>
+<li><b>function prototype</b> บรรทัดประกาศฟังก์ชันล่วงหน้า เช่น <code class="il">void blink(int ms);</code> C++ บังคับให้ประกาศก่อนเรียก ใน .ino เขียนฟังก์ชันไว้ท้ายไฟล์ได้เพราะ IDE สร้างบรรทัดนี้ให้</li>
+</ul>
+<p><code class="il">main()</code> ตัวจริงอยู่ใน core:</p>
 ''', '''
-<p>A .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. <code class="il">main()</code> lives in the core:</p>
+<p>On a computer, a C/C++ program starts at <code class="il">main()</code>, which the OS calls. A <b>microcontroller</b> (MCU: a single chip with CPU, memory and I/O pins built in, like the nRF52840 on the XIAO) has no OS to call it. So why does an Arduino sketch have no <code class="il">main()</code>? Because Arduino hides it from you.</p>
+<p>A .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. The terms in that paragraph:</p>
+<ul>
+<li><b>toolchain</b>: the set of programs that turns code into a file the chip can run (compiler, linker, file converters). The IDE runs them when you press Verify.</li>
+<li><b>arm-none-eabi-g++</b>: a <b>cross-compiler</b> version of g++. It runs on your PC but produces code for another CPU: <i>arm</i> = the ARM CPU family (the nRF52840 is a Cortex-M4F), <i>none</i> = no OS, <i>eabi</i> = ARM's embedded standard for calling functions and laying out data.</li>
+<li><b>core</b>: code the vendor provides for that chip, with <code class="il">main()</code>, <code class="il">digitalWrite()</code>, <code class="il">Serial</code> and so on. It is what you installed from Boards Manager in lesson 00.</li>
+<li><b>function prototype</b>: a line that declares a function ahead of time, e.g. <code class="il">void blink(int ms);</code>. C++ requires a declaration before a call. In a .ino you can put functions at the end of the file because the IDE writes these lines for you.</li>
+</ul>
+<p>The real <code class="il">main()</code> lives in the core:</p>
 ''') + code('''int main() {
   init();          // clock, timer, USB CDC
   setup();
   for (;;) {
     loop();
   }
-}''', T('core/main.cpp (ย่อ)', 'core/main.cpp (trimmed)')) + fig(SVG_BUILD, T('pipeline การ build ที่เกิดขึ้นทุกครั้งที่กด Verify', 'The build pipeline that runs every time you press Verify')) + '''
-<h3>Hands-on</h3>''' + code('''void setup() {
+}''', T('core/main.cpp (ย่อ)', 'core/main.cpp (trimmed)')) + T('''
+<p>เมื่อจ่ายไฟหรือกด reset ชิปจะเข้า <code class="il">main()</code> ของ core ซึ่งเรียก <code class="il">init()</code> เตรียมฮาร์ดแวร์ เรียก <code class="il">setup()</code> ครั้งเดียว แล้ววนเรียก <code class="il">loop()</code> ไม่รู้จบ เพราะ firmware ไม่มี OS ให้ "จบแล้วกลับไป" สิ่งที่ <code class="il">init()</code> เตรียม:</p>
+<ul>
+<li><b>clock</b> สัญญาณจังหวะที่ขับ CPU และวงจรอื่น (nRF52840 = 64 MHz) ต้องตั้งก่อนทุกอย่าง</li>
+<li><b>timer</b> วงจรนับเวลาในชิป เป็นที่มาของ <code class="il">millis()</code> และ <code class="il">delay()</code></li>
+<li><b>USB CDC</b> ทำให้บอร์ดแสดงตัวเป็น serial port เสมือนผ่านสาย USB (พอร์ต COM ที่เห็นใน Windows) Serial Monitor คุยกับบอร์ดผ่านช่องนี้</li>
+</ul>
+<p class="note">core nRF52 ตัวจริงรัน <code class="il">setup()</code>/<code class="il">loop()</code> ใน task ของ FreeRTOS (OS ขนาดเล็กสำหรับ MCU) และมีขั้นตอนมากกว่านี้ แต่ลำดับ init → setup → loop เหมือนเดิม</p>
+''', '''
+<p>On power-up or reset, the chip enters the core's <code class="il">main()</code>. It calls <code class="il">init()</code> to prepare the hardware, calls <code class="il">setup()</code> once, then calls <code class="il">loop()</code> forever, because firmware has no OS to "return to". What <code class="il">init()</code> prepares:</p>
+<ul>
+<li><b>clock</b>: the timing signal that drives the CPU and other circuits (64 MHz on the nRF52840). It must be set up first.</li>
+<li><b>timer</b>: a counting circuit in the chip. <code class="il">millis()</code> and <code class="il">delay()</code> are built on it.</li>
+<li><b>USB CDC</b>: makes the board appear as a virtual serial port over USB (the COM port you see in Windows). Serial Monitor talks to the board through it.</li>
+</ul>
+<p class="note">The real nRF52 core runs <code class="il">setup()</code>/<code class="il">loop()</code> inside a FreeRTOS task (a small OS for MCUs) and does more steps, but the order init → setup → loop is the same.</p>
+''') + fig(SVG_BUILD, T('pipeline การ build ที่เกิดขึ้นทุกครั้งที่กด Verify', 'The build pipeline that runs every time you press Verify')) + T('''
+<p>ไฟล์และเครื่องมือในรูป:</p>
+<ul>
+<li><b>.o</b> (object file) ผลการ compile ทีละไฟล์ เป็นคำสั่งเครื่องของ ARM แล้ว แต่ยังไม่มี address จริง และยังเรียกฟังก์ชันในไฟล์อื่นไม่ได้</li>
+<li><b>linker</b> รวม .o ทุกไฟล์กับ core.a (core ที่ compile ไว้แล้ว) และ library แล้วต่อการเรียกข้ามไฟล์ให้ครบ</li>
+<li><b>linker script</b> ไฟล์บอก linker ว่า flash และ RAM เริ่มที่ address ไหน มีขนาดเท่าไร และโค้ดกับตัวแปรวางตรงไหน</li>
+<li><b>.elf</b> ผลของ linker มีทั้งโค้ดและ debug symbol (ชื่อฟังก์ชัน ตัวแปร เลขบรรทัด)</li>
+<li><b>objcopy</b> ตัดเหลือเฉพาะ byte ที่จะเขียนลงชิป (.hex, .uf2) จากนั้นขั้น upload หรือ <b>flash</b> ส่งไฟล์ให้ <b>bootloader</b> (โปรแกรมเล็ก ๆ ในชิปที่รับ firmware ใหม่) เขียนลงหน่วยความจำ</li>
+</ul>
+''', '''
+<p>The files and tools in the figure:</p>
+<ul>
+<li><b>.o</b> (object file): one source file after compiling. It is ARM machine code, but it has no final addresses yet and cannot call functions in other files.</li>
+<li><b>linker</b>: combines all .o files with core.a (the precompiled core) and libraries, and connects calls between files.</li>
+<li><b>linker script</b>: tells the linker where flash and RAM start, how big they are, and where code and variables go.</li>
+<li><b>.elf</b>: the linker's output, holding the code plus debug symbols (function and variable names, line numbers).</li>
+<li><b>objcopy</b>: keeps only the bytes to be written to the chip (.hex, .uf2). Then the upload, or <b>flash</b>, step hands the file to the <b>bootloader</b> (a small program on the chip that receives new firmware), which writes it into memory.</li>
+</ul>
+''') + '''
+<h3>Hands-on</h3>''' + T('''
+<ol>
+<li>เปิด Arduino IDE เลือกบอร์ดและพอร์ตเหมือนบท 00 แล้วสร้าง sketch ใหม่ (<b>File → New Sketch</b>) วางโค้ดด้านล่างแทนของเดิม บันทึกชื่อ <code class="il">whoami</code></li>
+<li>กด <b>Upload</b> รอจนแถบ Output ขึ้น <i>Device programmed</i> หรือ upload เสร็จ</li>
+<li>เปิด <b>Tools → Serial Monitor</b> แล้วตั้งความเร็วมุมขวาเป็น <b>115200 baud</b> ถ้าไม่มีข้อความขึ้น ให้กด reset บนบอร์ด 1 ครั้ง</li>
+</ol>
+''', '''
+<ol>
+<li>Open Arduino IDE, select the board and port as in lesson 00, and create a new sketch (<b>File → New Sketch</b>). Replace its contents with the code below and save it as <code class="il">whoami</code>.</li>
+<li>Press <b>Upload</b> and wait until the Output panel shows <i>Device programmed</i> or the upload finishes.</li>
+<li>Open <b>Tools → Serial Monitor</b> and set the speed at the right to <b>115200 baud</b>. If nothing appears, press reset on the board once.</li>
+</ol>
+''') + code('''void setup() {
   Serial.begin(115200);
   while (!Serial) {}             // รอ USB CDC พร้อม
   Serial.print("__cplusplus = ");  Serial.println(__cplusplus);
@@ -19,12 +81,39 @@ lesson('01', 'A', T('.ino คือ C++ และเส้นทางจาก�
 }
 
 void loop() {}''', 'whoami.ino', en={'// รอ USB CDC พร้อม': '// wait for USB CDC'}) + T('''
-<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (เช่น 201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ จากนั้นดูบรรทัดท้ายของ output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = RAM แบบ static</p>
+<ul>
+<li><code class="il">Serial.begin(115200)</code> เปิด serial ที่ 115200 baud (bit ต่อวินาที) สำหรับ USB CDC ตัวเลขนี้ไม่มีผลจริง แต่ให้ตั้งตรงกับ Serial Monitor จนเป็นนิสัย เพราะ serial แบบสายจริง (UART) ต้องตรงกันทั้งสองฝั่ง</li>
+<li><code class="il">while (!Serial) {}</code> รอจนคอมพิวเตอร์เปิดพอร์ต ไม่อย่างนั้นข้อความจะถูกส่งออกไปก่อนเปิด Serial Monitor และหายไป</li>
+<li><code class="il">sizeof(x)</code> ขนาดของชนิดข้อมูลเป็น byte</li>
+</ul>
+<p>ผลที่ควรเห็น:</p>
 ''', '''
-<p><code class="il">__cplusplus</code> tells you the language standard the compiler uses (e.g. 201103 = C++11, 201703 = C++17). Note it down, because the features you can use depend on it. Then read the last lines of the output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = static RAM.</p>
+<ul>
+<li><code class="il">Serial.begin(115200)</code> opens serial at 115200 baud (bits per second). Over USB CDC the number has no real effect, but make a habit of matching it in Serial Monitor, because a wired serial port (UART) needs both sides to agree.</li>
+<li><code class="il">while (!Serial) {}</code> waits until the computer opens the port. Otherwise the text is sent before Serial Monitor opens and is lost.</li>
+<li><code class="il">sizeof(x)</code> gives the size of a type in bytes.</li>
+</ul>
+<p>Expected output:</p>
+''') + code('''__cplusplus = 201103
+sizeof(int) = 4
+sizeof(void*) = 4
+sizeof(bool) = 1''', 'Serial Monitor') + T('''
+<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ <code class="il">int</code> และ pointer ได้ 4 byte เพราะ Cortex-M4F เป็น CPU 32-bit แต่บน Arduino Uno (8-bit) <code class="il">int</code> มีแค่ 2 byte โค้ด embedded จึงไม่ควรเดาขนาด <code class="il">int</code></p>
+<p>สุดท้ายดูบรรทัดท้ายของแถบ Output หลัง Verify หรือ Upload:</p>
+<ul>
+<li><i>Sketch uses … bytes</i> = ขนาดโปรแกรมใน <b>flash</b> หน่วยความจำถาวรที่เก็บโปรแกรม ไฟดับไม่หาย (nRF52840 มี 1 MB แต่ส่วนหนึ่งถูกจองให้ bootloader และ stack BLE จึงเห็น Maximum น้อยกว่านั้น)</li>
+<li><i>Global variables use …</i> = <b>RAM</b> แบบ static หน่วยความจำทำงาน (256 KB) ที่ไฟดับแล้วหาย "static" คือส่วนที่รู้ขนาดตั้งแต่ตอน build ได้แก่ตัวแปร global ส่วน RAM ที่เหลือใช้เป็น <b>stack</b> (ตัวแปร local) และ heap</li>
+</ul>
+''', '''
+<p><code class="il">__cplusplus</code> tells you the language standard the compiler uses (201103 = C++11, 201703 = C++17). Note it down, because the features you can use depend on it. <code class="il">int</code> and pointers are 4 bytes because the Cortex-M4F is a 32-bit CPU. On an Arduino Uno (8-bit), <code class="il">int</code> is only 2 bytes, so embedded code should not assume the size of <code class="il">int</code>.</p>
+<p>Finally, read the last lines of the Output panel after Verify or Upload:</p>
+<ul>
+<li><i>Sketch uses … bytes</i> = program size in <b>flash</b>, the permanent memory that holds the program and survives power-off (the nRF52840 has 1 MB, but part is reserved for the bootloader and the BLE stack, so the Maximum shown is smaller).</li>
+<li><i>Global variables use …</i> = static <b>RAM</b>, the working memory (256 KB) that is lost at power-off. "Static" means its size is known at build time: the global variables. The rest of RAM is used for the <b>stack</b> (local variables) and the heap.</li>
+</ul>
 ''') + qa([(T('ถ้า __cplusplus ได้ 201103 จะใช้ if constexpr ได้ไหม?', 'If __cplusplus is 201103, can you use if constexpr?'),
            T('ไม่ได้ if constexpr เป็นของ C++17 ต้องเพิ่ม flag -std=gnu++17 หรือเลี่ยงไปใช้ template overload', 'No. if constexpr is C++17. Add -std=gnu++17 or fall back to template overloads.')),
           (T('"Global variables use" นับ stack ด้วยไหม?', 'Does "Global variables use" include the stack?'),
-           T('ไม่นับ นับเฉพาะ .data + .bss ที่รู้ขนาดตอน link ตัวแปร local บน stack ไม่อยู่ในตัวเลขนี้', 'No. It counts only .data + .bss, whose sizes are known at link time. Local variables on the stack are not in that number.'))])
+           T('ไม่นับ นับเฉพาะ .data (global ที่มีค่าเริ่มต้น) + .bss (global ที่เริ่มเป็น 0) ซึ่งรู้ขนาดตอน link ตัวแปร local บน stack ไม่อยู่ในตัวเลขนี้', 'No. It counts only .data (globals with an initial value) + .bss (globals that start at 0), whose sizes are known at link time. Local variables on the stack are not in that number.'))])
    + iv(T('ในงานจริงเมื่อ build มีปัญหา ให้ไล่ตามลำดับ preprocess → compile → link (linker script กำหนด address) → objcopy → flash จะรู้ว่าพังที่ขั้นไหน และเก็บ .elf ไว้เสมอ เพราะมี debug symbol ที่ debugger ต้องใช้ ส่วน .hex/.bin คือ image ที่ลงชิป',
           'When a build breaks, walk the stages in order: preprocess → compile → link (the linker script sets the addresses) → objcopy → flash, and you will see where it failed. Always keep the .elf: it carries the debug symbols the debugger needs, while the .hex/.bin is the image that goes onto the chip.')))

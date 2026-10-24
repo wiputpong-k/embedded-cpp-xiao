@@ -25,18 +25,49 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← Contents</a><span class="m">01 / 24</span></nav>
 <article class="lesson" id="l01">
-<header class="lh"><span class="big m">01</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>.ino is C++, and the path from code to board</h1><p class="meta">20 min · Hardware: Board only</p></div></header>
+<header class="lh"><span class="big m">01</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>.ino is C++, and the path from code to board</h1><p class="meta">25 min · Hardware: Board only</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> See what Arduino hides from you, and the real toolchain</p>
-<p>A .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. <code class="il">main()</code> lives in the core:</p>
+<p>On a computer, a C/C++ program starts at <code class="il">main()</code>, which the OS calls. A <b>microcontroller</b> (MCU: a single chip with CPU, memory and I/O pins built in, like the nRF52840 on the XIAO) has no OS to call it. So why does an Arduino sketch have no <code class="il">main()</code>? Because Arduino hides it from you.</p>
+<p>A .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. The terms in that paragraph:</p>
+<ul>
+<li><b>toolchain</b>: the set of programs that turns code into a file the chip can run (compiler, linker, file converters). The IDE runs them when you press Verify.</li>
+<li><b>arm-none-eabi-g++</b>: a <b>cross-compiler</b> version of g++. It runs on your PC but produces code for another CPU: <i>arm</i> = the ARM CPU family (the nRF52840 is a Cortex-M4F), <i>none</i> = no OS, <i>eabi</i> = ARM's embedded standard for calling functions and laying out data.</li>
+<li><b>core</b>: code the vendor provides for that chip, with <code class="il">main()</code>, <code class="il">digitalWrite()</code>, <code class="il">Serial</code> and so on. It is what you installed from Boards Manager in lesson 00.</li>
+<li><b>function prototype</b>: a line that declares a function ahead of time, e.g. <code class="il">void blink(int ms);</code>. C++ requires a declaration before a call. In a .ino you can put functions at the end of the file because the IDE writes these lines for you.</li>
+</ul>
+<p>The real <code class="il">main()</code> lives in the core:</p>
 <div class="code"><div class="cl">core/main.cpp (trimmed)</div><pre><code>int main() {
   init();          // clock, timer, USB CDC
   setup();
   for (;;) {
     loop();
   }
-}</code></pre></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 470" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">firmware.ino</text><text x="200" y="49" text-anchor="middle" class="sub">what you write</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="50" rx="8" class="b"/><text x="200" y="111" text-anchor="middle" class="tt">Arduino preprocessor</text><text x="200" y="129" text-anchor="middle" class="sub">#include &lt;Arduino.h&gt; + generated prototypes</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">firmware.ino.cpp</text><text x="200" y="209" text-anchor="middle" class="sub">now a plain C++ file</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="ba"/><text x="200" y="271" text-anchor="middle" class="tt">arm-none-eabi-g++</text><text x="200" y="289" text-anchor="middle" class="sub">compile → .o (Cortex-M4F)</text><line x1="200" y1="302" x2="200" y2="326" class="ln" marker-end="url(#ah)"/><rect x="40" y="330" width="320" height="50" rx="8" class="b"/><text x="200" y="351" text-anchor="middle" class="tt">linker + linker script</text><text x="200" y="369" text-anchor="middle" class="sub">core.a + libs → .elf</text><line x1="200" y1="382" x2="200" y2="406" class="ln" marker-end="url(#ah)"/><rect x="40" y="410" width="320" height="50" rx="8" class="bm"/><text x="200" y="431" text-anchor="middle" class="tt">objcopy / packager</text><text x="200" y="449" text-anchor="middle" class="sub">.hex · .zip (DFU) · .uf2</text></svg></div><figcaption>The build pipeline that runs every time you press Verify</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">whoami.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+}</code></pre></div>
+<p>On power-up or reset, the chip enters the core's <code class="il">main()</code>. It calls <code class="il">init()</code> to prepare the hardware, calls <code class="il">setup()</code> once, then calls <code class="il">loop()</code> forever, because firmware has no OS to "return to". What <code class="il">init()</code> prepares:</p>
+<ul>
+<li><b>clock</b>: the timing signal that drives the CPU and other circuits (64 MHz on the nRF52840). It must be set up first.</li>
+<li><b>timer</b>: a counting circuit in the chip. <code class="il">millis()</code> and <code class="il">delay()</code> are built on it.</li>
+<li><b>USB CDC</b>: makes the board appear as a virtual serial port over USB (the COM port you see in Windows). Serial Monitor talks to the board through it.</li>
+</ul>
+<p class="note">The real nRF52 core runs <code class="il">setup()</code>/<code class="il">loop()</code> inside a FreeRTOS task (a small OS for MCUs) and does more steps, but the order init → setup → loop is the same.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 470" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">firmware.ino</text><text x="200" y="49" text-anchor="middle" class="sub">what you write</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="50" rx="8" class="b"/><text x="200" y="111" text-anchor="middle" class="tt">Arduino preprocessor</text><text x="200" y="129" text-anchor="middle" class="sub">#include &lt;Arduino.h&gt; + generated prototypes</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">firmware.ino.cpp</text><text x="200" y="209" text-anchor="middle" class="sub">now a plain C++ file</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="ba"/><text x="200" y="271" text-anchor="middle" class="tt">arm-none-eabi-g++</text><text x="200" y="289" text-anchor="middle" class="sub">compile → .o (Cortex-M4F)</text><line x1="200" y1="302" x2="200" y2="326" class="ln" marker-end="url(#ah)"/><rect x="40" y="330" width="320" height="50" rx="8" class="b"/><text x="200" y="351" text-anchor="middle" class="tt">linker + linker script</text><text x="200" y="369" text-anchor="middle" class="sub">core.a + libs → .elf</text><line x1="200" y1="382" x2="200" y2="406" class="ln" marker-end="url(#ah)"/><rect x="40" y="410" width="320" height="50" rx="8" class="bm"/><text x="200" y="431" text-anchor="middle" class="tt">objcopy / packager</text><text x="200" y="449" text-anchor="middle" class="sub">.hex · .zip (DFU) · .uf2</text></svg></div><figcaption>The build pipeline that runs every time you press Verify</figcaption></figure>
+<p>The files and tools in the figure:</p>
+<ul>
+<li><b>.o</b> (object file): one source file after compiling. It is ARM machine code, but it has no final addresses yet and cannot call functions in other files.</li>
+<li><b>linker</b>: combines all .o files with core.a (the precompiled core) and libraries, and connects calls between files.</li>
+<li><b>linker script</b>: tells the linker where flash and RAM start, how big they are, and where code and variables go.</li>
+<li><b>.elf</b>: the linker's output, holding the code plus debug symbols (function and variable names, line numbers).</li>
+<li><b>objcopy</b>: keeps only the bytes to be written to the chip (.hex, .uf2). Then the upload, or <b>flash</b>, step hands the file to the <b>bootloader</b> (a small program on the chip that receives new firmware), which writes it into memory.</li>
+</ul>
+
+<h3 id="s1">Hands-on</h3>
+<ol>
+<li>Open Arduino IDE, select the board and port as in lesson 00, and create a new sketch (<b>File → New Sketch</b>). Replace its contents with the code below and save it as <code class="il">whoami</code>.</li>
+<li>Press <b>Upload</b> and wait until the Output panel shows <i>Device programmed</i> or the upload finishes.</li>
+<li>Open <b>Tools → Serial Monitor</b> and set the speed at the right to <b>115200 baud</b>. If nothing appears, press reset on the board once.</li>
+</ol>
+<div class="code"><div class="cl">whoami.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}             // wait for USB CDC
@@ -47,8 +78,23 @@ void setup() {
 }
 
 void loop() {}</code></pre></div>
-<p><code class="il">__cplusplus</code> tells you the language standard the compiler uses (e.g. 201103 = C++11, 201703 = C++17). Note it down, because the features you can use depend on it. Then read the last lines of the output: <i>Sketch uses … bytes</i> = flash, <i>Global variables use …</i> = static RAM.</p>
-<h3 id="s2">Check your understanding</h3><details><summary>If __cplusplus is 201103, can you use if constexpr?</summary><p>No. if constexpr is C++17. Add -std=gnu++17 or fall back to template overloads.</p></details><details><summary>Does "Global variables use" include the stack?</summary><p>No. It counts only .data + .bss, whose sizes are known at link time. Local variables on the stack are not in that number.</p></details><aside class="iv"><b>In practice</b><p>When a build breaks, walk the stages in order: preprocess → compile → link (the linker script sets the addresses) → objcopy → flash, and you will see where it failed. Always keep the .elf: it carries the debug symbols the debugger needs, while the .hex/.bin is the image that goes onto the chip.</p></aside>
+<ul>
+<li><code class="il">Serial.begin(115200)</code> opens serial at 115200 baud (bits per second). Over USB CDC the number has no real effect, but make a habit of matching it in Serial Monitor, because a wired serial port (UART) needs both sides to agree.</li>
+<li><code class="il">while (!Serial) {}</code> waits until the computer opens the port. Otherwise the text is sent before Serial Monitor opens and is lost.</li>
+<li><code class="il">sizeof(x)</code> gives the size of a type in bytes.</li>
+</ul>
+<p>Expected output:</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>__cplusplus = 201103
+sizeof(int) = 4
+sizeof(void*) = 4
+sizeof(bool) = 1</code></pre></div>
+<p><code class="il">__cplusplus</code> tells you the language standard the compiler uses (201103 = C++11, 201703 = C++17). Note it down, because the features you can use depend on it. <code class="il">int</code> and pointers are 4 bytes because the Cortex-M4F is a 32-bit CPU. On an Arduino Uno (8-bit), <code class="il">int</code> is only 2 bytes, so embedded code should not assume the size of <code class="il">int</code>.</p>
+<p>Finally, read the last lines of the Output panel after Verify or Upload:</p>
+<ul>
+<li><i>Sketch uses … bytes</i> = program size in <b>flash</b>, the permanent memory that holds the program and survives power-off (the nRF52840 has 1 MB, but part is reserved for the bootloader and the BLE stack, so the Maximum shown is smaller).</li>
+<li><i>Global variables use …</i> = static <b>RAM</b>, the working memory (256 KB) that is lost at power-off. "Static" means its size is known at build time: the global variables. The rest of RAM is used for the <b>stack</b> (local variables) and the heap.</li>
+</ul>
+<h3 id="s2">Check your understanding</h3><details><summary>If __cplusplus is 201103, can you use if constexpr?</summary><p>No. if constexpr is C++17. Add -std=gnu++17 or fall back to template overloads.</p></details><details><summary>Does "Global variables use" include the stack?</summary><p>No. It counts only .data (globals with an initial value) + .bss (globals that start at 0), whose sizes are known at link time. Local variables on the stack are not in that number.</p></details><aside class="iv"><b>In practice</b><p>When a build breaks, walk the stages in order: preprocess → compile → link (the linker script sets the addresses) → objcopy → flash, and you will see where it failed. Always keep the .elf: it carries the debug symbols the debugger needs, while the .hex/.bin is the image that goes onto the chip.</p></aside>
 <label class="done"><input type="checkbox" id="done-l01" data-l="l01"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../00/"><small>← Previous</small><span>00 · Install the tools + first Blink</span></a><a class="next" href="../02/"><small>Next →</small><span>02 · Reference, const and constexpr instead of #define</span></a></nav>
