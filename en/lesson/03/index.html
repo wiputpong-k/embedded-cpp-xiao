@@ -25,9 +25,16 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← Contents</a><span class="m">03 / 24</span></nav>
 <article class="lesson" id="l03">
-<header class="lh"><span class="big m">03</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>namespace, overloading, enum class</h1><p class="meta">20 min · Hardware: Board only</p></div></header>
+<header class="lh"><span class="big m">03</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>namespace, overloading, enum class</h1><p class="meta">25 min · Hardware: Board only</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
-<p class="goal"><b>Goal</b> Organize names, and understand why C++ needs name mangling</p><div class="vs"><div><span class="tag">C</span><p>Function names must be unique, so you write <code class="il">log_int</code>, <code class="il">log_float</code>, and an <code class="il">enum</code> mixes with int anywhere.</p></div><div><span class="tag t2">C++</span><p>One name can be overloaded for different parameters, <code class="il">namespace</code> prevents name clashes, and <code class="il">enum class</code> never converts to int by itself and can set its size with <code class="il">: uint8_t</code>.</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<p class="goal"><b>Goal</b> Organize names, and understand why C++ needs name mangling</p><div class="vs"><div><span class="tag">C</span><p>Function names must be unique, so you write <code class="il">log_int</code>, <code class="il">log_float</code>, and an <code class="il">enum</code> mixes with int anywhere.</p></div><div><span class="tag t2">C++</span><p>One name can be overloaded for different parameters, <code class="il">namespace</code> prevents name clashes, and <code class="il">enum class</code> never converts to int by itself and can set its size with <code class="il">: uint8_t</code>.</p></div></div>
+<ul>
+<li><b>overloading</b>: several functions share one name but take different parameters. The compiler picks the one that matches the arguments.</li>
+<li><b>namespace</b>: a box for names, used as <code class="il">box::name</code>, e.g. <code class="il">logx::info</code>. Names in different boxes never clash, even if another library also has an <code class="il">info</code>.</li>
+<li><b>enum class</b>: an enum you must spell out in full, e.g. <code class="il">Mode::Slow</code>, and that never turns into a number by itself. <code class="il">: uint8_t</code> makes it take 1 byte.</li>
+</ul>
+<p>In C, a function called <code class="il">info</code> is also called <code class="il">info</code> in the <code class="il">.o</code> file. C++ allows several <code class="il">info</code> functions, so that name is not enough for the linker (lesson 01) to tell them apart. The compiler therefore appends the parameter types to the name, which is called <b>name mangling</b>. The resulting name is the <b>symbol</b>: the name the linker uses to match a call with the function body. If a symbol cannot be found you get an <code class="il">undefined reference</code> error. For example, if a sketch has no <code class="il">setup()</code>, the linker reports <code class="il">undefined reference to `setup'</code>, because the core's <code class="il">main()</code> calls it and finds nothing.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
 <text x="10" y="18" class="sub">C++ source (namespace logx)</text><text x="220" y="18" class="sub">symbol name in .o / .elf</text>
 <rect x="6" y="28" width="190" height="34" rx="6" class="b"/><text x="14" y="49" class="tt m sm">info(const char*)</text><line x1="198" y1="45" x2="212" y2="45" class="ln" marker-end="url(#ah)"/><rect x="216" y="28" width="178" height="34" rx="6" class="ba"/><text x="224" y="49" class="tt m sm">_ZN4logx4infoEPKc</text>
 <rect x="6" y="70" width="190" height="34" rx="6" class="b"/><text x="14" y="91" class="tt m sm">info(const char*, int)</text><line x1="198" y1="87" x2="212" y2="87" class="ln" marker-end="url(#ah)"/><rect x="216" y="70" width="178" height="34" rx="6" class="ba"/><text x="224" y="91" class="tt m sm">_ZN4logx4infoEPKci</text>
@@ -35,7 +42,13 @@
 <rect x="6" y="164" width="190" height="34" rx="6" class="b"/><text x="14" y="185" class="tt m sm">extern &quot;C&quot; void foo()</text><line x1="198" y1="181" x2="212" y2="181" class="ln" marker-end="url(#ah)"/><rect x="216" y="164" width="178" height="34" rx="6" class="b"/><text x="224" y="185" class="tt m sm">foo</text>
 <text x="10" y="158" class="sub">Called from C or ASM? extern "C" turns mangling off</text>
 </svg></div><figcaption>The compiler encodes parameter types into the symbol name, which makes overloading possible</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">logx.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+<h3 id="s1">Hands-on</h3>
+<p>This sketch proves that three <code class="il">info</code> functions can live side by side (the compiler picks one by its parameters), and that an <code class="il">enum class</code> refuses to become a number by itself.</p>
+<ol>
+<li>Create a new sketch, paste the code below, save it as <code class="il">logx</code>, and press <b>Upload</b>.</li>
+<li>Open <b>Tools → Serial Monitor</b> at 115200 baud. If nothing appears, press reset on the board once.</li>
+</ol>
+<div class="code"><div class="cl">logx.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
 namespace logx {
 void info(const char* msg) {
   Serial.print(&quot;[I] &quot;); Serial.println(msg);
@@ -62,7 +75,23 @@ void setup() {
   // int bad = m;   // uncomment this line: compile error
 }
 
-void loop() {}</code></pre></div><h3 id="s2">Check your understanding</h3><details><summary>How do you include a library written in C?</summary><p>Wrap the header in extern "C" { … } so the linker finds the C-style symbol names. Without it you get undefined reference errors.</p></details><details><summary>Why is enum class safer than enum?</summary><p>It never converts to int implicitly, its enumerator names do not leak into the outer scope, and you can set the underlying type to control its size in memory.</p></details>
+void loop() {}</code></pre></div>
+<ul>
+<li><b>default argument</b>: <code class="il">int digits = 2</code> means 2 is used when the caller leaves it out.</li>
+<li><code class="il">static_cast&lt;int&gt;(m)</code>: the C++ cast. It does what C's <code class="il">(int)m</code> does, but makes the intent obvious.</li>
+</ul>
+<p>Expected output (the <code class="il">uptime_ms</code> number depends on when you open Serial Monitor):</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>[I] boot
+[I] uptime_ms=1234
+[I] vbat=3.71
+[I] pi=3.1416
+[I] mode=1</code></pre></div>
+<p>What the output tells you:</p>
+<ul>
+<li><b>overloading</b>: every line calls the same <code class="il">logx::info</code>, yet the format differs by parameters. <code class="il">vbat</code> gets 2 decimals from the default argument; <code class="il">pi</code> gets the 4 you passed.</li>
+<li><b>enum class</b>: <code class="il">mode=1</code> because <code class="il">Slow</code> is the second value (counting from 0), but you had to convert it with <code class="il">static_cast</code>. Remove the <code class="il">//</code> in front of <code class="il">int bad = m;</code> and press Verify: you get <code class="il">error: cannot convert 'Mode' to 'int' in initialization</code>. Then put the <code class="il">//</code> back.</li>
+</ul>
+<h3 id="s2">Check your understanding</h3><details><summary>How do you include a library written in C?</summary><p>Wrap the header in extern "C" { … } to turn off name mangling for those functions, so the linker finds the C-style symbol names. Without it you get undefined reference errors.</p></details><details><summary>Why is enum class safer than enum?</summary><p>It never converts to int implicitly, its value names (like Off) do not leak out and clash with other names, and you can choose the storage type (: uint8_t) to control its size in memory.</p></details>
 <label class="done"><input type="checkbox" id="done-l03" data-l="l03"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../02/"><small>← Previous</small><span>02 · Reference, const and constexpr instead of #define</span></a><a class="next" href="../04/"><small>Next →</small><span>04 · class: encapsulation and constructors</span></a></nav>

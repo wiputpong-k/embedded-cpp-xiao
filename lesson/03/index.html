@@ -25,9 +25,16 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">03 / 24</span></nav>
 <article class="lesson" id="l03">
-<header class="lh"><span class="big m">03</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>namespace, overloading, enum class</h1><p class="meta">20 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<header class="lh"><span class="big m">03</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>namespace, overloading, enum class</h1><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
-<p class="goal"><b>เป้าหมาย</b> จัดระเบียบชื่อและเข้าใจว่าทำไม C++ ต้องมี name mangling</p><div class="vs"><div><span class="tag">C</span><p>ชื่อฟังก์ชันซ้ำไม่ได้ ต้องตั้ง <code class="il">log_int</code>, <code class="il">log_float</code> และ <code class="il">enum</code> ปนกับ int ได้ทุกที่</p></div><div><span class="tag t2">C++</span><p>overload ชื่อเดียวหลายพารามิเตอร์ได้ <code class="il">namespace</code> กันชื่อชน <code class="il">enum class</code> ไม่แปลงเป็น int เอง กำหนดขนาด <code class="il">: uint8_t</code> ได้</p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
+<p class="goal"><b>เป้าหมาย</b> จัดระเบียบชื่อและเข้าใจว่าทำไม C++ ต้องมี name mangling</p><div class="vs"><div><span class="tag">C</span><p>ชื่อฟังก์ชันซ้ำไม่ได้ ต้องตั้ง <code class="il">log_int</code>, <code class="il">log_float</code> และ <code class="il">enum</code> ปนกับ int ได้ทุกที่</p></div><div><span class="tag t2">C++</span><p>overload ชื่อเดียวหลายพารามิเตอร์ได้ <code class="il">namespace</code> กันชื่อชน <code class="il">enum class</code> ไม่แปลงเป็น int เอง กำหนดขนาด <code class="il">: uint8_t</code> ได้</p></div></div>
+<ul>
+<li><b>overloading</b> ฟังก์ชันชื่อเดียวกันหลายตัวที่รับพารามิเตอร์ต่างกัน compiler เลือกตัวที่ตรงกับค่าที่ส่งเข้าไปให้เอง</li>
+<li><b>namespace</b> กล่องใส่ชื่อ เรียกด้วย <code class="il">กล่อง::ชื่อ</code> เช่น <code class="il">logx::info</code> ชื่อในกล่องต่างกันจึงไม่ชนกัน แม้ library อื่นมี <code class="il">info</code> เหมือนกัน</li>
+<li><b>enum class</b> enum ที่ต้องเรียกเต็ม เช่น <code class="il">Mode::Slow</code> และไม่กลายเป็นตัวเลขเอง ส่วน <code class="il">: uint8_t</code> กำหนดว่าใช้ที่ 1 byte</li>
+</ul>
+<p>ใน C ฟังก์ชันชื่อ <code class="il">info</code> ใน <code class="il">.o</code> ก็ชื่อ <code class="il">info</code> แต่ใน C++ มี <code class="il">info</code> ได้หลายตัว ชื่อนี้จึงไม่พอให้ linker (บท 01) แยกได้ compiler จึงต่อชนิดพารามิเตอร์ลงไปในชื่อ เรียกว่า <b>name mangling</b> ชื่อที่ได้เรียกว่า <b>symbol</b> คือชื่อที่ linker ใช้จับคู่ "คนเรียก" กับ "ตัวฟังก์ชัน" ถ้าหา symbol ไม่เจอ จะได้ error <code class="il">undefined reference</code> เช่น ถ้า sketch ไม่มี <code class="il">setup()</code> linker จะแจ้ง <code class="il">undefined reference to `setup'</code> เพราะ <code class="il">main()</code> ของ core เรียกหาแต่ไม่เจอ</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 210" role="img">
 <text x="10" y="18" class="sub">ซอร์ส C++ (namespace logx)</text><text x="220" y="18" class="sub">ชื่อ symbol ใน .o / .elf</text>
 <rect x="6" y="28" width="190" height="34" rx="6" class="b"/><text x="14" y="49" class="tt m sm">info(const char*)</text><line x1="198" y1="45" x2="212" y2="45" class="ln" marker-end="url(#ah)"/><rect x="216" y="28" width="178" height="34" rx="6" class="ba"/><text x="224" y="49" class="tt m sm">_ZN4logx4infoEPKc</text>
 <rect x="6" y="70" width="190" height="34" rx="6" class="b"/><text x="14" y="91" class="tt m sm">info(const char*, int)</text><line x1="198" y1="87" x2="212" y2="87" class="ln" marker-end="url(#ah)"/><rect x="216" y="70" width="178" height="34" rx="6" class="ba"/><text x="224" y="91" class="tt m sm">_ZN4logx4infoEPKci</text>
@@ -35,7 +42,13 @@
 <rect x="6" y="164" width="190" height="34" rx="6" class="b"/><text x="14" y="185" class="tt m sm">extern &quot;C&quot; void foo()</text><line x1="198" y1="181" x2="212" y2="181" class="ln" marker-end="url(#ah)"/><rect x="216" y="164" width="178" height="34" rx="6" class="b"/><text x="224" y="185" class="tt m sm">foo</text>
 <text x="10" y="158" class="sub">ถ้าต้องเรียกจาก C หรือ ASM ใช้ extern "C" ปิด mangling</text>
 </svg></div><figcaption>compiler ฝังชนิดพารามิเตอร์ลงในชื่อ symbol จึง overload ได้</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">logx.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+<h3 id="s1">Hands-on</h3>
+<p>sketch นี้พิสูจน์ว่า <code class="il">info</code> 3 ตัวอยู่ร่วมกันได้ (compiler เลือกตัวตามพารามิเตอร์) และ <code class="il">enum class</code> ไม่ยอมกลายเป็นตัวเลขเอง</p>
+<ol>
+<li>สร้าง sketch ใหม่ วางโค้ดข้างล่าง บันทึกชื่อ <code class="il">logx</code> แล้วกด <b>Upload</b></li>
+<li>เปิด <b>Tools → Serial Monitor</b> ที่ 115200 baud ถ้าไม่มีข้อความ กด reset บนบอร์ด 1 ครั้ง</li>
+</ol>
+<div class="code"><div class="cl">logx.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
 namespace logx {
 void info(const char* msg) {
   Serial.print(&quot;[I] &quot;); Serial.println(msg);
@@ -62,7 +75,23 @@ void setup() {
   // int bad = m;   // ลองเปิดบรรทัดนี้: compile error
 }
 
-void loop() {}</code></pre></div><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้า library เขียนด้วย C ต้อง include อย่างไร?</summary><p>ครอบ header ด้วย extern "C" { … } เพื่อให้ linker หา symbol ชื่อแบบ C เจอ ถ้าไม่ครอบจะ error undefined reference</p></details><details><summary>ทำไม enum class ปลอดภัยกว่า enum?</summary><p>ไม่แปลงเป็น int เอง ชื่อ enumerator ไม่หลุดออกมาใน scope ภายนอก และกำหนด underlying type ได้ จึงคุมขนาดในหน่วยความจำได้</p></details>
+void loop() {}</code></pre></div>
+<ul>
+<li><b>default argument</b> <code class="il">int digits = 2</code> ถ้าผู้เรียกไม่ส่งค่านี้มา จะใช้ 2</li>
+<li><code class="il">static_cast&lt;int&gt;(m)</code> การแปลงชนิดแบบ C++ ทำหน้าที่เหมือน <code class="il">(int)m</code> ของ C แต่ชัดเจนกว่าว่าตั้งใจแปลง</li>
+</ul>
+<p>ผลที่ควรเห็น (ตัวเลข <code class="il">uptime_ms</code> ขึ้นกับว่าเปิด Serial Monitor เมื่อไร):</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>[I] boot
+[I] uptime_ms=1234
+[I] vbat=3.71
+[I] pi=3.1416
+[I] mode=1</code></pre></div>
+<p>ผลนี้บอกอะไร:</p>
+<ul>
+<li><b>overloading</b> ทุกบรรทัดเรียก <code class="il">logx::info</code> ชื่อเดียวกัน แต่รูปแบบที่พิมพ์ต่างกันตามพารามิเตอร์ <code class="il">vbat</code> ได้ทศนิยม 2 ตำแหน่งจาก default argument ส่วน <code class="il">pi</code> ได้ 4 ตำแหน่งตามที่ส่งไป</li>
+<li><b>enum class</b> <code class="il">mode=1</code> เพราะ <code class="il">Slow</code> เป็นตัวที่สอง (นับจาก 0) แต่ต้องแปลงเองด้วย <code class="il">static_cast</code> ลองลบ <code class="il">//</code> หน้าบรรทัด <code class="il">int bad = m;</code> แล้วกด Verify จะได้ <code class="il">error: cannot convert 'Mode' to 'int' in initialization</code> แล้วใส่ <code class="il">//</code> กลับ</li>
+</ul>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้า library เขียนด้วย C ต้อง include อย่างไร?</summary><p>ครอบ header ด้วย extern "C" { … } เพื่อปิด name mangling ให้ฟังก์ชันเหล่านั้น linker จึงหา symbol ชื่อแบบ C เจอ ถ้าไม่ครอบจะ error undefined reference</p></details><details><summary>ทำไม enum class ปลอดภัยกว่า enum?</summary><p>ไม่แปลงเป็น int เอง ชื่อในนั้น (เช่น Off) ไม่หลุดออกมาชนกับชื่ออื่นข้างนอก และกำหนดชนิดที่ใช้เก็บได้ (: uint8_t) จึงคุมขนาดในหน่วยความจำได้</p></details>
 <label class="done"><input type="checkbox" id="done-l03" data-l="l03"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../02/"><small>← บทก่อนหน้า</small><span>02 · Reference, const และ constexpr แทน #define</span></a><a class="next" href="../04/"><small>บทถัดไป →</small><span>04 · class: encapsulation และ constructor</span></a></nav>
