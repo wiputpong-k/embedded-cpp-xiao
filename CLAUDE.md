@@ -34,7 +34,7 @@ Generated files (`site-src/pages/`, `site-src/course*.html`, `test_runner`) are 
 - Every user-visible string is written as `T('ไทย', 'English')`. Thai is the source; if the English is missing, the English page shows the Thai text. When you change the Thai, update the English in the same commit.
 - Thai prose keeps code, identifiers and technical terms in English. Code blocks and SVG labels may stay shared when they contain no Thai.
 - Thai inside shared code or hand-drawn SVGs is swapped with `tr(s, {'ไทย': 'English'})` (`code(..., en={...})` for code blocks; the SVG block sits just above `# lessons`). `tr()` fails the build if a Thai fragment no longer matches, so update the mapping when you edit that text. Keep English SVG labels inside the `viewBox`.
-- Each lesson: `goal(...)` → concept (+ `vs(C, C++)` when comparing) → `fig(svg, caption)` → Hands-on `code(...)` → `qa([...])` → optional `iv(...)` interview note. Target 20–30 minutes.
+- Each lesson: `goal(...)` → concept (+ `vs(C, C++)` when comparing) → `fig(svg, caption)` → Hands-on `code(...)` → `qa([...])` → optional `iv(...)` "In practice" note (how the topic shows up in real firmware work; keep job-application and interview framing out of the course). Target 20–30 minutes.
 - Keep lessons cumulative: later lessons (11, 15–17) reuse files from earlier ones. Check downstream lessons when renaming files, pins or APIs.
 - Hardware assumptions: XIAO nRF52840 (Sense), Seeed nRF52 non-mbed core, 3.3 V GPIO, on-board RGB LED is active-LOW, D0 = pot, D1 = button to GND (INPUT_PULLUP), D2 = external LED via 1 kΩ.
 - Wrap any title or text inserted into HTML with `html.escape(...)`.
