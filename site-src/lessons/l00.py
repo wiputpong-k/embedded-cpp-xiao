@@ -78,7 +78,7 @@ lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink
 <ol>
 <li>กดเมนู <b>File → New Sketch</b> จะได้หน้าต่างใหม่ที่มีโค้ดตั้งต้น</li>
 <li>ลบโค้ดเดิมทั้งหมด แล้วกดปุ่ม <b>คัดลอก</b> ที่มุมขวาบนของโค้ดข้างล่าง มาวางแทน</li>
-<li>กดเมนู <b>File → Save As…</b> แล้วตั้งชื่อ <code class="il">blink</code></li>
+<li>กดเมนู <b>File → Save As…</b> แล้วตั้งชื่อ <code class="il">blink</code> ให้บันทึกไว้ในโฟลเดอร์ sketchbook ปกติ (<code class="il">Documents\\Arduino</code>) หรือโฟลเดอร์อื่นที่ <b>path ทุกชั้นไม่มีช่องว่าง</b></li>
 <li>กดปุ่ม <b>Verify</b> (เครื่องหมายถูกที่มุมซ้ายบน) เพื่อ compile ครั้งแรกอาจนานเป็นนาที รอจนเห็น <i>Done compiling</i> ที่ด้านล่าง</li>
 <li>กดปุ่ม <b>Upload</b> (ลูกศรขวาถัดจาก Verify) แล้วรอจนเห็น <i>Done uploading</i></li>
 </ol>''', '''
@@ -86,7 +86,7 @@ lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink
 <ol>
 <li>Open <b>File → New Sketch</b>. A new window opens with starter code.</li>
 <li>Delete all of that code, click the <b>Copy</b> button at the top right of the code below, and paste it in.</li>
-<li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>.</li>
+<li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>. Save it in the normal sketchbook folder (<code class="il">Documents\\Arduino</code>) or any other folder whose <b>full path has no spaces</b>.</li>
 <li>Click <b>Verify</b> (the check mark at the top left) to compile. The first compile can take a minute; wait for <i>Done compiling</i> at the bottom.</li>
 <li>Click <b>Upload</b> (the right arrow next to Verify) and wait for <i>Done uploading</i>.</li>
 </ol>''') + code('''// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
@@ -104,6 +104,7 @@ void loop() {
                       '// ดับ': '// off', '// ติด': '// on'}) + T('''
 <p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ</p>
 <p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
+<p class="note">ถ้ากด Verify แล้วขึ้น <code class="il">arm-none-eabi-g++: error: … No such file or directory</code> พร้อมเศษชื่อโฟลเดอร์ของคุณ แปลว่า path ของ sketch มีช่องว่าง เช่น <code class="il">D:\\My Projects\\blink</code> core ของ Seeed nRF52 ส่ง path ให้ compiler โดยไม่ครอบเครื่องหมายคำพูด path จึงถูกตัดตรงช่องว่าง แก้โดยกด <b>File → Save As…</b> แล้วบันทึกไว้ในโฟลเดอร์ที่ไม่มีช่องว่าง เช่น <code class="il">Documents\\Arduino</code> หรือเปลี่ยนชื่อโฟลเดอร์ให้ใช้ <code class="il">_</code> แทนช่องว่าง</p>
 <h3>ลองต่อ</h3>
 <ol>
 <li>เปลี่ยน <code class="il">LED_RED</code> เป็น <code class="il">LED_GREEN</code> หรือ <code class="il">LED_BLUE</code> ให้ครบทั้ง 3 จุด แล้ว Upload ใหม่ สีของ LED ต้องเปลี่ยนตาม</li>
@@ -112,6 +113,7 @@ void loop() {
 ''', '''
 <p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
 <p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
+<p class="note">If Verify fails with <code class="il">arm-none-eabi-g++: error: … No such file or directory</code> followed by pieces of your folder name, the sketch path contains spaces, e.g. <code class="il">D:\\My Projects\\blink</code>. The Seeed nRF52 core passes the path to the compiler without quotes, so it gets split at each space. Fix it with <b>File → Save As…</b> into a folder without spaces, such as <code class="il">Documents\\Arduino</code>, or rename the folders to use <code class="il">_</code> instead of spaces.</p>
 <h3>Try next</h3>
 <ol>
 <li>Change <code class="il">LED_RED</code> to <code class="il">LED_GREEN</code> or <code class="il">LED_BLUE</code> in all three places and upload again. The LED color should change.</li>
