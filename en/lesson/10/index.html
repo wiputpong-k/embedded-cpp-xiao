@@ -37,6 +37,9 @@
 <h3 id="s1">Hands-on</h3><p>Create <code class="il">src/RingBuffer.h</code>.</p><div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
 #include &lt;stddef.h&gt;
 
+// The Seeed nRF52 core already has a class RingBuffer, so this one lives in a namespace to avoid the clash
+namespace xiao {
+
 // Fixed-size FIFO, no heap: N is set at compile time
 template &lt;typename T, size_t N&gt;
 class RingBuffer {
@@ -83,9 +86,12 @@ float average(const RingBuffer&lt;T, N&gt;&amp; rb) {
   float sum = 0;
   for (size_t i = 0; i &lt; rb.size(); ++i) sum += rb.at(i);
   return sum / rb.size();
-}</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &quot;src/RingBuffer.h&quot;
+}
 
-RingBuffer&lt;uint16_t, 16&gt; samples;   // last 16 values
+}  // namespace xiao</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+#include &quot;src/RingBuffer.h&quot;
+
+xiao::RingBuffer&lt;uint16_t, 16&gt; samples;   // last 16 values
 
 void setup() { Serial.begin(115200); }
 
@@ -95,7 +101,7 @@ void loop() {
   Serial.print(&quot;raw:&quot;); Serial.print(raw);
   Serial.print(&quot; avg:&quot;); Serial.println(average(samples));
   delay(20);
-}</code></pre></div><p>Open Serial Plotter and compare the raw and avg lines. Try N = 4 and N = 64 and watch the lag and smoothness (an N-point moving average delays the signal by about N/2 samples).</p><h3 id="s2">Check your understanding</h3><details><summary>What happens to flash if you use RingBuffer&lt;uint16_t,16&gt; and RingBuffer&lt;float,16&gt;?</summary><p>The compiler generates two copies of the code (template instantiation), so flash grows. Too many types leads to code bloat.</p></details><details><summary>Is it safe if an ISR pushes and loop pops?</summary><p>Not yet, because count_ is changed from both sides. Wrap it in a CriticalSection, or design an SPSC buffer where the producer only touches head and the consumer only touches tail.</p></details>
+}</code></pre></div><p class="note">Why <code class="il">xiao::RingBuffer</code>? The Seeed nRF52 core already has a class named <code class="il">RingBuffer</code> (used inside its UART driver). Declaring the same name outside a namespace fails to compile because the names clash, so the course's <code class="il">RingBuffer.h</code> lives in <code class="il">namespace xiao</code>. That is exactly the kind of clash namespaces from lesson 03 exist for. <code class="il">average(samples)</code> works without <code class="il">xiao::</code> because the compiler also searches the namespace of the argument's type (argument-dependent lookup).</p><p>Open Serial Plotter and compare the raw and avg lines. Try N = 4 and N = 64 and watch the lag and smoothness (an N-point moving average delays the signal by about N/2 samples).</p><h3 id="s2">Check your understanding</h3><details><summary>What happens to flash if you use RingBuffer&lt;uint16_t,16&gt; and RingBuffer&lt;float,16&gt;?</summary><p>The compiler generates two copies of the code (template instantiation), so flash grows. Too many types leads to code bloat.</p></details><details><summary>Is it safe if an ISR pushes and loop pops?</summary><p>Not yet, because count_ is changed from both sides. Wrap it in a CriticalSection, or design an SPSC buffer where the producer only touches head and the consumer only touches tail.</p></details>
 <label class="done"><input type="checkbox" id="done-l10" data-l="l10"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../09/"><small>← Previous</small><span>09 · Inheritance, virtual and interfaces</span></a><a class="next" href="../11/"><small>Next →</small><span>11 · Memory in embedded systems</span></a></nav>

@@ -45,7 +45,7 @@
 <h3 id="s3">Hands-on 2: เพิ่ม test ของคุณเอง</h3>
 <p>เพิ่มฟังก์ชันข้างล่างไว้เหนือ <code class="il">main()</code> ใน <code class="il">test/test_main.cpp</code> แล้วเพิ่มบรรทัด <code class="il">test_average_empty();</code> และ <code class="il">test_debouncer_release();</code> ใน <code class="il">main()</code> ต่อจาก test เดิม รันให้ผ่าน แล้ว commit</p>
 <div class="code"><div class="cl">test/test_main.cpp</div><pre><code>static void test_average_empty() {
-  RingBuffer&lt;int, 4&gt; rb;
+  xiao::RingBuffer&lt;int, 4&gt; rb;
   CHECK(average(rb) == 0.0f);      // ว่าง → 0 ไม่หารด้วยศูนย์
 }
 

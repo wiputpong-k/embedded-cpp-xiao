@@ -39,7 +39,8 @@
 <rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
 <text x="36" y="192" class="sub">compiler รับประกันว่า destructor ถูกเรียกเสมอ ไม่ว่าออกด้วย return ทางไหน</text>
 </svg></div><figcaption>อายุของ object ผูกกับวงเล็บปีกกา</figcaption></figure>
-<h3 id="s1">Hands-on</h3><p>ต่อ potentiometer: ขาข้าง 3V3 กับ GND, ขากลางเข้า A0</p><div class="code"><div class="cl">raii.ino</div><pre><code>class ScopedTimer {
+<h3 id="s1">Hands-on</h3><p>ต่อ potentiometer: ขาข้าง 3V3 กับ GND, ขากลางเข้า A0</p><div class="code"><div class="cl">raii.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+class ScopedTimer {
 public:
   explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
   ~ScopedTimer() {

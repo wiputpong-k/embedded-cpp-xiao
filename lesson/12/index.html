@@ -38,7 +38,8 @@
 <text x="120" y="180" text-anchor="middle" class="sub">ขอบ FALLING ที่ D1 → CPU กระโดดเข้า ISR ทันที</text>
 <text x="300" y="134" text-anchor="middle" class="sub">ISR: สั้น · ไม่ delay · ไม่ Serial</text>
 </svg></div><figcaption>ISR แทรกกลาง loop ได้ทุกเมื่อ</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">isr_count.ino</div><pre><code>constexpr uint8_t kButtonPin = D1;
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">isr_count.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+constexpr uint8_t kButtonPin = D1;
 volatile uint32_t pressCount = 0;   // volatile: ค่าเปลี่ยนนอก flow ปกติ ห้าม cache
 
 void setup() {

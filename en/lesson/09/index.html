@@ -44,7 +44,8 @@
 <text x="10" y="166" class="sub">Cost: +4 B RAM/object, 1 flash table/class, 1 indirect call</text>
 <text x="10" y="186" class="sub">FakeSensor has its own vtable pointing to its own functions</text>
 </svg></div><figcaption>How a virtual call works</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>class ISensor {
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+class ISensor {
 public:
   virtual ~ISensor() = default;
   virtual const char* name() const = 0;   // pure virtual = must override

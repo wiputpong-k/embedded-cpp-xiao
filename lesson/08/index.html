@@ -45,7 +45,8 @@
 <li>คัดลอกโฟลเดอร์ <code class="il">src</code> จาก sketch <code class="il">button_count</code> มาไว้ในโฟลเดอร์ของ sketch ใหม่ (ใช้ <b>Sketch → Show Sketch Folder</b> เปิดทั้งสองโฟลเดอร์)</li>
 <li>วางโค้ดข้างล่างใน <code class="il">button_modes.ino</code> แล้วกด <b>Upload</b></li>
 <li>กดปุ่ม: LED เขียวต้องเปลี่ยนจากดับ → กระพริบช้า → กระพริบเร็ว → ดับ วนไปเรื่อย ๆ</li>
-</ol><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+</ol><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+#include &quot;src/Debouncer.h&quot;
 
 constexpr uint8_t kButtonPin = D1;
 enum class Mode : uint8_t { Off, Slow, Fast };
@@ -53,7 +54,7 @@ enum class Mode : uint8_t { Off, Slow, Fast };
 Debouncer button;
 Mode mode = Mode::Off;
 uint32_t lastToggle = 0;
-bool ledOn = false;
+bool ledLit = false;
 
 Mode next(Mode m) {
   switch (m) {
@@ -82,8 +83,8 @@ void loop() {
     digitalWrite(LED_GREEN, HIGH);
   } else if (now - lastToggle &gt;= periodMs(mode)) {
     lastToggle = now;
-    ledOn = !ledOn;
-    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
+    ledLit = !ledLit;
+    digitalWrite(LED_GREEN, ledLit ? LOW : HIGH);
   }
 }</code></pre></div>
 <p>สังเกตว่าการกระพริบใช้ <code class="il">now - lastToggle &gt;= periodMs(mode)</code> แทน <code class="il">delay()</code> loop จึงวนเร็วตลอดเวลา และตอบสนองต่อปุ่มได้ทันทีแม้อยู่ในโหมด Slow</p>

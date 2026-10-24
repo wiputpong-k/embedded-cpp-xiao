@@ -42,7 +42,8 @@
 <li>Click <b>Upload</b>, then open <b>Tools → Serial Monitor</b> at <b>115200 baud</b>.</li>
 <li>At the right of the Serial Monitor there is a line-ending option. Pick <b>New Line</b>, otherwise the board never knows you finished typing a line.</li>
 <li>Type <code class="il">100</code> in the message box at the top of the Serial Monitor and press Enter. The green LED should blink faster. Try <code class="il">2000</code>, then <code class="il">10</code> (out of range, so nothing should change).</li>
-</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &quot;src/Led.h&quot;
+</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+#include &quot;src/Led.h&quot;
 #include &quot;src/Debouncer.h&quot;
 #include &quot;src/RingBuffer.h&quot;
 
@@ -58,7 +59,7 @@ constexpr uint8_t kPotPin    = A0;
 Led status(LED_GREEN, true);
 Led ext(D2, false);
 Debouncer button;
-RingBuffer&lt;uint16_t, 16&gt; samples;
+xiao::RingBuffer&lt;uint16_t, 16&gt; samples;
 bool paused = false;
 
 struct Task {

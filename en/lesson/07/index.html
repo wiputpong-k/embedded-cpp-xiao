@@ -87,7 +87,8 @@ private:
   uint32_t changedAt_ = 0;
   bool lastRaw_ = false;
   bool stable_ = false;
-};</code></pre></div><div class="code"><div class="cl">button_count.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+};</code></pre></div><div class="code"><div class="cl">button_count.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+#include &quot;src/Debouncer.h&quot;
 
 constexpr uint8_t kButtonPin = D1;
 

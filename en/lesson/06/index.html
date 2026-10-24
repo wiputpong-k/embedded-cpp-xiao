@@ -39,7 +39,8 @@
 <rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
 <text x="36" y="192" class="sub">The destructor always runs, whichever way you leave the scope</text>
 </svg></div><figcaption>The object's lifetime is tied to the braces</figcaption></figure>
-<h3 id="s1">Hands-on</h3><p>Wire the potentiometer: outer legs to 3V3 and GND, middle leg to A0.</p><div class="code"><div class="cl">raii.ino</div><pre><code>class ScopedTimer {
+<h3 id="s1">Hands-on</h3><p>Wire the potentiometer: outer legs to 3V3 and GND, middle leg to A0.</p><div class="code"><div class="cl">raii.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+class ScopedTimer {
 public:
   explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
   ~ScopedTimer() {

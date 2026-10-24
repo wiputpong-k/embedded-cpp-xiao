@@ -76,7 +76,8 @@
 <li>Open <b>File → Save As…</b> and name it <code class="il">blink</code>. Save it in the normal sketchbook folder (<code class="il">Documents\Arduino</code>) or any other folder whose <b>full path has no spaces</b>.</li>
 <li>Click <b>Verify</b> (the check mark at the top left) to compile. The first compile can take a minute; wait for <i>Done compiling</i> at the bottom.</li>
 <li>Click <b>Upload</b> (the right arrow next to Verify) and wait for <i>Done uploading</i>.</li>
-</ol><div class="code"><div class="cl">blink.ino</div><pre><code>// The on-board LED anode is tied to 3V3, so it lights when you write LOW
+</ol><div class="code"><div class="cl">blink.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+// The on-board LED anode is tied to 3V3, so it lights when you write LOW
 void setup() {
   pinMode(LED_RED, OUTPUT);
   digitalWrite(LED_RED, HIGH);   // off
@@ -88,7 +89,8 @@ void loop() {
   digitalWrite(LED_RED, HIGH);   // off
   delay(800);
 }</code></pre></div>
-<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
+<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over. After the upload, a new port for the board appears under <b>Tools → Port</b>; next time, pick that port and click Upload.</p>
+<p class="note">Why does every sketch in this course start with <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? The Seeed nRF52 core only links its USB library (TinyUSB) when the sketch includes this file itself. Without the line, the program still compiles and runs (the LED still blinks), but the board never turns on USB: Windows sees no port, Serial Monitor shows nothing, and every upload needs a double-press of reset. If you see those symptoms, check the first line of the sketch.</p>
 <p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
 <p class="note">If Verify fails with <code class="il">arm-none-eabi-g++: error: … No such file or directory</code> followed by pieces of your folder name, the sketch path contains spaces, e.g. <code class="il">D:\My Projects\blink</code>. The Seeed nRF52 core passes the path to the compiler without quotes, so it gets split at each space. Fix it with <b>File → Save As…</b> into a folder without spaces, such as <code class="il">Documents\Arduino</code>, or rename the folders to use <code class="il">_</code> instead of spaces.</p>
 <h3 id="s6">Try next</h3>

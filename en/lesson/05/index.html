@@ -59,7 +59,8 @@ private:
   uint8_t pin_;
   bool activeLow_;
   bool isOn_ = false;
-};</code></pre></div><div class="code"><div class="cl">led_class.ino</div><pre><code>#include &quot;src/Led.h&quot;
+};</code></pre></div><div class="code"><div class="cl">led_class.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+#include &quot;src/Led.h&quot;
 
 Led red(LED_RED, true);   // on-board: active-LOW
 Led ext(D2, false);       // external: active-HIGH

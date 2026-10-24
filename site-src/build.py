@@ -32,6 +32,11 @@ TEST = tr(TEST, {'// เต็มแล้ว': '// already full', '// FIFO: อ
 
 def code(txt, label='', en=None):
     txt = tr(txt, en)
+    if label.endswith('.ino'):
+        # The Seeed nRF52 core links USB (TinyUSB) only when the sketch includes it; without it there is no
+        # USB port or Serial output. Every sketch therefore starts with this line (explained in lesson 00).
+        txt = T('#include <Adafruit_TinyUSB.h>   // เปิด USB และ Serial (core นี้ต้องมี)',
+                '#include <Adafruit_TinyUSB.h>   // enables USB and Serial (required by this core)') + '\n' + txt.lstrip('\n')
     lab = f'<div class="cl">{label}</div>' if label else ''
     return f'<div class="code">{lab}<pre><code>{html.escape(txt.strip(chr(10)))}</code></pre></div>'
 

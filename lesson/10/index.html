@@ -37,6 +37,9 @@
 <h3 id="s1">Hands-on</h3><p>สร้าง <code class="il">src/RingBuffer.h</code></p><div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
 #include &lt;stddef.h&gt;
 
+// core ของ Seeed nRF52 มี class RingBuffer อยู่แล้ว จึงต้องอยู่ใน namespace ไม่ให้ชื่อชนกัน
+namespace xiao {
+
 // FIFO ขนาดคงที่ ไม่ใช้ heap — ขนาด N ถูกกำหนดตอน compile
 template &lt;typename T, size_t N&gt;
 class RingBuffer {
@@ -83,9 +86,12 @@ float average(const RingBuffer&lt;T, N&gt;&amp; rb) {
   float sum = 0;
   for (size_t i = 0; i &lt; rb.size(); ++i) sum += rb.at(i);
   return sum / rb.size();
-}</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &quot;src/RingBuffer.h&quot;
+}
 
-RingBuffer&lt;uint16_t, 16&gt; samples;   // 16 ค่าล่าสุด
+}  // namespace xiao</code></pre></div><div class="code"><div class="cl">moving_average.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+#include &quot;src/RingBuffer.h&quot;
+
+xiao::RingBuffer&lt;uint16_t, 16&gt; samples;   // 16 ค่าล่าสุด
 
 void setup() { Serial.begin(115200); }
 
@@ -95,7 +101,7 @@ void loop() {
   Serial.print(&quot;raw:&quot;); Serial.print(raw);
   Serial.print(&quot; avg:&quot;); Serial.println(average(samples));
   delay(20);
-}</code></pre></div><p>เปิด Serial Plotter เทียบเส้น raw กับ avg ลองเปลี่ยน N เป็น 4 และ 64 สังเกตความหน่วงและความเรียบ (moving average N จุด = delay ราว N/2 sample)</p><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?</summary><p>compiler สร้างโค้ด 2 ชุด (template instantiation) flash เพิ่มขึ้น ถ้ามีหลายชนิดเกินไปเรียกว่า code bloat</p></details><details><summary>ถ้า ISR เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?</summary><p>ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ต้องครอบด้วย CriticalSection หรือออกแบบ SPSC ที่ฝั่ง producer แก้แค่ head ฝั่ง consumer แก้แค่ tail</p></details>
+}</code></pre></div><p class="note">ทำไมต้องเขียน <code class="il">xiao::RingBuffer</code>? core ของ Seeed nRF52 มี class ชื่อ <code class="il">RingBuffer</code> อยู่แล้ว (ใช้ภายในตัวจัดการ UART) ถ้าประกาศชื่อเดียวกันไว้นอก namespace จะ compile ไม่ผ่านเพราะชื่อชนกัน ไฟล์ <code class="il">RingBuffer.h</code> ของคอร์สจึงอยู่ใน <code class="il">namespace xiao</code> นี่คือเหตุผลจริงที่ต้องมี namespace ตามบท 03 ส่วน <code class="il">average(samples)</code> เรียกได้โดยไม่ต้องเติม <code class="il">xiao::</code> เพราะ compiler หาฟังก์ชันใน namespace ของชนิดพารามิเตอร์ให้เอง (argument-dependent lookup)</p><p>เปิด Serial Plotter เทียบเส้น raw กับ avg ลองเปลี่ยน N เป็น 4 และ 64 สังเกตความหน่วงและความเรียบ (moving average N จุด = delay ราว N/2 sample)</p><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?</summary><p>compiler สร้างโค้ด 2 ชุด (template instantiation) flash เพิ่มขึ้น ถ้ามีหลายชนิดเกินไปเรียกว่า code bloat</p></details><details><summary>ถ้า ISR เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?</summary><p>ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ต้องครอบด้วย CriticalSection หรือออกแบบ SPSC ที่ฝั่ง producer แก้แค่ head ฝั่ง consumer แก้แค่ tail</p></details>
 <label class="done"><input type="checkbox" id="done-l10" data-l="l10"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../09/"><small>← บทก่อนหน้า</small><span>09 · Inheritance, virtual และ interface</span></a><a class="next" href="../11/"><small>บทถัดไป →</small><span>11 · หน่วยความจำใน embedded</span></a></nav>

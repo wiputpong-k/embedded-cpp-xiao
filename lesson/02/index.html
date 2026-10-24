@@ -37,7 +37,8 @@
 <text x="84" y="182" text-anchor="middle" class="sub">เป็นตัวแปรแยก · null ได้ · ชี้ใหม่ได้</text>
 <text x="322" y="182" text-anchor="middle" class="sub">ไม่ใช่ตัวแปรใหม่ · ต้องผูกตอนสร้าง</text>
 </svg></div><figcaption>pointer เก็บ address แยก ส่วน reference ผูกกับตัวแปรเดิมตลอดชีวิต</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">rgb_cycle.ino</div><pre><code>constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">rgb_cycle.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
 constexpr size_t  kLedCount  = sizeof(kLedPins) / sizeof(kLedPins[0]);
 constexpr uint32_t kStepMs   = 150;
 

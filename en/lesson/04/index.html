@@ -58,7 +58,8 @@
 <li>Plug the USB cable back in and open <b>File → New Sketch</b>.</li>
 <li>Copy the code below over the starter code, then <b>File → Save As…</b> and name it <code class="il">led_class</code>.</li>
 <li>Click <b>Upload</b>. Both the red on-board LED and the external LED should blink together every 0.3 s.</li>
-</ol><div class="code"><div class="cl">led_class.ino</div><pre><code>class Led {
+</ol><div class="code"><div class="cl">led_class.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+class Led {
 public:
   Led(uint8_t pin, bool activeLow) : pin_(pin), activeLow_(activeLow) {}
 

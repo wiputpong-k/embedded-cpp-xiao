@@ -45,7 +45,8 @@
 <li>Copy the <code class="il">src</code> folder from the <code class="il">button_count</code> sketch into the new sketch's folder (use <b>Sketch → Show Sketch Folder</b> to open both folders).</li>
 <li>Paste the code below into <code class="il">button_modes.ino</code> and click <b>Upload</b>.</li>
 <li>Press the button: the green LED should go off → slow blink → fast blink → off, and around again.</li>
-</ol><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &quot;src/Debouncer.h&quot;
+</ol><div class="code"><div class="cl">button_modes.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+#include &quot;src/Debouncer.h&quot;
 
 constexpr uint8_t kButtonPin = D1;
 enum class Mode : uint8_t { Off, Slow, Fast };
@@ -53,7 +54,7 @@ enum class Mode : uint8_t { Off, Slow, Fast };
 Debouncer button;
 Mode mode = Mode::Off;
 uint32_t lastToggle = 0;
-bool ledOn = false;
+bool ledLit = false;
 
 Mode next(Mode m) {
   switch (m) {
@@ -82,8 +83,8 @@ void loop() {
     digitalWrite(LED_GREEN, HIGH);
   } else if (now - lastToggle &gt;= periodMs(mode)) {
     lastToggle = now;
-    ledOn = !ledOn;
-    digitalWrite(LED_GREEN, ledOn ? LOW : HIGH);
+    ledLit = !ledLit;
+    digitalWrite(LED_GREEN, ledLit ? LOW : HIGH);
   }
 }</code></pre></div>
 <p>Notice that the blinking uses <code class="il">now - lastToggle &gt;= periodMs(mode)</code> instead of <code class="il">delay()</code>. loop keeps spinning fast, so the button responds immediately even in Slow mode.</p>

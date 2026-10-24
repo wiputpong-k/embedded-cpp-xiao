@@ -42,7 +42,8 @@
 <li>กด <b>Upload</b> แล้วเปิด <b>Tools → Serial Monitor</b> ตั้งความเร็ว <b>115200 baud</b></li>
 <li>ที่มุมขวาของ Serial Monitor มีตัวเลือกการขึ้นบรรทัด ให้เลือก <b>New Line</b> ไม่อย่างนั้นบอร์ดจะไม่รู้ว่าพิมพ์จบบรรทัดแล้ว</li>
 <li>พิมพ์ <code class="il">100</code> ในช่องข้อความด้านบนของ Serial Monitor แล้วกด Enter LED เขียวต้องกระพริบเร็วขึ้น ลองพิมพ์ <code class="il">2000</code> แล้วลอง <code class="il">10</code> (นอกช่วง ต้องไม่มีอะไรเปลี่ยน)</li>
-</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &quot;src/Led.h&quot;
+</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+#include &quot;src/Led.h&quot;
 #include &quot;src/Debouncer.h&quot;
 #include &quot;src/RingBuffer.h&quot;
 
@@ -58,7 +59,7 @@ constexpr uint8_t kPotPin    = A0;
 Led status(LED_GREEN, true);
 Led ext(D2, false);
 Debouncer button;
-RingBuffer&lt;uint16_t, 16&gt; samples;
+xiao::RingBuffer&lt;uint16_t, 16&gt; samples;
 bool paused = false;
 
 struct Task {

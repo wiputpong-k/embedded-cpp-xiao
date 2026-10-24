@@ -36,7 +36,8 @@
 <li>Create a new sketch and use <b>File → Save As…</b> to name it <code class="il">firmware</code>. You get a <code class="il">firmware/</code> folder containing <code class="il">firmware.ino</code> (Arduino requires the folder and the .ino file to share a name).</li>
 <li>Create a <code class="il">src</code> folder inside <code class="il">firmware/</code> and copy in three files from earlier lessons: <code class="il">Led.h</code> (lesson 05), <code class="il">Debouncer.h</code> (lesson 07) and <code class="il">RingBuffer.h</code> (lesson 10).</li>
 <li>Paste the code below into <code class="il">firmware.ino</code> and click <b>Upload</b>.</li>
-</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &quot;src/Led.h&quot;
+</ol><div class="code"><div class="cl">firmware/firmware.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+#include &quot;src/Led.h&quot;
 #include &quot;src/Debouncer.h&quot;
 #include &quot;src/RingBuffer.h&quot;
 
@@ -52,7 +53,7 @@ constexpr uint8_t kPotPin    = A0;
 Led status(LED_GREEN, true);
 Led ext(D2, false);
 Debouncer button;
-RingBuffer&lt;uint16_t, 16&gt; samples;
+xiao::RingBuffer&lt;uint16_t, 16&gt; samples;
 bool paused = false;
 
 struct Task {

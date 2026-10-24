@@ -58,7 +58,8 @@
 <li>เสียบสาย USB กลับ แล้วกด <b>File → New Sketch</b></li>
 <li>คัดลอกโค้ดข้างล่างไปวางแทนโค้ดเดิม แล้วกด <b>File → Save As…</b> ตั้งชื่อ <code class="il">led_class</code></li>
 <li>กด <b>Upload</b> แล้วดูผล: LED แดงบนบอร์ดและ LED ภายนอกกระพริบพร้อมกันทุก 0.3 วินาที</li>
-</ol><div class="code"><div class="cl">led_class.ino</div><pre><code>class Led {
+</ol><div class="code"><div class="cl">led_class.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+class Led {
 public:
   Led(uint8_t pin, bool activeLow) : pin_(pin), activeLow_(activeLow) {}
 

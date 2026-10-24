@@ -37,7 +37,8 @@
 <text x="84" y="182" text-anchor="middle" class="sub">nullable · can re-point</text>
 <text x="322" y="182" text-anchor="middle" class="sub">never null · bound at init</text>
 </svg></div><figcaption>A pointer stores an address of its own; a reference stays bound to the original variable for life</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">rgb_cycle.ino</div><pre><code>constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">rgb_cycle.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+constexpr uint8_t kLedPins[] = {LED_RED, LED_GREEN, LED_BLUE};
 constexpr size_t  kLedCount  = sizeof(kLedPins) / sizeof(kLedPins[0]);
 constexpr uint32_t kStepMs   = 150;
 

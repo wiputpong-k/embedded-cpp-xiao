@@ -44,7 +44,8 @@
 <text x="10" y="166" class="sub">ต้นทุน: RAM +4 B ต่อ object, flash 1 ตารางต่อ class, call ทางอ้อม 1 ครั้ง</text>
 <text x="10" y="186" class="sub">FakeSensor มี vtable ของตัวเอง ชี้ไปฟังก์ชันของมัน</text>
 </svg></div><figcaption>กลไกของ virtual call</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>class ISensor {
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+class ISensor {
 public:
   virtual ~ISensor() = default;
   virtual const char* name() const = 0;   // pure virtual = ต้อง override

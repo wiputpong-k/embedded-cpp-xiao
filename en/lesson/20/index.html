@@ -45,7 +45,7 @@
 <h3 id="s3">Hands-on 2: add your own tests</h3>
 <p>Add the functions below above <code class="il">main()</code> in <code class="il">test/test_main.cpp</code>, then add <code class="il">test_average_empty();</code> and <code class="il">test_debouncer_release();</code> to <code class="il">main()</code> after the existing tests. Make them pass, then commit.</p>
 <div class="code"><div class="cl">test/test_main.cpp</div><pre><code>static void test_average_empty() {
-  RingBuffer&lt;int, 4&gt; rb;
+  xiao::RingBuffer&lt;int, 4&gt; rb;
   CHECK(average(rb) == 0.0f);      // empty → 0, no divide by zero
 }
 

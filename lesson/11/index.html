@@ -45,7 +45,8 @@
 <text x="20" y="316" class="sub m">0x0000_0000 (ล่าง)</text><text x="220" y="316" class="sub m">0x2000_0000 (ล่าง)</text>
 <text x="20" y="336" class="sub">ลูกศรส้ม: startup code copy .data จาก flash ไป RAM ก่อน setup()</text>
 </svg></div><figcaption>memory map แบบย่อของ nRF52840 (ตัวเลขประมาณ ขึ้นกับ SoftDevice และ bootloader)</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>uint8_t bigStatic[8192];        // .bss  → นับใน &quot;Global variables use&quot;
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+uint8_t bigStatic[8192];        // .bss  → นับใน &quot;Global variables use&quot;
 const char kMsg[] = &quot;hello&quot;;    // .rodata → อยู่ใน flash
 
 void setup() {

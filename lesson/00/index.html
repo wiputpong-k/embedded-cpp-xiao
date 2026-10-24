@@ -76,7 +76,8 @@
 <li>กดเมนู <b>File → Save As…</b> แล้วตั้งชื่อ <code class="il">blink</code> ให้บันทึกไว้ในโฟลเดอร์ sketchbook ปกติ (<code class="il">Documents\Arduino</code>) หรือโฟลเดอร์อื่นที่ <b>path ทุกชั้นไม่มีช่องว่าง</b></li>
 <li>กดปุ่ม <b>Verify</b> (เครื่องหมายถูกที่มุมซ้ายบน) เพื่อ compile ครั้งแรกอาจนานเป็นนาที รอจนเห็น <i>Done compiling</i> ที่ด้านล่าง</li>
 <li>กดปุ่ม <b>Upload</b> (ลูกศรขวาถัดจาก Verify) แล้วรอจนเห็น <i>Done uploading</i></li>
-</ol><div class="code"><div class="cl">blink.ino</div><pre><code>// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
+</ol><div class="code"><div class="cl">blink.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW
 void setup() {
   pinMode(LED_RED, OUTPUT);
   digitalWrite(LED_RED, HIGH);   // ดับ
@@ -88,7 +89,8 @@ void loop() {
   digitalWrite(LED_RED, HIGH);   // ดับ
   delay(800);
 }</code></pre></div>
-<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ</p>
+<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ และหลังอัปโหลดเสร็จ จะมีพอร์ตใหม่ของบอร์ดขึ้นใน <b>Tools → Port</b> ครั้งต่อไปเลือกพอร์ตนั้นแล้วกด Upload ได้เลย</p>
+<p class="note">ทำไมทุก sketch ในคอร์สขึ้นต้นด้วย <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? core Seeed nRF52 จะใส่ไลบรารี USB (TinyUSB) ให้ก็ต่อเมื่อ sketch include ไฟล์นี้เอง ถ้าลืมบรรทัดนี้ โปรแกรมยัง compile และทำงานได้ (LED ยังกระพริบ) แต่บอร์ดจะไม่เปิด USB ผลคือ Windows มองไม่เห็นพอร์ต, Serial Monitor ไม่มีข้อความ และต้องกด reset 2 ครั้งทุกครั้งที่จะอัปโหลด ถ้าเจออาการนี้ ให้ตรวจบรรทัดแรกของ sketch ก่อน</p>
 <p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
 <p class="note">ถ้ากด Verify แล้วขึ้น <code class="il">arm-none-eabi-g++: error: … No such file or directory</code> พร้อมเศษชื่อโฟลเดอร์ของคุณ แปลว่า path ของ sketch มีช่องว่าง เช่น <code class="il">D:\My Projects\blink</code> core ของ Seeed nRF52 ส่ง path ให้ compiler โดยไม่ครอบเครื่องหมายคำพูด path จึงถูกตัดตรงช่องว่าง แก้โดยกด <b>File → Save As…</b> แล้วบันทึกไว้ในโฟลเดอร์ที่ไม่มีช่องว่าง เช่น <code class="il">Documents\Arduino</code> หรือเปลี่ยนชื่อโฟลเดอร์ให้ใช้ <code class="il">_</code> แทนช่องว่าง</p>
 <h3 id="s6">ลองต่อ</h3>

@@ -102,7 +102,8 @@ void loop() {
   delay(800);
 }''', 'blink.ino', en={'// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW': '// The on-board LED anode is tied to 3V3, so it lights when you write LOW',
                       '// ดับ': '// off', '// ติด': '// on'}) + T('''
-<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ</p>
+<p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ และหลังอัปโหลดเสร็จ จะมีพอร์ตใหม่ของบอร์ดขึ้นใน <b>Tools → Port</b> ครั้งต่อไปเลือกพอร์ตนั้นแล้วกด Upload ได้เลย</p>
+<p class="note">ทำไมทุก sketch ในคอร์สขึ้นต้นด้วย <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? core Seeed nRF52 จะใส่ไลบรารี USB (TinyUSB) ให้ก็ต่อเมื่อ sketch include ไฟล์นี้เอง ถ้าลืมบรรทัดนี้ โปรแกรมยัง compile และทำงานได้ (LED ยังกระพริบ) แต่บอร์ดจะไม่เปิด USB ผลคือ Windows มองไม่เห็นพอร์ต, Serial Monitor ไม่มีข้อความ และต้องกด reset 2 ครั้งทุกครั้งที่จะอัปโหลด ถ้าเจออาการนี้ ให้ตรวจบรรทัดแรกของ sketch ก่อน</p>
 <p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
 <p class="note">ถ้ากด Verify แล้วขึ้น <code class="il">arm-none-eabi-g++: error: … No such file or directory</code> พร้อมเศษชื่อโฟลเดอร์ของคุณ แปลว่า path ของ sketch มีช่องว่าง เช่น <code class="il">D:\\My Projects\\blink</code> core ของ Seeed nRF52 ส่ง path ให้ compiler โดยไม่ครอบเครื่องหมายคำพูด path จึงถูกตัดตรงช่องว่าง แก้โดยกด <b>File → Save As…</b> แล้วบันทึกไว้ในโฟลเดอร์ที่ไม่มีช่องว่าง เช่น <code class="il">Documents\\Arduino</code> หรือเปลี่ยนชื่อโฟลเดอร์ให้ใช้ <code class="il">_</code> แทนช่องว่าง</p>
 <h3>ลองต่อ</h3>
@@ -111,7 +112,8 @@ void loop() {
 <li>เปิด <b>File → Preferences…</b> ติ๊กช่อง <b>Show verbose output during: compile</b> กด OK แล้วกด Verify อีกครั้ง หน้าต่าง Output ด้านล่างจะแสดงคำสั่ง compiler ที่ IDE เรียกจริง บท 01 จะอธิบายว่าแต่ละคำสั่งทำอะไร</li>
 </ol>
 ''', '''
-<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over.</p>
+<p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over. After the upload, a new port for the board appears under <b>Tools → Port</b>; next time, pick that port and click Upload.</p>
+<p class="note">Why does every sketch in this course start with <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? The Seeed nRF52 core only links its USB library (TinyUSB) when the sketch includes this file itself. Without the line, the program still compiles and runs (the LED still blinks), but the board never turns on USB: Windows sees no port, Serial Monitor shows nothing, and every upload needs a double-press of reset. If you see those symptoms, check the first line of the sketch.</p>
 <p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
 <p class="note">If Verify fails with <code class="il">arm-none-eabi-g++: error: … No such file or directory</code> followed by pieces of your folder name, the sketch path contains spaces, e.g. <code class="il">D:\\My Projects\\blink</code>. The Seeed nRF52 core passes the path to the compiler without quotes, so it gets split at each space. Fix it with <b>File → Save As…</b> into a folder without spaces, such as <code class="il">Documents\\Arduino</code>, or rename the folders to use <code class="il">_</code> instead of spaces.</p>
 <h3>Try next</h3>

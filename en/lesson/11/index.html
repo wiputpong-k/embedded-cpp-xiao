@@ -45,7 +45,8 @@
 <text x="20" y="316" class="sub m">0x0000_0000 (bottom)</text><text x="220" y="316" class="sub m">0x2000_0000 (bottom)</text>
 <text x="20" y="336" class="sub">Orange arrow: startup copies .data flash → RAM before setup()</text>
 </svg></div><figcaption>Simplified nRF52840 memory map (approximate; depends on the SoftDevice and bootloader)</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>uint8_t bigStatic[8192];        // .bss  → counted in &quot;Global variables use&quot;
+<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+uint8_t bigStatic[8192];        // .bss  → counted in &quot;Global variables use&quot;
 const char kMsg[] = &quot;hello&quot;;    // .rodata → lives in flash
 
 void setup() {
