@@ -25,10 +25,16 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">06 / 24</span></nav>
 <article class="lesson" id="l06">
-<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>RAII และ destructor</h1><p class="meta">25 นาที · ฮาร์ดแวร์: Pot 10 kΩ ที่ A0</p></div></header>
-<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
+<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>RAII และ destructor</h1><p class="meta">30 นาที · ฮาร์ดแวร์: Pot 10 kΩ ที่ A0</p></div></header>
+<nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">ต่อวงจร</a></li><li><a href="#s2">Hands-on</a></li><li><a href="#s3">เช็กความเข้าใจ</a></li></ol></nav>
 <p class="goal"><b>เป้าหมาย</b> ใช้ scope ควบคุม resource อัตโนมัติ: จับเวลา, ปิด/เปิด interrupt</p>
-<p>RAII (Resource Acquisition Is Initialization): ขอ resource ใน constructor คืนใน destructor แล้ว compiler จะเรียก destructor ให้เมื่อออกจาก scope เสมอ จึงไม่มีทางลืม <code class="il">unlock</code> หรือ <code class="il">enable_irq</code> แม้จะ <code class="il">return</code> กลางทาง C ไม่มีกลไกนี้</p>
+<p>ใน C ถ้าปิด interrupt ไว้แล้ว <code class="il">return</code> กลางฟังก์ชันโดยลืมเปิดคืน ระบบจะค้างแบบหาสาเหตุยาก C++ แก้ปัญหานี้ด้วยการผูก "การคืน" ไว้กับการออกจาก <code class="il">{ }</code> คำศัพท์ที่ใช้ในบทนี้:</p>
+<ul>
+<li><b>resource</b> สิ่งที่ยืมแล้วต้องคืน เช่น สถานะ "ปิด interrupt", lock หรือ buffer ที่จองไว้</li>
+<li><b>interrupt</b> สัญญาณที่ทำให้ CPU หยุดงานที่ทำอยู่ชั่วคราวไปทำงานเร่งด่วน เช่น เมื่อมีข้อมูล USB เข้ามา (บท 12 ลงรายละเอียด) บางช่วงต้องปิดไว้สั้น ๆ เพื่อไม่ให้ถูกแทรกกลาง เรียกช่วงนั้นว่า <b>critical section</b></li>
+<li><b>destructor</b> ฟังก์ชัน <code class="il">~ชื่อclass()</code> ที่ทำงานอัตโนมัติเมื่อ object หมดอายุ object local หมดอายุตอนออกจาก <code class="il">{ }</code> ที่ประกาศมัน (scope ในบท 02)</li>
+</ul>
+<p><b>RAII</b> (Resource Acquisition Is Initialization): ขอ resource ใน constructor คืนใน destructor แล้ว compiler จะเรียก destructor ให้เมื่อออกจาก scope เสมอ จึงไม่มีทางลืม <code class="il">unlock</code> หรือเปิด interrupt คืน แม้จะ <code class="il">return</code> กลางทาง C ไม่มีกลไกนี้</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
 <path d="M26 26 H16 V174 H26" class="la"/>
 <text x="36" y="32" class="tt m">{</text>
@@ -39,7 +45,32 @@
 <rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
 <text x="36" y="192" class="sub">compiler รับประกันว่า destructor ถูกเรียกเสมอ ไม่ว่าออกด้วย return ทางไหน</text>
 </svg></div><figcaption>อายุของ object ผูกกับวงเล็บปีกกา</figcaption></figure>
-<h3 id="s1">Hands-on</h3><p>ต่อ potentiometer: ขาข้าง 3V3 กับ GND, ขากลางเข้า A0</p><div class="code"><div class="cl">raii.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+<h3 id="s1">ต่อวงจร</h3>
+<p><b>potentiometer</b> (pot) คือตัวต้านทานปรับค่าได้ มี 3 ขา ขาสองข้างต่อกับปลายทั้งสองของตัวต้านทาน ส่วนขากลาง (wiper) เลื่อนไปตามการหมุน แรงดันที่ขากลางจึงเปลี่ยนได้ตั้งแต่ 0 ถึง 3.3 V</p>
+<ol>
+<li>ถอดสาย USB ออกก่อน (LED จากบท 04 ต่อทิ้งไว้ได้)</li>
+<li>เสียบ pot ลง breadboard ให้ 3 ขาอยู่คนละแถว</li>
+<li>ต่อขาข้างหนึ่งไปที่ขา 3V3 ของบอร์ด และขาข้างที่เหลือไปที่ GND (สลับกันได้ แค่ทิศการหมุนกลับด้าน)</li>
+<li>ต่อขากลางไปที่ขา A0 (ขาเดียวกับ D0)</li>
+</ol>
+<p class="note">ใช้ขา 3V3 เท่านั้น ห้ามต่อ 5V เพราะขาของ nRF52840 รับแรงดันได้ไม่เกิน 3.3 V</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 176" role="img">
+<rect x="8" y="30" width="96" height="112" rx="8" class="bm"/><text x="40" y="91" text-anchor="middle" class="tt m">XIAO</text>
+<text x="96" y="59" text-anchor="end" class="sub m">3V3</text><text x="96" y="89" text-anchor="end" class="sub m">A0</text><text x="96" y="119" text-anchor="end" class="sub m">GND</text>
+<path d="M104 55 H262 V44" class="w"/><path d="M104 115 H262 V126" class="w"/>
+<rect x="250" y="44" width="24" height="82" rx="4" class="ba"/>
+<line x1="104" y1="85" x2="244" y2="85" class="ln" marker-end="url(#ah)"/>
+<text x="176" y="78" text-anchor="middle" class="sub">ขากลาง (wiper)</text>
+<text x="290" y="82" class="tt m">pot 10 kΩ</text><text x="290" y="100" class="sub">ขาข้าง: 3V3 / GND</text>
+<text x="8" y="166" class="sub">หมุน pot = เลื่อนขากลาง แรงดันที่ A0 เปลี่ยนได้ 0–3.3 V</text>
+</svg></div><figcaption>ขาข้างของ pot ต่อ 3V3 และ GND ขากลางต่อ A0</figcaption></figure>
+<h3 id="s2">Hands-on</h3>
+<p>sketch นี้พิสูจน์ว่า destructor ทำงานเองเมื่อออกจาก <code class="il">{ }</code>: <code class="il">ScopedTimer</code> พิมพ์เวลาโดยไม่มีใครสั่งพิมพ์ และ <code class="il">CriticalSection</code> เปิด interrupt คืนให้เองโดยไม่มีบรรทัดเปิดคืน</p>
+<ol>
+<li>เสียบ USB กลับ สร้าง sketch ใหม่ วางโค้ดข้างล่าง บันทึกชื่อ <code class="il">raii</code> แล้วกด <b>Upload</b></li>
+<li>เปิด <b>Tools → Serial Monitor</b> ที่ 115200 baud แล้วลองหมุน pot</li>
+</ol>
+<div class="code"><div class="cl">raii.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
 class ScopedTimer {
 public:
   explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
@@ -72,8 +103,33 @@ void loop() {
     for (int i = 0; i &lt; 100; ++i) sum += analogRead(A0);
   }                                   // destructor ทำงานตรงนี้
   Serial.print(&quot;avg = &quot;); Serial.println(sum / 100);
+
+  uint32_t inside;
+  {
+    CriticalSection cs;               // ปิด interrupt
+    inside = __get_PRIMASK();         // 1 = ปิดอยู่
+  }                                   // destructor เปิดคืน
+  Serial.print(&quot;PRIMASK inside = &quot;); Serial.print(inside);
+  Serial.print(&quot;, after = &quot;);        Serial.println(__get_PRIMASK());
   delay(1000);
-}</code></pre></div><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ทำไมต้อง = delete copy constructor?</summary><p>ถ้า copy ได้ จะมี 2 object ที่ destructor ทำงานซ้ำ เช่น เปิด interrupt 2 ครั้ง หรือพิมพ์เวลาซ้ำ resource ที่มีเจ้าของคนเดียวควรห้าม copy</p></details><details><summary>CriticalSection ใช้กับ BLE (SoftDevice) ได้ไหม?</summary><p>ใช้ได้แค่ช่วงสั้นมาก ไม่กี่ไมโครวินาที ถ้าปิดนาน SoftDevice จะพลาด timing ของวิทยุ ในงานจริงใช้ sd_nvic_critical_region_enter แทน</p></details><aside class="iv"><b>มุมงานจริง</b><p>RAII คือเหตุผลหลักที่หลายทีมย้ายจาก C มา C++ ในงาน embedded เพราะไม่มี runtime overhead และกำจัดบั๊ก resource leak ทั้งกลุ่ม เช่น ลืมเปิด interrupt คืนใน error path</p></aside>
+}</code></pre></div>
+<ul>
+<li><code class="il">micros()</code> เวลาตั้งแต่บอร์ดเริ่มทำงาน หน่วยไมโครวินาที</li>
+<li><code class="il">explicit</code> ห้าม compiler แปลงข้อความเป็น <code class="il">ScopedTimer</code> ให้เองโดยไม่ได้ตั้งใจ ส่วน <code class="il">= delete</code> ห้ามใช้ฟังก์ชันนั้น (ที่นี่คือห้าม copy ดูคำถามข้อแรก)</li>
+<li><b>PRIMASK</b> register ใน CPU Cortex-M: 1 = ปิด interrupt, 0 = เปิด <code class="il">__disable_irq()</code> ตั้งเป็น 1 ส่วน <code class="il">__get_PRIMASK()</code> / <code class="il">__set_PRIMASK()</code> อ่านและเขียนค่านี้</li>
+</ul>
+<p>ผลที่ควรเห็น ทุก 1 วินาที (ตัวเลข us และ avg ของคุณจะต่างออกไป):</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>analogRead x100: … us
+avg = 512
+PRIMASK inside = 1, after = 0</code></pre></div>
+<p>ผลนี้บอกอะไร:</p>
+<ul>
+<li><b>destructor ทำงานเอง</b> บรรทัด <code class="il">analogRead x100</code> ไม่มีใครเรียก print ใน <code class="il">loop()</code> มันมาจาก <code class="il">~ScopedTimer()</code> ที่ทำงานตรง <code class="il">}</code></li>
+<li><b>คืน resource เสมอ</b> <code class="il">inside = 1</code> คือ interrupt ถูกปิดภายใน <code class="il">{ }</code> และ <code class="il">after = 0</code> คือถูกเปิดคืนแล้ว ทั้งที่ไม่มีบรรทัดเปิดคืนเลย</li>
+<li><b>วงจร pot</b> หมุนแล้ว <code class="il">avg</code> เปลี่ยนในช่วง 0–1023 เพราะ <code class="il">analogRead()</code> ใช้ <b>ADC</b> (วงจรในชิปที่แปลงแรงดันเป็นตัวเลข) แปลง 0–3.3 V เป็น 0–1023</li>
+</ul>
+<p class="note">อย่าเรียก <code class="il">Serial.print</code> ระหว่างที่ interrupt ปิดอยู่ เพราะ USB ต้องใช้ interrupt จึงเก็บค่าไว้ในตัวแปรก่อนแล้วพิมพ์หลังออกจาก <code class="il">{ }</code></p>
+<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>ทำไมต้อง = delete copy constructor?</summary><p>ถ้า copy ได้ จะมี 2 object ที่ destructor ทำงานซ้ำ เช่น เปิด interrupt 2 ครั้ง หรือพิมพ์เวลาซ้ำ resource ที่มีเจ้าของคนเดียวควรห้าม copy</p></details><details><summary>CriticalSection ใช้ตอนเปิด BLE ได้ไหม?</summary><p>ใช้ได้แค่ช่วงสั้นมาก ไม่กี่ไมโครวินาที เพราะ BLE ของ nRF52 ทำงานด้วย SoftDevice (ซอฟต์แวร์วิทยุของ Nordic ที่อยู่ในชิป) ถ้าปิด interrupt นาน SoftDevice จะพลาดจังหวะของวิทยุ ในงานจริงใช้ฟังก์ชันของ SoftDevice เอง (sd_nvic_critical_region_enter) แทน</p></details><aside class="iv"><b>มุมงานจริง</b><p>RAII คือเหตุผลหลักที่หลายทีมย้ายจาก C มา C++ ในงาน embedded เพราะไม่ทำให้โปรแกรมช้าลง และกำจัดบั๊กลืมคืน resource ได้ทั้งกลุ่ม เช่น ลืมเปิด interrupt คืนในทางที่ออกจากฟังก์ชันเพราะเกิด error</p></aside>
 <label class="done"><input type="checkbox" id="done-l06" data-l="l06"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../05/"><small>← บทก่อนหน้า</small><span>05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</span></a><a class="next" href="../07/"><small>บทถัดไป →</small><span>07 · ปุ่มกดและ debounce</span></a></nav>

@@ -25,10 +25,16 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← Contents</a><span class="m">06 / 24</span></nav>
 <article class="lesson" id="l06">
-<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>RAII and destructors</h1><p class="meta">25 min · Hardware: 10 kΩ pot on A0</p></div></header>
-<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<header class="lh"><span class="big m">06</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>RAII and destructors</h1><p class="meta">30 min · Hardware: 10 kΩ pot on A0</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Wire it up</a></li><li><a href="#s2">Hands-on</a></li><li><a href="#s3">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> Let scope manage resources automatically: timing, disabling/enabling interrupts</p>
-<p>RAII (Resource Acquisition Is Initialization): acquire the resource in the constructor and release it in the destructor. The compiler always calls the destructor when the object leaves scope, so you can never forget <code class="il">unlock</code> or <code class="il">enable_irq</code>, even if you <code class="il">return</code> early. C has no such mechanism.</p>
+<p>In C, if you disable interrupts and then <code class="il">return</code> from the middle of a function without re-enabling them, the system hangs in a way that is hard to trace. C++ solves this by tying the "give back" step to leaving a <code class="il">{ }</code> block. Terms used in this lesson:</p>
+<ul>
+<li><b>resource</b>: something you borrow and must give back, e.g. the "interrupts disabled" state, a lock, or a reserved buffer.</li>
+<li><b>interrupt</b>: a signal that makes the CPU pause its current work to handle something urgent, e.g. USB data arriving (lesson 12 goes deeper). Sometimes they must be turned off briefly so code is not cut in the middle; that stretch is a <b>critical section</b>.</li>
+<li><b>destructor</b>: the function <code class="il">~ClassName()</code> that runs automatically when an object ends its life. A local object ends when execution leaves the <code class="il">{ }</code> that declared it (scope, lesson 02).</li>
+</ul>
+<p><b>RAII</b> (Resource Acquisition Is Initialization): acquire the resource in the constructor and release it in the destructor. The compiler always calls the destructor when the object leaves scope, so you can never forget <code class="il">unlock</code> or re-enabling interrupts, even if you <code class="il">return</code> early. C has no such mechanism.</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
 <path d="M26 26 H16 V174 H26" class="la"/>
 <text x="36" y="32" class="tt m">{</text>
@@ -39,7 +45,32 @@
 <rect x="210" y="134" width="184" height="26" rx="6" class="ba"/><text x="218" y="151" class="sub m">dtor: print(micros()-start_)</text>
 <text x="36" y="192" class="sub">The destructor always runs, whichever way you leave the scope</text>
 </svg></div><figcaption>The object's lifetime is tied to the braces</figcaption></figure>
-<h3 id="s1">Hands-on</h3><p>Wire the potentiometer: outer legs to 3V3 and GND, middle leg to A0.</p><div class="code"><div class="cl">raii.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+<h3 id="s1">Wire it up</h3>
+<p>A <b>potentiometer</b> (pot) is an adjustable resistor with 3 legs. The outer legs connect to the two ends of the resistor; the middle leg (wiper) slides along it as you turn the knob, so the voltage on the middle leg can go from 0 to 3.3 V.</p>
+<ol>
+<li>Unplug the USB cable first (the LED from lesson 04 can stay).</li>
+<li>Press the pot into the breadboard with its 3 legs in different rows.</li>
+<li>Connect one outer leg to the board's 3V3 pin and the other outer leg to GND (either way round; it only flips the turning direction).</li>
+<li>Connect the middle leg to pin A0 (the same pin as D0).</li>
+</ol>
+<p class="note">Use 3V3 only, never 5V: the nRF52840's pins accept at most 3.3 V.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 176" role="img">
+<rect x="8" y="30" width="96" height="112" rx="8" class="bm"/><text x="40" y="91" text-anchor="middle" class="tt m">XIAO</text>
+<text x="96" y="59" text-anchor="end" class="sub m">3V3</text><text x="96" y="89" text-anchor="end" class="sub m">A0</text><text x="96" y="119" text-anchor="end" class="sub m">GND</text>
+<path d="M104 55 H262 V44" class="w"/><path d="M104 115 H262 V126" class="w"/>
+<rect x="250" y="44" width="24" height="82" rx="4" class="ba"/>
+<line x1="104" y1="85" x2="244" y2="85" class="ln" marker-end="url(#ah)"/>
+<text x="176" y="78" text-anchor="middle" class="sub">middle leg (wiper)</text>
+<text x="290" y="82" class="tt m">pot 10 kΩ</text><text x="290" y="100" class="sub">outer legs: 3V3 / GND</text>
+<text x="8" y="166" class="sub">Turning the pot moves the wiper: A0 sees 0–3.3 V</text>
+</svg></div><figcaption>Pot outer legs to 3V3 and GND, middle leg to A0</figcaption></figure>
+<h3 id="s2">Hands-on</h3>
+<p>This sketch proves that destructors run by themselves when execution leaves a <code class="il">{ }</code>: <code class="il">ScopedTimer</code> prints the time though nobody calls print, and <code class="il">CriticalSection</code> re-enables interrupts though no line does it.</p>
+<ol>
+<li>Plug USB back in, create a new sketch, paste the code below, save it as <code class="il">raii</code>, and press <b>Upload</b>.</li>
+<li>Open <b>Tools → Serial Monitor</b> at 115200 baud and turn the pot.</li>
+</ol>
+<div class="code"><div class="cl">raii.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
 class ScopedTimer {
 public:
   explicit ScopedTimer(const char* label) : label_(label), start_(micros()) {}
@@ -72,8 +103,33 @@ void loop() {
     for (int i = 0; i &lt; 100; ++i) sum += analogRead(A0);
   }                                   // destructor runs here
   Serial.print(&quot;avg = &quot;); Serial.println(sum / 100);
+
+  uint32_t inside;
+  {
+    CriticalSection cs;               // interrupts off
+    inside = __get_PRIMASK();         // 1 = disabled
+  }                                   // destructor turns them back on
+  Serial.print(&quot;PRIMASK inside = &quot;); Serial.print(inside);
+  Serial.print(&quot;, after = &quot;);        Serial.println(__get_PRIMASK());
   delay(1000);
-}</code></pre></div><h3 id="s2">Check your understanding</h3><details><summary>Why = delete the copy constructor?</summary><p>If copying were allowed, two objects would run the destructor, e.g. re-enabling interrupts twice or printing the time twice. A resource with a single owner should not be copyable.</p></details><details><summary>Can CriticalSection be used with BLE (SoftDevice)?</summary><p>Only for a very short time, a few microseconds. If interrupts stay off longer, the SoftDevice misses radio timing. Real projects use sd_nvic_critical_region_enter instead.</p></details><aside class="iv"><b>In practice</b><p>RAII is a main reason many teams move from C to C++ in embedded work: zero runtime overhead, and it removes a whole class of resource-leak bugs, such as forgetting to re-enable interrupts on an error path.</p></aside>
+}</code></pre></div>
+<ul>
+<li><code class="il">micros()</code>: time since the board started, in microseconds.</li>
+<li><code class="il">explicit</code> stops the compiler from silently turning a string into a <code class="il">ScopedTimer</code>. <code class="il">= delete</code> forbids that function (here: no copying, see the first question).</li>
+<li><b>PRIMASK</b>: a register in the Cortex-M CPU: 1 = interrupts off, 0 = on. <code class="il">__disable_irq()</code> sets it to 1; <code class="il">__get_PRIMASK()</code> / <code class="il">__set_PRIMASK()</code> read and write it.</li>
+</ul>
+<p>Expected output every second (your us and avg numbers will differ):</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>analogRead x100: … us
+avg = 512
+PRIMASK inside = 1, after = 0</code></pre></div>
+<p>What the output tells you:</p>
+<ul>
+<li><b>Destructors run by themselves</b>: nothing in <code class="il">loop()</code> prints the <code class="il">analogRead x100</code> line. It comes from <code class="il">~ScopedTimer()</code>, running at the <code class="il">}</code>.</li>
+<li><b>The resource is always returned</b>: <code class="il">inside = 1</code> means interrupts were off inside the <code class="il">{ }</code>, and <code class="il">after = 0</code> means they are back on, with no line that turns them on.</li>
+<li><b>Pot wiring</b>: turning the pot moves <code class="il">avg</code> between 0 and 1023, because <code class="il">analogRead()</code> uses the <b>ADC</b> (a circuit in the chip that turns a voltage into a number) to map 0–3.3 V to 0–1023.</li>
+</ul>
+<p class="note">Never call <code class="il">Serial.print</code> while interrupts are off, because USB needs interrupts. That is why the value is stored first and printed after the <code class="il">{ }</code>.</p>
+<h3 id="s3">Check your understanding</h3><details><summary>Why = delete the copy constructor?</summary><p>If copying were allowed, two objects would run the destructor, e.g. re-enabling interrupts twice or printing the time twice. A resource with a single owner should not be copyable.</p></details><details><summary>Can CriticalSection be used while BLE is running?</summary><p>Only for a very short time, a few microseconds. BLE on the nRF52 runs through the SoftDevice (Nordic's radio software inside the chip); if interrupts stay off longer, it misses radio timing. Real projects use the SoftDevice's own function (sd_nvic_critical_region_enter) instead.</p></details><aside class="iv"><b>In practice</b><p>RAII is a main reason many teams move from C to C++ in embedded work: it costs no speed, and it removes a whole class of forgot-to-give-back bugs, such as not re-enabling interrupts on the path that exits early because of an error.</p></aside>
 <label class="done"><input type="checkbox" id="done-l06" data-l="l06"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../05/"><small>← Previous</small><span>05 · Split code into files: headers and src/</span></a><a class="next" href="../07/"><small>Next →</small><span>07 · Buttons and debounce</span></a></nav>

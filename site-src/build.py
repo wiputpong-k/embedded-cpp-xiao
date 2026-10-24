@@ -155,6 +155,17 @@ SVG_WIRE = '''<svg viewBox="0 0 400 160" role="img">
 <text x="8" y="148" class="sub">I ≈ (3.3 − 2.0) V / 1 kΩ ≈ 1.3 mA — พอเห็นชัด และไม่เกิน standard drive ของ GPIO</text>
 </svg>'''
 
+SVG_POT = '''<svg viewBox="0 0 400 176" role="img">
+<rect x="8" y="30" width="96" height="112" rx="8" class="bm"/><text x="40" y="91" text-anchor="middle" class="tt m">XIAO</text>
+<text x="96" y="59" text-anchor="end" class="sub m">3V3</text><text x="96" y="89" text-anchor="end" class="sub m">A0</text><text x="96" y="119" text-anchor="end" class="sub m">GND</text>
+<path d="M104 55 H262 V44" class="w"/><path d="M104 115 H262 V126" class="w"/>
+<rect x="250" y="44" width="24" height="82" rx="4" class="ba"/>
+<line x1="104" y1="85" x2="244" y2="85" class="ln" marker-end="url(#ah)"/>
+<text x="176" y="78" text-anchor="middle" class="sub">ขากลาง (wiper)</text>
+<text x="290" y="82" class="tt m">pot 10 kΩ</text><text x="290" y="100" class="sub">ขาข้าง: 3V3 / GND</text>
+<text x="8" y="166" class="sub">หมุน pot = เลื่อนขากลาง แรงดันที่ A0 เปลี่ยนได้ 0–3.3 V</text>
+</svg>'''
+
 SVG_RAII = '''<svg viewBox="0 0 400 200" role="img">
 <path d="M26 26 H16 V174 H26" class="la"/>
 <text x="36" y="32" class="tt m">{</text>
@@ -339,6 +350,8 @@ SVG_ENTRY = tr(SVG_ENTRY, {'จ่ายไฟ': 'power-up', 'เตรียม
 SVG_MANGLE = tr(SVG_MANGLE, {'ซอร์ส C++ (namespace logx)': 'C++ source (namespace logx)', 'ชื่อ symbol ใน .o / .elf': 'symbol name in .o / .elf',
                              'ถ้าต้องเรียกจาก C หรือ ASM ใช้ extern "C" ปิด mangling': 'Called from C or ASM? extern "C" turns mangling off'})
 SVG_WIRE = tr(SVG_WIRE, {'LED (ขายาว = +)': 'LED (long leg = +)', '— พอเห็นชัด และไม่เกิน standard drive ของ GPIO': ': bright enough, safe for GPIO'})
+SVG_POT = tr(SVG_POT, {'ขากลาง (wiper)': 'middle leg (wiper)', 'ขาข้าง: 3V3 / GND': 'outer legs: 3V3 / GND',
+                       'หมุน pot = เลื่อนขากลาง แรงดันที่ A0 เปลี่ยนได้ 0–3.3 V': 'Turning the pot moves the wiper: A0 sees 0–3.3 V'})
 SVG_RAII = tr(SVG_RAII, {'// ... งานที่จับเวลา ...': '// ... timed work ...', '// ออกจาก scope': '// leave scope',
                          'compiler รับประกันว่า destructor ถูกเรียกเสมอ ไม่ว่าออกด้วย return ทางไหน': 'The destructor always runs, whichever way you leave the scope'})
 SVG_BOUNCE = tr(SVG_BOUNCE, {'ขา D1 (raw) — HIGH = ปล่อย, LOW = กด': 'Pin D1 (raw): HIGH = released, LOW = pressed', 'หลัง Debouncer': 'After Debouncer'})
