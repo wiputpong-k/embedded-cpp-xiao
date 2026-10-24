@@ -37,6 +37,11 @@ def code(txt, label='', en=None):
 def fig(svg, cap):
     return f'<figure class="dg"><div class="sv">{svg}</div><figcaption>{cap}</figcaption></figure>'
 
+def photo(src, w, h, alt, cap, credit, credit_url):
+    """Third-party image: linked from its source (not copied into the repo), with a visible credit."""
+    return (f'<figure class="dg ph"><a href="{src}"><img src="{src}" width="{w}" height="{h}" loading="lazy" alt="{html.escape(alt)}"></a>'
+            f'<figcaption>{cap} <span class="credit">({T("ที่มา", "Source")}: <a href="{credit_url}">{credit}</a>)</span></figcaption></figure>')
+
 def flow(steps, labels=None, w=400):
     """steps: (title, sub, cls) vertical box-arrow flow"""
     labels = labels or []

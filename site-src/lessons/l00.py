@@ -1,3 +1,12 @@
+SEEED_WIKI = 'https://wiki.seeedstudio.com/XIAO_BLE/'
+SEEED_IMG = 'https://files.seeedstudio.com/wiki/XIAO-BLE/'
+BOARD_FIGS = (photo(SEEED_IMG + 'xiaonrf52840sence.png', 829, 620, 'Seeed XIAO nRF52840 Sense',
+                    T('บอร์ด Seeed XIAO nRF52840 Sense ที่ใช้ในคอร์สนี้', 'The Seeed XIAO nRF52840 Sense board used in this course'), 'Seeed Studio Wiki', SEEED_WIKI)
+              + photo(SEEED_IMG + 'XIAO_nRF52840_Sense_front_pinout.png', 7680, 4320, 'XIAO nRF52840 Sense front pinout',
+                      T('แผนผังขาของ XIAO nRF52840 Sense ด้านหน้า (กดที่รูปเพื่อดูขนาดเต็ม) ช่อง ARDUINO NAME แสดงเป็น "Mbed core / Non-Mbed core" คอร์สนี้ใช้ core แบบ non-mbed จึงใช้เลขหลัง',
+                        'Front pinout of the XIAO nRF52840 Sense (click the image for full size). The ARDUINO NAME column reads "Mbed core / Non-Mbed core"; this course uses the non-mbed core, so use the second number.'),
+                      'Seeed Studio Wiki', SEEED_WIKI))
+
 lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink แรก', 'Install the tools + first Blink'), 30, BOARD, goal(T('IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW', 'The IDE compiles and flashes the board, and you know the on-board LED is active-LOW')) + T('''
 <p>บทนี้เป็นบทติดตั้ง จึงใช้เวลานานกว่าบทอื่น ทำตามทีละขั้นจากบนลงล่าง ท้ายแต่ละขั้นมีวิธีเช็กว่าทำสำเร็จแล้ว ตัวอย่างเขียนสำหรับ Windows ถ้าใช้ macOS ให้ดูหมายเหตุในขั้นนั้น</p>
 <h3>ขั้นที่ 1: ติดตั้ง Arduino IDE 2</h3>
@@ -66,7 +75,7 @@ lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink
 <li>Open <b>Tools → Port</b> and pick the board's port (on Windows, <code class="il">COM</code> plus a number, e.g. COM5; on macOS, <code class="il">/dev/cu.usbmodem…</code>).</li>
 </ol>
 <p class="note">Check: if you are not sure which port is the board, unplug the cable and open the Port menu again; the port that disappeared is the board. If no port shows up at all, try another USB cable.</p>
-''') + fig(SVG_PINOUT, T('XIAO nRF52840 Sense: GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D', 'XIAO nRF52840 Sense: GPIO is 3.3 V. Never feed 5 V into a D pin.')) + T('''
+''') + BOARD_FIGS + fig(SVG_PINOUT, T('แผนผังย่อ: ขาที่ใช้ในคอร์สนี้ (สีส้ม) GPIO เป็น 3.3 V ห้ามป้อน 5 V เข้าขา D', 'Simplified: the pins this course uses (orange). GPIO is 3.3 V. Never feed 5 V into a D pin.')) + T('''
 <h3>Hands-on: Blink แรก</h3>
 <ol>
 <li>กดเมนู <b>File → New Sketch</b> จะได้หน้าต่างใหม่ที่มีโค้ดตั้งต้น</li>
