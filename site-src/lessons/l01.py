@@ -64,12 +64,14 @@ lesson('01', 'A', T('.ino คือ C++ และเส้นทางจาก�
 </ul>
 ''') + '''
 <h3>Hands-on</h3>''' + T('''
+<p>การทดลองนี้พิสูจน์ 4 เรื่องจากด้านบน: .ino ถูก compile เป็น C++, IDE สร้าง prototype ให้, โค้ดถูกสร้างให้ CPU ของบอร์ด (ไม่ใช่ PC) และ <code class="il">init()</code> ของ core เตรียม USB ไว้ให้ก่อน <code class="il">setup()</code></p>
 <ol>
 <li>เปิด Arduino IDE เลือกบอร์ดและพอร์ตเหมือนบท 00 แล้วสร้าง sketch ใหม่ (<b>File → New Sketch</b>) วางโค้ดด้านล่างแทนของเดิม บันทึกชื่อ <code class="il">whoami</code></li>
 <li>กด <b>Upload</b> รอจนแถบ Output ขึ้น <i>Device programmed</i> หรือ upload เสร็จ</li>
 <li>เปิด <b>Tools → Serial Monitor</b> แล้วตั้งความเร็วมุมขวาเป็น <b>115200 baud</b> ถ้าไม่มีข้อความขึ้น ให้กด reset บนบอร์ด 1 ครั้ง</li>
 </ol>
 ''', '''
+<p>This exercise proves four points from above: the .ino is compiled as C++, the IDE generates prototypes, the code is built for the board's CPU (not your PC), and the core's <code class="il">init()</code> prepares USB before <code class="il">setup()</code>.</p>
 <ol>
 <li>Open Arduino IDE, select the board and port as in lesson 00, and create a new sketch (<b>File → New Sketch</b>). Replace its contents with the code below and save it as <code class="il">whoami</code>.</li>
 <li>Press <b>Upload</b> and wait until the Output panel shows <i>Device programmed</i> or the upload finishes.</li>
@@ -78,13 +80,17 @@ lesson('01', 'A', T('.ino คือ C++ และเส้นทางจาก�
 ''') + code('''void setup() {
   Serial.begin(115200);
   while (!Serial) {}             // รอ USB CDC พร้อม
+  printInfo();                   // ฟังก์ชันอยู่ท้ายไฟล์ แต่เรียกได้
+}
+
+void loop() {}
+
+void printInfo() {
   Serial.print("__cplusplus = ");  Serial.println(__cplusplus);
   Serial.print("sizeof(int) = ");  Serial.println(sizeof(int));
   Serial.print("sizeof(void*) = ");Serial.println(sizeof(void*));
   Serial.print("sizeof(bool) = "); Serial.println(sizeof(bool));
-}
-
-void loop() {}''', 'whoami.ino', en={'// รอ USB CDC พร้อม': '// wait for USB CDC'}) + T('''
+}''', 'whoami.ino', en={'// รอ USB CDC พร้อม': '// wait for USB CDC', '// ฟังก์ชันอยู่ท้ายไฟล์ แต่เรียกได้': '// defined at the end, still callable'}) + T('''
 <ul>
 <li><code class="il">Serial.begin(115200)</code> เปิด serial ที่ 115200 baud (bit ต่อวินาที) สำหรับ USB CDC ตัวเลขนี้ไม่มีผลจริง แต่ให้ตั้งตรงกับ Serial Monitor จนเป็นนิสัย เพราะ serial แบบสายจริง (UART) ต้องตรงกันทั้งสองฝั่ง</li>
 <li><code class="il">while (!Serial) {}</code> รอจนคอมพิวเตอร์เปิดพอร์ต ไม่อย่างนั้นข้อความจะถูกส่งออกไปก่อนเปิด Serial Monitor และหายไป</li>
@@ -102,15 +108,41 @@ void loop() {}''', 'whoami.ino', en={'// รอ USB CDC พร้อม': '// wa
 sizeof(int) = 4
 sizeof(void*) = 4
 sizeof(bool) = 1''', 'Serial Monitor') + T('''
-<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ <code class="il">int</code> และ pointer ได้ 4 byte เพราะ Cortex-M4F เป็น CPU 32-bit แต่บน Arduino Uno (8-bit) <code class="il">int</code> มีแค่ 2 byte โค้ด embedded จึงไม่ควรเดาขนาด <code class="il">int</code></p>
-<p>สุดท้ายดูบรรทัดท้ายของแถบ Output หลัง Verify หรือ Upload:</p>
+<p>ผลนี้บอกอะไร เทียบกับเนื้อหาด้านบน:</p>
+<ul>
+<li><b>.ino คือ C++</b> <code class="il">__cplusplus</code> มีค่า แปลว่าไฟล์ถูก compile เป็น C++ (macro นี้มีเฉพาะใน C++ ถ้า compile เป็นภาษา C บรรทัดนี้จะ error) ค่า 201103 = C++11 (201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้</li>
+<li><b>prototype</b> compile ผ่านทั้งที่ <code class="il">setup()</code> เรียก <code class="il">printInfo()</code> ก่อนบรรทัดที่ประกาศ ถ้าเป็นไฟล์ .cpp ปกติจะได้ error <code class="il">'printInfo' was not declared in this scope</code> ที่ผ่านได้เพราะ IDE เติม prototype ไว้ต้นไฟล์ให้</li>
+<li><b>cross-compiler</b> <code class="il">int</code> และ pointer ได้ 4 byte เพราะ Cortex-M4F เป็น CPU 32-bit ถ้า compile โค้ดเดียวกันบน PC 64-bit จะได้ <code class="il">sizeof(void*) = 8</code> และบน Arduino Uno (8-bit) <code class="il">int</code> มีแค่ 2 byte โค้ด embedded จึงไม่ควรเดาขนาด <code class="il">int</code></li>
+<li><b><code class="il">main()</code> ของ core</b> ข้อความขึ้นได้เพราะ <code class="il">init()</code> เปิด USB CDC ไว้ก่อน <code class="il">setup()</code> จะถูกเรียก</li>
+</ul>
+<p>อยากเห็นไฟล์ C++ ที่ IDE สร้างจริง: เปิด <b>File → Preferences</b> ติ๊ก <i>Show verbose output during compile</i> แล้วกด Verify ในแถบ Output หาคำสั่งที่ลงท้ายด้วย <code class="il">sketch\\whoami.ino.cpp</code> แล้วเปิดไฟล์ตาม path นั้นด้วย Notepad จะเห็นประมาณนี้:</p>
+''', '''
+<p>What the output tells you, point by point:</p>
+<ul>
+<li><b>.ino is C++</b>: <code class="il">__cplusplus</code> has a value, so the file was compiled as C++ (the macro exists only in C++; compiled as C, this line would fail). 201103 = C++11 (201703 = C++17). Note it down, because the features you can use depend on it.</li>
+<li><b>prototype</b>: it compiles even though <code class="il">setup()</code> calls <code class="il">printInfo()</code> before the line that defines it. In a plain .cpp file you would get <code class="il">'printInfo' was not declared in this scope</code>. It works because the IDE adds prototypes at the top of the file.</li>
+<li><b>cross-compiler</b>: <code class="il">int</code> and pointers are 4 bytes because the Cortex-M4F is a 32-bit CPU. Compile the same code on a 64-bit PC and <code class="il">sizeof(void*)</code> is 8; on an Arduino Uno (8-bit) <code class="il">int</code> is only 2 bytes. So embedded code should not assume the size of <code class="il">int</code>.</li>
+<li><b>The core's <code class="il">main()</code></b>: the text appears because <code class="il">init()</code> set up USB CDC before <code class="il">setup()</code> was called.</li>
+</ul>
+<p>To see the C++ file the IDE generates: open <b>File → Preferences</b>, tick <i>Show verbose output during compile</i> and press Verify. In the Output panel, find the command ending in <code class="il">sketch\\whoami.ino.cpp</code> and open that file in Notepad. It looks roughly like this:</p>
+''') + code('''#include <Arduino.h>            // IDE เติมให้
+#include <Adafruit_TinyUSB.h>
+void setup();                   // prototype ที่ IDE สร้างให้
+void loop();
+void printInfo();
+void setup() {
+  Serial.begin(115200);
+  ...''', T('whoami.ino.cpp (ตัดบรรทัด #line ออก)', 'whoami.ino.cpp (#line lines removed)'),
+         en={'// IDE เติมให้': '// added by the IDE', '// prototype ที่ IDE สร้างให้': '// prototypes generated by the IDE'}) + T('''
+<p class="note">บรรทัด <code class="il">#line</code> ที่ IDE แทรกไว้ทำให้ error ชี้กลับไปที่เลขบรรทัดใน .ino ไม่ใช่ใน .ino.cpp</p>
+<p>สุดท้ายดูบรรทัดท้ายของแถบ Output หลัง Verify หรือ Upload ตัวเลขนี้มาจากขั้น link ในรูป pipeline:</p>
 <ul>
 <li><i>Sketch uses … bytes</i> = ขนาดโปรแกรมใน <b>flash</b> หน่วยความจำถาวรที่เก็บโปรแกรม ไฟดับไม่หาย (nRF52840 มี 1 MB แต่ส่วนหนึ่งถูกจองให้ bootloader และ stack BLE จึงเห็น Maximum น้อยกว่านั้น)</li>
 <li><i>Global variables use …</i> = <b>RAM</b> แบบ static หน่วยความจำทำงาน (256 KB) ที่ไฟดับแล้วหาย "static" คือส่วนที่รู้ขนาดตั้งแต่ตอน build ได้แก่ตัวแปร global ส่วน RAM ที่เหลือใช้เป็น <b>stack</b> (ตัวแปร local) และ heap</li>
 </ul>
 ''', '''
-<p><code class="il">__cplusplus</code> tells you the language standard the compiler uses (201103 = C++11, 201703 = C++17). Note it down, because the features you can use depend on it. <code class="il">int</code> and pointers are 4 bytes because the Cortex-M4F is a 32-bit CPU. On an Arduino Uno (8-bit), <code class="il">int</code> is only 2 bytes, so embedded code should not assume the size of <code class="il">int</code>.</p>
-<p>Finally, read the last lines of the Output panel after Verify or Upload:</p>
+<p class="note">The <code class="il">#line</code> lines the IDE inserts make errors point to line numbers in the .ino, not in the .ino.cpp.</p>
+<p>Finally, read the last lines of the Output panel after Verify or Upload. These numbers come from the link stage in the pipeline figure:</p>
 <ul>
 <li><i>Sketch uses … bytes</i> = program size in <b>flash</b>, the permanent memory that holds the program and survives power-off (the nRF52840 has 1 MB, but part is reserved for the bootloader and the BLE stack, so the Maximum shown is smaller).</li>
 <li><i>Global variables use …</i> = static <b>RAM</b>, the working memory (256 KB) that is lost at power-off. "Static" means its size is known at build time: the global variables. The rest of RAM is used for the <b>stack</b> (local variables) and the heap.</li>

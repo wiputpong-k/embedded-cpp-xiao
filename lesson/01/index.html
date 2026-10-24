@@ -81,6 +81,7 @@
 </ul>
 
 <h3 id="s1">Hands-on</h3>
+<p>การทดลองนี้พิสูจน์ 4 เรื่องจากด้านบน: .ino ถูก compile เป็น C++, IDE สร้าง prototype ให้, โค้ดถูกสร้างให้ CPU ของบอร์ด (ไม่ใช่ PC) และ <code class="il">init()</code> ของ core เตรียม USB ไว้ให้ก่อน <code class="il">setup()</code></p>
 <ol>
 <li>เปิด Arduino IDE เลือกบอร์ดและพอร์ตเหมือนบท 00 แล้วสร้าง sketch ใหม่ (<b>File → New Sketch</b>) วางโค้ดด้านล่างแทนของเดิม บันทึกชื่อ <code class="il">whoami</code></li>
 <li>กด <b>Upload</b> รอจนแถบ Output ขึ้น <i>Device programmed</i> หรือ upload เสร็จ</li>
@@ -90,13 +91,17 @@
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}             // รอ USB CDC พร้อม
+  printInfo();                   // ฟังก์ชันอยู่ท้ายไฟล์ แต่เรียกได้
+}
+
+void loop() {}
+
+void printInfo() {
   Serial.print(&quot;__cplusplus = &quot;);  Serial.println(__cplusplus);
   Serial.print(&quot;sizeof(int) = &quot;);  Serial.println(sizeof(int));
   Serial.print(&quot;sizeof(void*) = &quot;);Serial.println(sizeof(void*));
   Serial.print(&quot;sizeof(bool) = &quot;); Serial.println(sizeof(bool));
-}
-
-void loop() {}</code></pre></div>
+}</code></pre></div>
 <ul>
 <li><code class="il">Serial.begin(115200)</code> เปิด serial ที่ 115200 baud (bit ต่อวินาที) สำหรับ USB CDC ตัวเลขนี้ไม่มีผลจริง แต่ให้ตั้งตรงกับ Serial Monitor จนเป็นนิสัย เพราะ serial แบบสายจริง (UART) ต้องตรงกันทั้งสองฝั่ง</li>
 <li><code class="il">while (!Serial) {}</code> รอจนคอมพิวเตอร์เปิดพอร์ต ไม่อย่างนั้นข้อความจะถูกส่งออกไปก่อนเปิด Serial Monitor และหายไป</li>
@@ -107,8 +112,24 @@ void loop() {}</code></pre></div>
 sizeof(int) = 4
 sizeof(void*) = 4
 sizeof(bool) = 1</code></pre></div>
-<p>ค่า <code class="il">__cplusplus</code> บอกมาตรฐานภาษาที่ compiler ใช้ (201103 = C++11, 201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้ <code class="il">int</code> และ pointer ได้ 4 byte เพราะ Cortex-M4F เป็น CPU 32-bit แต่บน Arduino Uno (8-bit) <code class="il">int</code> มีแค่ 2 byte โค้ด embedded จึงไม่ควรเดาขนาด <code class="il">int</code></p>
-<p>สุดท้ายดูบรรทัดท้ายของแถบ Output หลัง Verify หรือ Upload:</p>
+<p>ผลนี้บอกอะไร เทียบกับเนื้อหาด้านบน:</p>
+<ul>
+<li><b>.ino คือ C++</b> <code class="il">__cplusplus</code> มีค่า แปลว่าไฟล์ถูก compile เป็น C++ (macro นี้มีเฉพาะใน C++ ถ้า compile เป็นภาษา C บรรทัดนี้จะ error) ค่า 201103 = C++11 (201703 = C++17) จดไว้ เพราะ feature ที่ใช้ได้ขึ้นกับค่านี้</li>
+<li><b>prototype</b> compile ผ่านทั้งที่ <code class="il">setup()</code> เรียก <code class="il">printInfo()</code> ก่อนบรรทัดที่ประกาศ ถ้าเป็นไฟล์ .cpp ปกติจะได้ error <code class="il">'printInfo' was not declared in this scope</code> ที่ผ่านได้เพราะ IDE เติม prototype ไว้ต้นไฟล์ให้</li>
+<li><b>cross-compiler</b> <code class="il">int</code> และ pointer ได้ 4 byte เพราะ Cortex-M4F เป็น CPU 32-bit ถ้า compile โค้ดเดียวกันบน PC 64-bit จะได้ <code class="il">sizeof(void*) = 8</code> และบน Arduino Uno (8-bit) <code class="il">int</code> มีแค่ 2 byte โค้ด embedded จึงไม่ควรเดาขนาด <code class="il">int</code></li>
+<li><b><code class="il">main()</code> ของ core</b> ข้อความขึ้นได้เพราะ <code class="il">init()</code> เปิด USB CDC ไว้ก่อน <code class="il">setup()</code> จะถูกเรียก</li>
+</ul>
+<p>อยากเห็นไฟล์ C++ ที่ IDE สร้างจริง: เปิด <b>File → Preferences</b> ติ๊ก <i>Show verbose output during compile</i> แล้วกด Verify ในแถบ Output หาคำสั่งที่ลงท้ายด้วย <code class="il">sketch\whoami.ino.cpp</code> แล้วเปิดไฟล์ตาม path นั้นด้วย Notepad จะเห็นประมาณนี้:</p>
+<div class="code"><div class="cl">whoami.ino.cpp (ตัดบรรทัด #line ออก)</div><pre><code>#include &lt;Arduino.h&gt;            // IDE เติมให้
+#include &lt;Adafruit_TinyUSB.h&gt;
+void setup();                   // prototype ที่ IDE สร้างให้
+void loop();
+void printInfo();
+void setup() {
+  Serial.begin(115200);
+  ...</code></pre></div>
+<p class="note">บรรทัด <code class="il">#line</code> ที่ IDE แทรกไว้ทำให้ error ชี้กลับไปที่เลขบรรทัดใน .ino ไม่ใช่ใน .ino.cpp</p>
+<p>สุดท้ายดูบรรทัดท้ายของแถบ Output หลัง Verify หรือ Upload ตัวเลขนี้มาจากขั้น link ในรูป pipeline:</p>
 <ul>
 <li><i>Sketch uses … bytes</i> = ขนาดโปรแกรมใน <b>flash</b> หน่วยความจำถาวรที่เก็บโปรแกรม ไฟดับไม่หาย (nRF52840 มี 1 MB แต่ส่วนหนึ่งถูกจองให้ bootloader และ stack BLE จึงเห็น Maximum น้อยกว่านั้น)</li>
 <li><i>Global variables use …</i> = <b>RAM</b> แบบ static หน่วยความจำทำงาน (256 KB) ที่ไฟดับแล้วหาย "static" คือส่วนที่รู้ขนาดตั้งแต่ตอน build ได้แก่ตัวแปร global ส่วน RAM ที่เหลือใช้เป็น <b>stack</b> (ตัวแปร local) และ heap</li>
