@@ -332,7 +332,7 @@ def lesson(num, mod, title, mins, hw, body):
 
 def qa(pairs):
     return f'<h3>{T("เช็กความเข้าใจ", "Check your understanding")}</h3>' + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in pairs)
-def iv(t): return f'<aside class="iv"><b>{T("มุมสัมภาษณ์", "Interview angle")}</b><p>{t}</p></aside>'
+def iv(t): return f'<aside class="iv"><b>{T("มุมงานจริง", "In practice")}</b><p>{t}</p></aside>'
 def goal(t): return f'<p class="goal"><b>{T("เป้าหมาย", "Goal")}</b> {t}</p>'
 def vs(c, cpp): return f'<div class="vs"><div><span class="tag">C</span><p>{c}</p></div><div><span class="tag t2">C++</span><p>{cpp}</p></div></div>'
 
@@ -408,8 +408,8 @@ void loop() {}''', 'whoami.ino', en={'// รอ USB CDC พร้อม': '// wa
            T('ไม่ได้ if constexpr เป็นของ C++17 ต้องเพิ่ม flag -std=gnu++17 หรือเลี่ยงไปใช้ template overload', 'No. if constexpr is C++17. Add -std=gnu++17 or fall back to template overloads.')),
           (T('"Global variables use" นับ stack ด้วยไหม?', 'Does "Global variables use" include the stack?'),
            T('ไม่นับ นับเฉพาะ .data + .bss ที่รู้ขนาดตอน link ตัวแปร local บน stack ไม่อยู่ในตัวเลขนี้', 'No. It counts only .data + .bss, whose sizes are known at link time. Local variables on the stack are not in that number.'))])
-   + iv(T('ถูกถามบ่อยว่า "อธิบายขั้นตอน build firmware" ให้ตอบเป็นลำดับ preprocess → compile → link (linker script กำหนด address) → objcopy → flash และบอกว่า .elf มี debug symbol ส่วน .hex/.bin คือ image ที่ลงชิป',
-          'A common question is "walk me through a firmware build". Answer in order: preprocess → compile → link (the linker script sets the addresses) → objcopy → flash, and mention that the .elf carries debug symbols while the .hex/.bin is the image that goes onto the chip.')))
+   + iv(T('ในงานจริงเมื่อ build มีปัญหา ให้ไล่ตามลำดับ preprocess → compile → link (linker script กำหนด address) → objcopy → flash จะรู้ว่าพังที่ขั้นไหน และเก็บ .elf ไว้เสมอ เพราะมี debug symbol ที่ debugger ต้องใช้ ส่วน .hex/.bin คือ image ที่ลงชิป',
+          'When a build breaks, walk the stages in order: preprocess → compile → link (the linker script sets the addresses) → objcopy → flash, and you will see where it failed. Always keep the .elf: it carries the debug symbols the debugger needs, while the .hex/.bin is the image that goes onto the chip.')))
 
 lesson('02', 'A', T('Reference, const และ constexpr แทน #define', 'Reference, const and constexpr instead of #define'), 25, BOARD, goal(T('เลิกใช้ #define กับค่าคงที่ และส่งพารามิเตอร์ด้วย reference ได้ถูกที่', 'Stop using #define for constants, and pass parameters by reference in the right places'))
    + vs(T('ค่าคงที่ใช้ <code class="il">#define</code> ไม่มี type ไม่มี scope แก้ตัวแปรของผู้เรียกต้องส่ง pointer', 'Constants use <code class="il">#define</code>: no type, no scope. To change the caller\'s variable you pass a pointer.'),
@@ -449,8 +449,8 @@ void loop() {
            T('เมื่อ T ใหญ่กว่า register (struct, buffer) เพื่อเลี่ยงการ copy ส่วน int, float, pointer ส่งค่าตรง ๆ เร็วกว่าและอ่านง่ายกว่า', 'When T is bigger than a register (structs, buffers), to avoid a copy. Pass int, float and pointers by value: faster and easier to read.')),
           (T('constexpr ต่างจาก const อย่างไร?', 'How does constexpr differ from const?'),
            T('const = ห้ามแก้ แต่อาจรู้ค่าตอน runtime ส่วน constexpr = ต้องรู้ค่าตอน compile จึงใช้เป็นขนาด array หรือ template argument ได้', 'const means read-only, but the value may only be known at runtime. constexpr must be known at compile time, so it can size an array or be a template argument.'))])
-   + iv(T('"ทำไมไม่ใช้ #define?" ตอบ: ไม่มี type checking, ไม่เคารพ namespace/scope, debugger มองไม่เห็นชื่อ และอาจเกิด side effect จาก macro expansion',
-          '"Why not #define?" Answer: no type checking, it ignores namespaces and scope, the debugger cannot see the name, and macro expansion can cause side effects.')))
+   + iv(T('ใน code review ของทีม firmware ค่าคงที่แบบ #define มักถูกขอให้เปลี่ยนเป็น constexpr เพราะ #define ไม่มี type checking, ไม่เคารพ namespace/scope, debugger มองไม่เห็นชื่อ และอาจเกิด side effect จาก macro expansion',
+          'In firmware code reviews, #define constants are often sent back to become constexpr: #define has no type checking, ignores namespaces and scope, is invisible to the debugger, and macro expansion can cause side effects.')))
 
 lesson('03', 'A', 'namespace, overloading, enum class', 20, BOARD, goal(T('จัดระเบียบชื่อและเข้าใจว่าทำไม C++ ต้องมี name mangling', 'Organize names, and understand why C++ needs name mangling'))
    + vs(T('ชื่อฟังก์ชันซ้ำไม่ได้ ต้องตั้ง <code class="il">log_int</code>, <code class="il">log_float</code> และ <code class="il">enum</code> ปนกับ int ได้ทุกที่', 'Function names must be unique, so you write <code class="il">log_int</code>, <code class="il">log_float</code>, and an <code class="il">enum</code> mixes with int anywhere.'),
@@ -535,8 +535,8 @@ void loop() {
            T('สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้อง default-construct แล้วค่อย assign และจำเป็นสำหรับ member ที่เป็น const หรือ reference', 'Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.')),
           (T('object Led ใช้ RAM กี่ byte โดยประมาณ?', 'Roughly how many bytes of RAM does a Led object use?'),
            T('ราว 3–4 byte (pin_, activeLow_, isOn_ + padding) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน', 'About 3–4 bytes (pin_, activeLow_, isOn_ + padding). Member functions cost no RAM per object; they live in flash and are shared.'))])
-   + iv(T('"Static initialization order fiasco" คือคำถามระดับกลาง: ลำดับการสร้าง global object ข้ามไฟล์ไม่ถูกกำหนด ทางแก้คือ begin() หรือ function-local static',
-          '"Static initialization order fiasco" is a mid-level question: the construction order of global objects across files is unspecified. The fixes are begin() or a function-local static.')))
+   + iv(T('บั๊ก "static initialization order fiasco" เจอได้จริงในโปรเจกต์หลายไฟล์: ลำดับการสร้าง global object ข้ามไฟล์ไม่ถูกกำหนด object หนึ่งอาจเรียกใช้อีกตัวที่ยังไม่ถูกสร้าง ทางแก้คือ begin() หรือ function-local static',
+          'The "static initialization order fiasco" is a real bug in multi-file projects: the construction order of global objects across files is unspecified, so one object may use another that does not exist yet. The fixes are begin() or a function-local static.')))
 
 lesson('05', 'A', T('RAII และ destructor', 'RAII and destructors'), 25, T('Pot 10 kΩ ที่ A0', '10 kΩ pot on A0'), goal(T('ใช้ scope ควบคุม resource อัตโนมัติ: จับเวลา, ปิด/เปิด interrupt', 'Let scope manage resources automatically: timing, disabling/enabling interrupts')) + T('''
 <p>RAII (Resource Acquisition Is Initialization): ขอ resource ใน constructor คืนใน destructor แล้ว compiler จะเรียก destructor ให้เมื่อออกจาก scope เสมอ จึงไม่มีทางลืม <code class="il">unlock</code> หรือ <code class="il">enable_irq</code> แม้จะ <code class="il">return</code> กลางทาง C ไม่มีกลไกนี้</p>
@@ -582,8 +582,8 @@ void loop() {
           T('ถ้า copy ได้ จะมี 2 object ที่ destructor ทำงานซ้ำ เช่น เปิด interrupt 2 ครั้ง หรือพิมพ์เวลาซ้ำ resource ที่มีเจ้าของคนเดียวควรห้าม copy', 'If copying were allowed, two objects would run the destructor, e.g. re-enabling interrupts twice or printing the time twice. A resource with a single owner should not be copyable.')),
          (T('CriticalSection ใช้กับ BLE (SoftDevice) ได้ไหม?', 'Can CriticalSection be used with BLE (SoftDevice)?'),
           T('ใช้ได้แค่ช่วงสั้นมาก ไม่กี่ไมโครวินาที ถ้าปิดนาน SoftDevice จะพลาด timing ของวิทยุ ในงานจริงใช้ sd_nvic_critical_region_enter แทน', 'Only for a very short time, a few microseconds. If interrupts stay off longer, the SoftDevice misses radio timing. Real projects use sd_nvic_critical_region_enter instead.'))])
-   + iv(T('ถ้าถูกถาม "ข้อดีที่สุดของ C++ เหนือ C ใน embedded" RAII คือคำตอบที่ดี เพราะไม่มี runtime overhead และกำจัดบั๊ก resource leak ทั้งกลุ่ม',
-          'If asked "what is the biggest advantage of C++ over C in embedded?", RAII is a strong answer: zero runtime overhead, and it removes a whole class of resource-leak bugs.')))
+   + iv(T('RAII คือเหตุผลหลักที่หลายทีมย้ายจาก C มา C++ ในงาน embedded เพราะไม่มี runtime overhead และกำจัดบั๊ก resource leak ทั้งกลุ่ม เช่น ลืมเปิด interrupt คืนใน error path',
+          'RAII is a main reason many teams move from C to C++ in embedded work: zero runtime overhead, and it removes a whole class of resource-leak bugs, such as forgetting to re-enable interrupts on an error path.')))
 
 lesson('06', 'A', T('ปุ่มกด, debounce และ state machine', 'Buttons, debounce and state machines'), 30, BTN, goal(T('เขียน debounce แบบ non-blocking เป็น class ที่ไม่พึ่ง Arduino (จะ test ได้ในบท 15)', 'Write non-blocking debounce as a class that does not depend on Arduino (you will test it in lesson 15)')) + T('''
 <p>ต่อปุ่มระหว่าง D1 กับ GND แล้วใช้ <code class="il">INPUT_PULLUP</code> ปล่อย = HIGH, กด = LOW หน้าสัมผัสจะเด้งหลายครั้งในไม่กี่มิลลิวินาที ถ้าไม่ debounce กดครั้งเดียวจะนับได้หลายครั้ง</p>
@@ -684,8 +684,8 @@ void loop() {
           T('ถ้า delete object ผ่าน pointer ของ base แล้ว destructor ไม่ virtual destructor ของ derived จะไม่ถูกเรียก resource รั่ว', 'If you delete an object through a base pointer and the destructor is not virtual, the derived destructor never runs and resources leak.')),
          (T('ถ้าไม่อยากจ่ายต้นทุน virtual มีทางเลือกอะไร?', 'What can you use if you do not want to pay for virtual?'),
           T('ใช้ template (static polymorphism / CRTP) ให้ compiler รู้ชนิดตอน compile แล้ว inline ได้ แลกกับ code size ที่อาจเพิ่มขึ้น', 'Templates (static polymorphism / CRTP): the compiler knows the type at compile time and can inline, at the cost of possibly larger code.'))])
-   + iv(T('คำถามคลาสสิก: "virtual ช้าไหม?" ตอบเป็นตัวเลข: เพิ่ม load 2 ครั้ง + indirect branch ต่อ call บน Cortex-M4 ราวไม่กี่ cycle ปัญหาจริงคือ inline ไม่ได้ ไม่ใช่ความช้าโดยตรง',
-          'Classic question: "Is virtual slow?" Answer with numbers: two extra loads plus an indirect branch per call, a few cycles on a Cortex-M4. The real cost is that the call cannot be inlined, not raw speed.')))
+   + iv(T('เวลาทีมถกกันว่า "virtual ช้าไหม" ให้คุยด้วยตัวเลข: เพิ่ม load 2 ครั้ง + indirect branch ต่อ call บน Cortex-M4 ราวไม่กี่ cycle ต้นทุนจริงคือ inline ไม่ได้ จึงควรเลี่ยงเฉพาะใน hot loop หรือ ISR',
+          'When a team debates "is virtual slow?", talk numbers: two extra loads plus an indirect branch per call, a few cycles on a Cortex-M4. The real cost is lost inlining, so avoid it only in hot loops and ISRs.')))
 
 lesson('08', 'A', 'Template: RingBuffer<T, N>', 30, POT, goal(T('เขียน container ขนาดคงที่ใช้ซ้ำได้ทุกชนิด โดยไม่ใช้ heap', 'Write a reusable fixed-size container for any type, without the heap'))
    + vs(T('ทำ buffer สำหรับ int, float แยกกัน หรือใช้ <code class="il">void*</code> + macro ซึ่งไม่มี type safety', 'Write separate buffers for int and float, or use <code class="il">void*</code> + macros with no type safety.'),
@@ -751,8 +751,8 @@ void loop() {}''', 'memmap.ino', en={'// .bss  → นับใน "Global varia
            T('.data หรือ .bss เหมือน global แต่ scope จำกัดในฟังก์ชัน จึงคงค่าระหว่างการเรียก', 'In .data or .bss like a global, but its scope is limited to the function, so it keeps its value between calls.')),
           (T('stack overflow บน MCU ไม่มี OS แสดงอาการอย่างไร?', 'What does a stack overflow look like on an MCU without an OS?'),
            T('stack โตลงไปทับ heap หรือ .bss ทำให้ค่าตัวแปรเพี้ยนแบบสุ่มหรือ HardFault วิธีตรวจคือ stack painting (เติม pattern แล้วดูว่าถูกเขียนลึกแค่ไหน) หรือเปิด MPU guard', 'The stack grows down into the heap or .bss, causing random variable corruption or a HardFault. Detect it with stack painting (fill a pattern and see how deep it gets overwritten) or an MPU guard region.'))])
-   + iv(T('เตรียมอธิบาย .text / .data / .bss / heap / stack ด้วยรูปนี้ได้ภายใน 1 นาที เป็นคำถามที่เจอเกือบทุกที่',
-          'Be ready to explain .text / .data / .bss / heap / stack with this diagram in under a minute. It comes up almost everywhere.')))
+   + iv(T('ใช้ memory map นี้ทุกครั้งที่เจอ HardFault หรือ RAM ไม่พอ: ดูว่า address ที่พังอยู่ใน .text / .data / .bss / heap / stack ส่วนไหน และเปิดไฟล์ .map จาก linker ดูว่าอะไรกินที่มากที่สุด',
+          'Reach for this memory map whenever you hit a HardFault or run out of RAM: find which of .text / .data / .bss / heap / stack the faulting address falls in, and open the linker .map file to see what uses the most space.')))
 
 lesson('10', 'A', T('Interrupt, volatile และ lambda', 'Interrupts, volatile and lambdas'), 25, BTN, goal(T('เขียน ISR ที่ถูกต้อง และแชร์ข้อมูลระหว่าง ISR กับ loop อย่างปลอดภัย', 'Write a correct ISR, and share data between the ISR and loop safely'))
    + fig(SVG_ISR, T('ISR แทรกกลาง loop ได้ทุกเมื่อ', 'An ISR can cut into loop at any moment')) + '''
@@ -785,8 +785,8 @@ void loop() {
            T('ไม่ volatile แค่บังคับให้อ่าน/เขียน memory จริงทุกครั้ง แต่ ++ คือ load-add-store 3 คำสั่ง ถูกแทรกกลางได้ ต้องใช้ critical section หรือ std::atomic', 'No. volatile only forces a real memory read/write every time, but ++ is load-add-store, three instructions that can be interrupted. Use a critical section or std::atomic.')),
           (T('อะไรห้ามทำใน ISR?', 'What must you never do in an ISR?'),
            T('delay(), Serial.print(), malloc/new, ทำงานนาน และเรียกฟังก์ชันที่ไม่ reentrant ให้ ISR ตั้ง flag หรือ push ลง buffer แล้วกลับเร็วที่สุด', 'delay(), Serial.print(), malloc/new, long work, or calling non-reentrant functions. Let the ISR set a flag or push into a buffer, and return as fast as possible.'))])
-   + iv(T('volatile คือคำถามที่ถูกถามบ่อยที่สุดในสาย embedded ตอบให้ครบ 3 กรณี: ตัวแปรที่ ISR แก้, memory-mapped register, ตัวแปรที่แชร์ระหว่าง thread (และบอกว่ามันไม่ใช่ synchronization)',
-          'volatile is the most common embedded interview question. Cover all three cases: variables changed by an ISR, memory-mapped registers, and variables shared between threads, and say that it is not synchronization.')))
+   + iv(T('การลืม volatile เป็นสาเหตุอันดับต้น ๆ ของอาการ "build debug ทำงาน แต่ build release พัง" จำ 3 กรณีที่ต้องใช้: ตัวแปรที่ ISR แก้, memory-mapped register, ตัวแปรที่แชร์ระหว่าง thread และจำไว้ว่ามันไม่ใช่ synchronization',
+          'A missing volatile is a top cause of "works in debug, breaks in release". Remember the three cases that need it: variables changed by an ISR, memory-mapped registers and variables shared between threads, and remember that it is not synchronization.')))
 
 lesson('11', 'A', 'Mini project: cooperative scheduler', 30, T('LED + ปุ่ม + Pot', 'LED + button + pot'), goal(T('รวมทุกอย่างเป็น firmware ที่ไม่มี delay() เลย โครงสร้างแบบนี้ใช้จริงก่อนจะขึ้น RTOS', 'Combine everything into firmware with no delay() at all. Real products use this structure before moving to an RTOS'))
    + fig(SVG_SCHED, T('แต่ละ task มีรอบของตัวเอง loop แค่ตรวจว่าถึงเวลาหรือยัง', 'Each task has its own period; loop only checks whether it is due')) + '''
@@ -951,7 +951,7 @@ git branch -d feature/fast-blink''', 'terminal', en={'# แก้ไฟล์ใ
           (T('ทำไมทีมไม่ commit ตรงเข้า main?', 'Why do teams not commit straight to main?'),
            T('main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย', 'main should always build and pass its tests. Going through a branch + PR lets CI and teammates check first, and makes changes easy to revert.'))]))
 
-lesson('14', 'B', T('GitHub: push และ Pull Request', 'GitHub: push and Pull Requests'), 25, PC, goal(T('มี repo สาธารณะเป็น portfolio และทำงานผ่าน PR แบบทีมจริง', 'Have a public repo as your portfolio, and work through PRs like a real team'))
+lesson('14', 'B', T('GitHub: push และ Pull Request', 'GitHub: push and Pull Requests'), 25, PC, goal(T('ขึ้น repo บน GitHub และทำงานผ่าน PR แบบทีมจริง', 'Put the repo on GitHub, and work through PRs like a real team'))
    + fig(SVG_PR, T('GitHub flow ที่บริษัทส่วนใหญ่ใช้', 'The GitHub flow most companies use')) + '''
 <h3>Hands-on</h3>''' + code('''# ติดตั้ง GitHub CLI (gh) แล้ว login ครั้งเดียว
 gh auth login
@@ -980,8 +980,8 @@ git switch main && git pull''', 'terminal', en={'# ติดตั้ง GitHub 
            T('fetch ดึงข้อมูล remote มาเก็บไว้ (origin/main) แต่ยังไม่แตะ branch ของเรา pull = fetch + merge (หรือ rebase) เข้ามา', 'fetch downloads the remote state (origin/main) without touching your branch. pull = fetch + merge (or rebase) into your branch.')),
           (T('squash merge ดีอย่างไร?', 'What is good about a squash merge?'),
            T('รวม commit ย่อยใน PR เป็น commit เดียวบน main ประวัติอ่านง่าย 1 commit = 1 ฟีเจอร์ ย้อน (revert) ง่าย', 'It combines the PR\'s small commits into one commit on main: readable history, 1 commit = 1 feature, easy to revert.'))])
-   + iv(T('ผู้สัมภาษณ์มักเปิด GitHub ของผู้สมัครดูจริง README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด สร้างความน่าเชื่อถือได้มากกว่า resume',
-          'Interviewers often open a candidate\'s GitHub. A README with a wiring photo, a green CI badge and a clean commit history builds more trust than a resume.')))
+   + iv(T('ในทีม README ที่มีรูป wiring, badge CI สีเขียว และประวัติ commit ที่สะอาด ช่วยให้เพื่อนร่วมทีมหรือคนที่มารับงานต่อ setup และเข้าใจโปรเจกต์ได้ในไม่กี่นาที ไม่ต้องมาถามทีละเรื่อง',
+          'On a team, a README with a wiring photo, a green CI badge and a clean commit history lets teammates, or whoever takes over the project, set up and understand it in minutes instead of asking one question at a time.')))
 
 lesson('15', 'C', T('แยก logic ออกจากฮาร์ดแวร์ + unit test บน PC', 'Separate logic from hardware + unit tests on a PC'), 30, PC, goal(T('รัน test ของ Debouncer และ RingBuffer บน PC ได้ในไม่กี่วินาที โดยไม่ต้องเสียบบอร์ด', 'Run the Debouncer and RingBuffer tests on a PC in seconds, with no board plugged in'))
    + fig(SVG_LAYERS, T('ยิ่ง logic อยู่ชั้นที่ไม่รู้จักฮาร์ดแวร์มาก ยิ่ง test อัตโนมัติได้มาก', 'The more logic lives in layers that know nothing about hardware, the more you can test automatically')) + T('''
@@ -1001,8 +1001,8 @@ g++ -std=c++17 -Wall -Wextra -Werror -Ifirmware/src test/test_main.cpp -o test_r
            T('CI ตัดสินผ่าน/ไม่ผ่านจาก exit code ของคำสั่ง 0 = ผ่าน อย่างอื่น = fail และหยุด pipeline', 'CI decides pass/fail from each command\'s exit code: 0 = pass, anything else = fail, which stops the pipeline.')),
           (T('จะ test โค้ดที่เรียก digitalRead() ได้อย่างไร?', 'How do you test code that calls digitalRead()?'),
            T('ซ่อนการเข้าถึงฮาร์ดแวร์ไว้หลัง interface (เช่น ISensor บท 7) แล้วใส่ fake/mock ตอน test หรือส่งค่าที่อ่านได้เข้าฟังก์ชันแทนให้ฟังก์ชันไปอ่านเอง', 'Hide hardware access behind an interface (like ISensor in lesson 7) and plug in a fake/mock for tests, or pass the value in instead of letting the function read it.'))])
-   + iv(T('"คุณ test firmware อย่างไร" ตอบเป็นชั้น: unit test บน host สำหรับ logic, HIL test บนบอร์ดจริงสำหรับ driver, system test สำหรับฟีเจอร์ แล้วบอกว่าชั้นแรกรันใน CI ทุก commit',
-          '"How do you test firmware?" Answer in layers: host unit tests for logic, HIL tests on real boards for drivers, system tests for features, and say that the first layer runs in CI on every commit.')))
+   + iv(T('ทีม firmware ส่วนใหญ่ test เป็นชั้น: unit test บน host สำหรับ logic, HIL test บนบอร์ดจริงสำหรับ driver, system test สำหรับฟีเจอร์ ชั้นแรกเร็วและถูกที่สุด จึงรันใน CI ทุก commit',
+          'Most firmware teams test in layers: host unit tests for logic, HIL tests on real boards for drivers, and system tests for features. The first layer is the fastest and cheapest, so it runs in CI on every commit.')))
 
 CI_YML = '''name: CI
 
@@ -1078,8 +1078,8 @@ gh pr checks --watch        # ดูสถานะ job แบบ live''', 'term
            T('ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน', 'build-firmware runs only after the tests pass, which saves time and makes the order of priority clear. Without it, the two jobs run in parallel.')),
           (T('ทำไมต้อง pin เวอร์ชัน core / action?', 'Why pin the core and action versions?'),
            T('ให้ build reproducible ถ้า core อัปเดตเอง firmware อาจเปลี่ยนพฤติกรรมโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับ BOM lock ในฮาร์ดแวร์', 'For reproducible builds. If the core updates itself, the firmware may change behavior without anyone touching the code. It is the same idea as a locked BOM in hardware.'))])
-   + iv(T('อธิบายความต่าง CI กับ CD ให้ชัด: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป)',
-          'Be clear about CI vs CD: CI = integrate code often and check it automatically every time; CD = deliver ready-to-use artifacts automatically (next lesson).')))
+   + iv(T('ในทีม CI กับ CD มักถูกพูดปนกัน: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป) แยกให้ชัดแล้วจะคุยเรื่อง pipeline กันง่ายขึ้น',
+          'Teams often mix up CI and CD: CI = integrate code often and check it automatically every time; CD = deliver ready-to-use artifacts automatically (next lesson). Keeping them apart makes pipeline discussions easier.')))
 
 REL_YML = '''name: Release
 
@@ -1136,7 +1136,7 @@ git push origin v0.1.0''', 'terminal') + T('''
           (T('permissions: contents: write จำเป็นไหม?', 'Is permissions: contents: write required?'),
            T('จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release', 'Yes. In many repos the default GITHUB_TOKEN is read-only, and creating a Release needs write access.'))]))
 
-lesson('18', 'C', T('Capstone และเตรียมสัมภาษณ์', 'Capstone and interview prep'), 30, T('ทั้งหมด', 'Everything'), goal(T('ปิด repo ให้พร้อมเป็น portfolio และซ้อมตอบคำถามที่เจอบ่อย', 'Finish the repo as a portfolio piece, and practice the questions that come up most')) + T('''
+lesson('18', 'C', T('Capstone และทบทวน', 'Capstone and review'), 30, T('ทั้งหมด', 'Everything'), goal(T('ปิด repo ให้สมบูรณ์ และทบทวนแนวคิดหลักของทั้งคอร์ส', 'Finish the repo, and review the key ideas of the whole course')) + T('''
 <h3>Checklist ของ repo</h3>
 <ul class="check">
 <li>README: รูป wiring, ตารางขา, วิธี build ในเครื่อง, วิธีรัน test, badge CI</li>
@@ -1145,7 +1145,7 @@ lesson('18', 'C', T('Capstone และเตรียมสัมภาษณ�
 <li>เพิ่ม test ของคุณเอง 1 ชุด เช่น ทดสอบ <code class="il">average()</code> ตอน buffer ว่าง</li>
 <li>ฟีเจอร์ต่อยอด 1 อย่าง: กดค้าง 1 วินาที = reset ค่า (เพิ่ม Event::LongPress ใน Debouncer พร้อม test)</li>
 </ul>
-<h3>คำถามที่ควรตอบได้ภายใน 1 นาที</h3>
+<h3>คำถามทบทวนก่อนจบคอร์ส</h3>
 ''', '''
 <h3>Repo checklist</h3>
 <ul class="check">
@@ -1155,7 +1155,7 @@ lesson('18', 'C', T('Capstone และเตรียมสัมภาษณ�
 <li>One test suite of your own, e.g. testing <code class="il">average()</code> on an empty buffer</li>
 <li>One extra feature: hold for 1 second = reset (add Event::LongPress to the Debouncer, with tests)</li>
 </ul>
-<h3>Questions you should answer in under a minute</h3>
+<h3>Review questions</h3>
 ''') + ''.join(f'<details><summary>{q}</summary><p>{a}</p></details>' for q, a in [
  (T('C++ ต่างจาก C ในงาน embedded อย่างไร มีต้นทุนอะไรบ้าง?', 'How does C++ differ from C in embedded work, and what does it cost?'),
   T('ได้ class, RAII, reference, template, constexpr, enum class, namespace ที่ส่วนใหญ่ไม่มี runtime cost ส่วนที่มีต้นทุนคือ virtual (vtable), exceptions, RTTI, heap ผ่าน STL บางตัว จึงเลือกใช้เป็น subset', 'You get classes, RAII, references, templates, constexpr, enum class and namespaces, mostly with no runtime cost. The costly parts are virtual (vtables), exceptions, RTTI and heap use through some STL types, so teams use a subset.')),
@@ -1174,8 +1174,8 @@ lesson('18', 'C', T('Capstone และเตรียมสัมภาษณ�
  (T('pipeline CI/CD ของ firmware ควรมีอะไร?', 'What should a firmware CI/CD pipeline include?'),
   T('build ทุก target, unit test บน host, static analysis, เก็บ artifact, release ตาม tag พร้อมเวอร์ชันฝังใน binary, ขั้นต่อไปคือ HIL test บน runner ที่ต่อบอร์ดจริง', 'Builds for every target, host unit tests, static analysis, stored artifacts, and tag-based releases with the version built into the binary. The next step is HIL tests on a runner wired to real boards.')),
 ]) + fig(SVG_ROAD, T('เส้นทางต่อหลังจบคอร์ส', 'Where to go after this course'))
-   + iv(T('ประสบการณ์ PCB, failure analysis และ V&amp;V ที่มีอยู่คือจุดแข็งที่คนสาย firmware ล้วนไม่มี ใน portfolio ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร',
-          'Your existing PCB, failure analysis and V&amp;V experience is a strength that pure firmware people do not have. Connect both sides in your portfolio, e.g. explain how you chose the LED resistor and the debounce time.')))
+   + iv(T('ประสบการณ์ PCB, failure analysis และ V&amp;V ช่วยงาน firmware ได้มาก ใน README หรือ design note ให้เชื่อม 2 ฝั่ง เช่น อธิบายว่าเลือกค่า R ของ LED และ debounce time จากอะไร คนที่มาอ่านโค้ดทีหลังจะเข้าใจเหตุผล ไม่ใช่เห็นแค่ตัวเลข',
+          'PCB, failure analysis and V&amp;V experience helps firmware work a lot. Connect both sides in the README or a design note, e.g. explain how you chose the LED resistor and the debounce time, so later readers understand the reasoning, not just the numbers.')))
 
 # ---------------- page ----------------
 WK = T('สัปดาห์', 'Week')
