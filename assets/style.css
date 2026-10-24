@@ -122,7 +122,7 @@ h1 { font: 700 clamp(34px, 7vw, 56px)/1.1 var(--display); margin: 0 0 14px; text
 .dg { margin: 20px 0; }
 .sv { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
 .sv svg { display: block; width: 100%; max-width: 520px; height: auto; margin: 0 auto; }
-.ph img { display: block; width: 100%; height: auto; margin: 0 auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.ph img, .ph video { display: block; width: 100%; height: auto; margin: 0 auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .credit { color: var(--muted); white-space: nowrap; }
 .dg figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
 svg text { font-family: var(--body); font-size: 13px; fill: var(--fg); }

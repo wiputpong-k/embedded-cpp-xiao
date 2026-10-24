@@ -101,7 +101,9 @@ void loop() {
   digitalWrite(LED_RED, HIGH);   // ดับ
   delay(800);
 }''', 'blink.ino', en={'// LED บนบอร์ดต่อขั้วบวกไว้ที่ 3V3 จึงติดเมื่อเขียน LOW': '// The on-board LED anode is tied to 3V3, so it lights when you write LOW',
-                      '// ดับ': '// off', '// ติด': '// on'}) + T('''
+                      '// ดับ': '// off', '// ติด': '// on'})
+   + video('l00-blink.mp4', 540, 960, T('วิดีโอ: อัปโหลด Blink จาก Arduino IDE สำเร็จ (Output ขึ้น Device programmed) แล้ว LED สีแดงบนบอร์ด XIAO กระพริบ',
+                                        'Video: Blink uploaded from Arduino IDE (the Output shows Device programmed), and the red LED on the XIAO blinks')) + T('''
 <p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ และหลังอัปโหลดเสร็จ จะมีพอร์ตใหม่ของบอร์ดขึ้นใน <b>Tools → Port</b> ครั้งต่อไปเลือกพอร์ตนั้นแล้วกด Upload ได้เลย</p>
 <p class="note">ทำไมทุก sketch ในคอร์สขึ้นต้นด้วย <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? core Seeed nRF52 จะใส่ไลบรารี USB (TinyUSB) ให้ก็ต่อเมื่อ sketch include ไฟล์นี้เอง ถ้าลืมบรรทัดนี้ โปรแกรมยัง compile และทำงานได้ (LED ยังกระพริบ) แต่บอร์ดจะไม่เปิด USB ผลคือ Windows มองไม่เห็นพอร์ต, Serial Monitor ไม่มีข้อความ และต้องกด reset 2 ครั้งทุกครั้งที่จะอัปโหลด ถ้าเจออาการนี้ ให้ตรวจบรรทัดแรกของ sketch ก่อน</p>
 <p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>

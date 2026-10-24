@@ -9,7 +9,7 @@
 <link rel="alternate" hreflang="th" href="https://wiputpong-k.github.io/embedded-cpp-xiao/lesson/00/"><link rel="alternate" hreflang="en" href="https://wiputpong-k.github.io/embedded-cpp-xiao/en/lesson/00/"><link rel="alternate" hreflang="x-default" href="https://wiputpong-k.github.io/embedded-cpp-xiao/lesson/00/">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../../../assets/style.css?v=8850fe06">
+<link rel="stylesheet" href="../../../assets/style.css?v=e6c235bc">
 </head>
 <body class="lesson-page">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -88,7 +88,7 @@ void loop() {
   delay(200);
   digitalWrite(LED_RED, HIGH);   // off
   delay(800);
-}</code></pre></div>
+}</code></pre></div><figure class="dg ph"><video src="../../../media/l00-blink.mp4" width="540" height="960" style="max-width:min(100%,320px);height:auto" autoplay muted loop playsinline controls preload="metadata"></video><figcaption>Video: Blink uploaded from Arduino IDE (the Output shows Device programmed), and the red LED on the XIAO blinks</figcaption></figure>
 <p>What you should see: the red LED on the board blinks, on for 0.2 s and off for 0.8 s, over and over. After the upload, a new port for the board appears under <b>Tools → Port</b>; next time, pick that port and click Upload.</p>
 <p class="note">Why does every sketch in this course start with <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? The Seeed nRF52 core only links its USB library (TinyUSB) when the sketch includes this file itself. Without the line, the program still compiles and runs (the LED still blinks), but the board never turns on USB: Windows sees no port, Serial Monitor shows nothing, and every upload needs a double-press of reset. If you see those symptoms, check the first line of the sketch.</p>
 <p class="note">If the upload fails: double-press the reset button on the board (the tiny button next to the USB port) quickly. The board enters bootloader mode (Windows may show a new drive). Then open <b>Tools → Port</b> and pick the port again, because its number may change, and click Upload again.</p>
@@ -103,6 +103,6 @@ void loop() {
 </article>
 <nav class="pager"><span class="prev none"></span><a class="next" href="../01/"><small>Next →</small><span>01 · .ino is C++, and the path from code to board</span></a></nav>
 </main>
-<script src="../../../assets/app.js?v=8850fe06"></script>
+<script src="../../../assets/app.js?v=e6c235bc"></script>
 </body>
 </html>

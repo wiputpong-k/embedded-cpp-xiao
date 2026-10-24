@@ -9,7 +9,7 @@
 <link rel="alternate" hreflang="th" href="https://wiputpong-k.github.io/embedded-cpp-xiao/lesson/00/"><link rel="alternate" hreflang="en" href="https://wiputpong-k.github.io/embedded-cpp-xiao/en/lesson/00/"><link rel="alternate" hreflang="x-default" href="https://wiputpong-k.github.io/embedded-cpp-xiao/lesson/00/">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="../../assets/style.css?v=8850fe06">
+<link rel="stylesheet" href="../../assets/style.css?v=e6c235bc">
 </head>
 <body class="lesson-page">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -88,7 +88,7 @@ void loop() {
   delay(200);
   digitalWrite(LED_RED, HIGH);   // ดับ
   delay(800);
-}</code></pre></div>
+}</code></pre></div><figure class="dg ph"><video src="../../media/l00-blink.mp4" width="540" height="960" style="max-width:min(100%,320px);height:auto" autoplay muted loop playsinline controls preload="metadata"></video><figcaption>วิดีโอ: อัปโหลด Blink จาก Arduino IDE สำเร็จ (Output ขึ้น Device programmed) แล้ว LED สีแดงบนบอร์ด XIAO กระพริบ</figcaption></figure>
 <p>ผลที่ควรเห็น: LED สีแดงบนบอร์ดกระพริบ ติด 0.2 วินาที ดับ 0.8 วินาที วนไปเรื่อย ๆ และหลังอัปโหลดเสร็จ จะมีพอร์ตใหม่ของบอร์ดขึ้นใน <b>Tools → Port</b> ครั้งต่อไปเลือกพอร์ตนั้นแล้วกด Upload ได้เลย</p>
 <p class="note">ทำไมทุก sketch ในคอร์สขึ้นต้นด้วย <code class="il">#include &lt;Adafruit_TinyUSB.h&gt;</code>? core Seeed nRF52 จะใส่ไลบรารี USB (TinyUSB) ให้ก็ต่อเมื่อ sketch include ไฟล์นี้เอง ถ้าลืมบรรทัดนี้ โปรแกรมยัง compile และทำงานได้ (LED ยังกระพริบ) แต่บอร์ดจะไม่เปิด USB ผลคือ Windows มองไม่เห็นพอร์ต, Serial Monitor ไม่มีข้อความ และต้องกด reset 2 ครั้งทุกครั้งที่จะอัปโหลด ถ้าเจออาการนี้ ให้ตรวจบรรทัดแรกของ sketch ก่อน</p>
 <p class="note">ถ้าอัปโหลดไม่ผ่าน: กดปุ่ม reset บนบอร์ด (ปุ่มเล็กข้างช่อง USB) 2 ครั้งเร็ว ๆ บอร์ดจะเข้าโหมด bootloader (Windows อาจเห็นไดรฟ์ใหม่ขึ้นมา) จากนั้นเปิด <b>Tools → Port</b> เลือกพอร์ตใหม่ เพราะเลขพอร์ตอาจเปลี่ยน แล้วกด Upload อีกครั้ง</p>
@@ -103,6 +103,6 @@ void loop() {
 </article>
 <nav class="pager"><span class="prev none"></span><a class="next" href="../01/"><small>บทถัดไป →</small><span>01 · .ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</span></a></nav>
 </main>
-<script src="../../assets/app.js?v=8850fe06"></script>
+<script src="../../assets/app.js?v=e6c235bc"></script>
 </body>
 </html>

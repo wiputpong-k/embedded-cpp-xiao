@@ -43,6 +43,11 @@ def code(txt, label='', en=None):
 def fig(svg, cap):
     return f'<figure class="dg"><div class="sv">{svg}</div><figcaption>{cap}</figcaption></figure>'
 
+def video(name, w, h, cap, max_w=320):
+    """Course video from site-src/media/ (copied to the site's media/). @ROOT@ becomes the path to the site root."""
+    return (f'<figure class="dg ph"><video src="@ROOT@media/{name}" width="{w}" height="{h}" style="max-width:min(100%,{max_w}px);height:auto" '
+            f'autoplay muted loop playsinline controls preload="metadata"></video><figcaption>{cap}</figcaption></figure>')
+
 def photo(src, w, h, alt, cap, credit, credit_url, max_w=None):
     """Third-party image: linked from its source (not copied into the repo), with a visible credit.
     Sizing is inline so a stale cached stylesheet can never let a large image stretch the page."""
@@ -434,7 +439,7 @@ def write(rel, text):
 search = []
 for i, l in enumerate(LESSONS):
     n = l['num']
-    body, heads, toc = add_toc(l['body'])
+    body, heads, toc = add_toc(l['body'].replace('@ROOT@', '../../' + LROOT))
     m = re.search(r'<p class="goal"><b>.*?</b> (.*?)</p>', body)
     goal_text = strip(m.group(1)) if m else ''
     search.append(dict(n=n, t=strip(l['title']), g=goal_text, h=heads, u=f'lesson/{n}/', m=MODS[l['mod']]))
@@ -525,4 +530,6 @@ if LANG == 'th':  # shared assets and sitemap, written once
     os.makedirs(os.path.join(OUT, 'assets'), exist_ok=True)
     for f in ('style.css', 'app.js'):
         shutil.copyfile(os.path.join(D, f), os.path.join(OUT, 'assets', f))
+    if os.path.isdir(os.path.join(D, 'media')):
+        shutil.copytree(os.path.join(D, 'media'), os.path.join(OUT, 'media'))
 print(LANG, N, 'lessons')
