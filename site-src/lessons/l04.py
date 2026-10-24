@@ -38,6 +38,21 @@ lesson('04', 'A', T('class: encapsulation และ constructor', 'class: encaps
    + vs(T('struct เก็บข้อมูล + ฟังก์ชัน <code class="il">led_on(&amp;led)</code> แยกกัน ใครก็แก้ field ได้', 'A struct holds the data and a separate function <code class="il">led_on(&amp;led)</code> acts on it. Anyone can change the fields.'),
         T('ข้อมูล (private) และพฤติกรรม (public) อยู่ด้วยกัน คอมไพล์แล้วได้โค้ดขนาดใกล้เคียงกัน เพราะ <code class="il">this</code> ก็คือ pointer ที่ส่งเข้าไปแบบซ่อน', 'Data (private) and behavior (public) live together. The compiled code is about the same size, because <code class="il">this</code> is just a hidden pointer argument.'))
    + T('''
+<ul>
+<li><b>class / object</b> class คือแบบพิมพ์ (เหมือน struct ที่มีฟังก์ชันอยู่ด้วย) object คือตัวจริงที่สร้างจากแบบนั้น เช่น <code class="il">red</code> และ <code class="il">ext</code></li>
+<li><b>encapsulation</b> ซ่อนข้อมูลไว้ใน <code class="il">private:</code> ให้ภายนอกใช้ได้แค่ฟังก์ชันใน <code class="il">public:</code> จึงไม่มีใครแก้ค่าข้างในผิด ๆ ได้</li>
+<li><b>constructor</b> ฟังก์ชันชื่อเดียวกับ class ไม่มีชนิด return ทำงานอัตโนมัติตอนสร้าง object ใช้ตั้งค่าเริ่มต้น ส่วน <code class="il">: pin_(pin)</code> เรียกว่า member initializer list คือการกำหนดค่า member ตอนสร้าง</li>
+<li><b><code class="il">this</code></b> pointer ไปยัง object ที่กำลังถูกเรียก compiler ส่งให้ทุกฟังก์ชันใน class แบบซ่อน เทียบได้กับ <code class="il">&amp;led</code> ใน <code class="il">led_on(&amp;led)</code> ของ C</li>
+</ul>
+''', '''
+<ul>
+<li><b>class / object</b>: a class is the blueprint (like a struct that also holds functions); an object is a real instance made from it, such as <code class="il">red</code> and <code class="il">ext</code>.</li>
+<li><b>encapsulation</b>: data hidden under <code class="il">private:</code>, so outside code can only use the functions under <code class="il">public:</code> and cannot set internal values wrongly.</li>
+<li><b>constructor</b>: a function named after the class, with no return type, that runs automatically when an object is created, to set initial values. <code class="il">: pin_(pin)</code> is the member initializer list: members get their values at construction.</li>
+<li><b><code class="il">this</code></b>: a pointer to the object being called. The compiler passes it to every member function behind the scenes, like <code class="il">&amp;led</code> in C's <code class="il">led_on(&amp;led)</code>.</li>
+</ul>
+''')
+   + T('''
 <h3>ต่อวงจร</h3>
 <p>breadboard คือแผงเสียบสายที่ไม่ต้องบัดกรี รู 5 รูที่เรียงอยู่ในแถวเดียวกัน (แนวตั้งฉากกับร่องกลาง) ต่อถึงกันอยู่ข้างใน ส่วนแถวยาวตามขอบที่มีเส้นสีแดงและน้ำเงิน ใช้เป็นรางไฟและราง GND</p>
 <ol>
@@ -64,23 +79,25 @@ lesson('04', 'A', T('class: encapsulation และ constructor', 'class: encaps
 ''') + fig(SVG_WIRE, T('ต่อ LED ภายนอกที่ D2 ผ่าน R 1 kΩ ลง GND (active-HIGH)', 'External LED on D2 through 1 kΩ to GND (active-HIGH)'))
    + T('''
 <h3>Hands-on</h3>
+<p>sketch นี้พิสูจน์ encapsulation: LED 2 ดวงที่ต่อวงจรต่างกัน (active-LOW และ active-HIGH) ถูกสั่งด้วยคำสั่งเดียวกัน</p>
 <ol>
 <li>เสียบสาย USB กลับ แล้วกด <b>File → New Sketch</b></li>
 <li>คัดลอกโค้ดข้างล่างไปวางแทนโค้ดเดิม แล้วกด <b>File → Save As…</b> ตั้งชื่อ <code class="il">led_class</code></li>
 <li>กด <b>Upload</b> แล้วดูผล: LED แดงบนบอร์ดและ LED ภายนอกกระพริบพร้อมกันทุก 0.3 วินาที</li>
 </ol>''', '''
 <h3>Hands-on</h3>
+<p>This sketch proves encapsulation: two LEDs wired differently (active-LOW and active-HIGH) are driven with the same calls.</p>
 <ol>
 <li>Plug the USB cable back in and open <b>File → New Sketch</b>.</li>
 <li>Copy the code below over the starter code, then <b>File → Save As…</b> and name it <code class="il">led_class</code>.</li>
 <li>Click <b>Upload</b>. Both the red on-board LED and the external LED should blink together every 0.3 s.</li>
 </ol>''') + code(LED_CLASS + '\n\n' + LED_MAIN, 'led_class.ino', en=LED_EN) + T('''
 <p>สังเกตว่าทั้งสองดวงติดพร้อมกัน แม้ LED บนบอร์ดเป็น active-LOW และ LED ภายนอกเป็น active-HIGH เพราะ class จัดการเรื่องนี้ไว้ใน <code class="il">write()</code> คนที่เรียกใช้แค่สั่ง <code class="il">on()</code> หรือ <code class="il">toggle()</code> ไม่ต้องรู้ว่าต่อวงจรแบบไหน</p>
-<p class="note">ทำไมมี <code class="il">begin()</code> แยก ไม่เรียก <code class="il">pinMode</code> ใน constructor? เพราะ object global ถูกสร้างก่อน <code class="il">main()</code> และก่อน <code class="il">init()</code> ฮาร์ดแวร์อาจยังไม่พร้อม เป็น pattern มาตรฐานของ embedded C++</p>
+<p class="note">ทำไมมี <code class="il">begin()</code> แยก ไม่เรียก <code class="il">pinMode</code> ใน constructor? เพราะ constructor ของ object global ถูกเรียกโดย startup code ก่อน <code class="il">main()</code> (ดูแผนภาพบท 01) จึงทำงานก่อน <code class="il">init()</code> ฮาร์ดแวร์อาจยังไม่พร้อม เป็น pattern มาตรฐานของ embedded C++</p>
 ''', '''
 <p>Notice that both LEDs light at the same time, even though the on-board LED is active-LOW and the external one is active-HIGH. The class handles that inside <code class="il">write()</code>; callers just use <code class="il">on()</code> or <code class="il">toggle()</code> without knowing how the LED is wired.</p>
-<p class="note">Why a separate <code class="il">begin()</code> instead of calling <code class="il">pinMode</code> in the constructor? Global objects are constructed before <code class="il">main()</code> and before <code class="il">init()</code>, so the hardware may not be ready yet. This is a standard embedded C++ pattern.</p>
+<p class="note">Why a separate <code class="il">begin()</code> instead of calling <code class="il">pinMode</code> in the constructor? The startup code runs the constructors of global objects before <code class="il">main()</code> (see the lesson 01 diagram), so they run before <code class="il">init()</code> and the hardware may not be ready yet. This is a standard embedded C++ pattern.</p>
 ''') + qa([(T('member initializer list (: pin_(pin)) ดีกว่ากำหนดค่าใน body อย่างไร?', 'Why is a member initializer list (: pin_(pin)) better than assigning in the body?'),
-           T('สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้อง default-construct แล้วค่อย assign และจำเป็นสำหรับ member ที่เป็น const หรือ reference', 'Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.')),
+           T('สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้องสร้างด้วยค่าเริ่มต้นแล้วค่อยกำหนดค่าใหม่ และจำเป็นสำหรับ member ที่เป็น const หรือ reference', 'Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.')),
           (T('object Led ใช้ RAM กี่ byte โดยประมาณ?', 'Roughly how many bytes of RAM does a Led object use?'),
-           T('ราว 3–4 byte (pin_, activeLow_, isOn_ + padding) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน', 'About 3–4 bytes (pin_, activeLow_, isOn_ + padding). Member functions cost no RAM per object; they live in flash and are shared.'))]))
+           T('ราว 3–4 byte (pin_, activeLow_, isOn_ และอาจมี padding คือ byte ว่างที่ compiler เติมให้ข้อมูลเรียงตรงตำแหน่ง) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน', 'About 3–4 bytes (pin_, activeLow_, isOn_, plus possible padding: empty bytes the compiler adds to keep data aligned). Member functions cost no RAM per object; they live in flash and are shared.'))]))

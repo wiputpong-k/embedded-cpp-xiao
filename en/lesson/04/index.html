@@ -28,6 +28,13 @@
 <header class="lh"><span class="big m">04</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>class: encapsulation and constructors</h1><p class="meta">30 min · Hardware: LED + R 1 kΩ</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Wire it up</a></li><li><a href="#s2">Hands-on</a></li><li><a href="#s3">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> Wire an external LED, and write a Led class that hides the active-LOW detail inside</p><div class="vs"><div><span class="tag">C</span><p>A struct holds the data and a separate function <code class="il">led_on(&amp;led)</code> acts on it. Anyone can change the fields.</p></div><div><span class="tag t2">C++</span><p>Data (private) and behavior (public) live together. The compiled code is about the same size, because <code class="il">this</code> is just a hidden pointer argument.</p></div></div>
+<ul>
+<li><b>class / object</b>: a class is the blueprint (like a struct that also holds functions); an object is a real instance made from it, such as <code class="il">red</code> and <code class="il">ext</code>.</li>
+<li><b>encapsulation</b>: data hidden under <code class="il">private:</code>, so outside code can only use the functions under <code class="il">public:</code> and cannot set internal values wrongly.</li>
+<li><b>constructor</b>: a function named after the class, with no return type, that runs automatically when an object is created, to set initial values. <code class="il">: pin_(pin)</code> is the member initializer list: members get their values at construction.</li>
+<li><b><code class="il">this</code></b>: a pointer to the object being called. The compiler passes it to every member function behind the scenes, like <code class="il">&amp;led</code> in C's <code class="il">led_on(&amp;led)</code>.</li>
+</ul>
+
 <h3 id="s1">Wire it up</h3>
 <p>A breadboard lets you connect parts without soldering. The 5 holes in each short row (across the center gap) are connected inside. The long rows along the edges, marked red and blue, are the power and GND rails.</p>
 <ol>
@@ -54,6 +61,7 @@
 <text x="8" y="148" class="sub">I ≈ (3.3 − 2.0) V / 1 kΩ ≈ 1.3 mA : bright enough, safe for GPIO</text>
 </svg></div><figcaption>External LED on D2 through 1 kΩ to GND (active-HIGH)</figcaption></figure>
 <h3 id="s2">Hands-on</h3>
+<p>This sketch proves encapsulation: two LEDs wired differently (active-LOW and active-HIGH) are driven with the same calls.</p>
 <ol>
 <li>Plug the USB cable back in and open <b>File → New Sketch</b>.</li>
 <li>Copy the code below over the starter code, then <b>File → Save As…</b> and name it <code class="il">led_class</code>.</li>
@@ -93,8 +101,8 @@ void loop() {
   delay(300);
 }</code></pre></div>
 <p>Notice that both LEDs light at the same time, even though the on-board LED is active-LOW and the external one is active-HIGH. The class handles that inside <code class="il">write()</code>; callers just use <code class="il">on()</code> or <code class="il">toggle()</code> without knowing how the LED is wired.</p>
-<p class="note">Why a separate <code class="il">begin()</code> instead of calling <code class="il">pinMode</code> in the constructor? Global objects are constructed before <code class="il">main()</code> and before <code class="il">init()</code>, so the hardware may not be ready yet. This is a standard embedded C++ pattern.</p>
-<h3 id="s3">Check your understanding</h3><details><summary>Why is a member initializer list (: pin_(pin)) better than assigning in the body?</summary><p>Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.</p></details><details><summary>Roughly how many bytes of RAM does a Led object use?</summary><p>About 3–4 bytes (pin_, activeLow_, isOn_ + padding). Member functions cost no RAM per object; they live in flash and are shared.</p></details>
+<p class="note">Why a separate <code class="il">begin()</code> instead of calling <code class="il">pinMode</code> in the constructor? The startup code runs the constructors of global objects before <code class="il">main()</code> (see the lesson 01 diagram), so they run before <code class="il">init()</code> and the hardware may not be ready yet. This is a standard embedded C++ pattern.</p>
+<h3 id="s3">Check your understanding</h3><details><summary>Why is a member initializer list (: pin_(pin)) better than assigning in the body?</summary><p>Members are constructed with the right value from the start instead of being default-constructed and then assigned. It is required for const and reference members.</p></details><details><summary>Roughly how many bytes of RAM does a Led object use?</summary><p>About 3–4 bytes (pin_, activeLow_, isOn_, plus possible padding: empty bytes the compiler adds to keep data aligned). Member functions cost no RAM per object; they live in flash and are shared.</p></details>
 <label class="done"><input type="checkbox" id="done-l04" data-l="l04"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../03/"><small>← Previous</small><span>03 · namespace, overloading, enum class</span></a><a class="next" href="../05/"><small>Next →</small><span>05 · Split code into files: headers and src/</span></a></nav>

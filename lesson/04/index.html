@@ -28,6 +28,13 @@
 <header class="lh"><span class="big m">04</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>class: encapsulation และ constructor</h1><p class="meta">30 นาที · ฮาร์ดแวร์: LED + R 1 kΩ</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">ต่อวงจร</a></li><li><a href="#s2">Hands-on</a></li><li><a href="#s3">เช็กความเข้าใจ</a></li></ol></nav>
 <p class="goal"><b>เป้าหมาย</b> ต่อ LED ภายนอก และเขียน class Led ที่ซ่อนเรื่อง active-LOW ไว้ข้างใน</p><div class="vs"><div><span class="tag">C</span><p>struct เก็บข้อมูล + ฟังก์ชัน <code class="il">led_on(&amp;led)</code> แยกกัน ใครก็แก้ field ได้</p></div><div><span class="tag t2">C++</span><p>ข้อมูล (private) และพฤติกรรม (public) อยู่ด้วยกัน คอมไพล์แล้วได้โค้ดขนาดใกล้เคียงกัน เพราะ <code class="il">this</code> ก็คือ pointer ที่ส่งเข้าไปแบบซ่อน</p></div></div>
+<ul>
+<li><b>class / object</b> class คือแบบพิมพ์ (เหมือน struct ที่มีฟังก์ชันอยู่ด้วย) object คือตัวจริงที่สร้างจากแบบนั้น เช่น <code class="il">red</code> และ <code class="il">ext</code></li>
+<li><b>encapsulation</b> ซ่อนข้อมูลไว้ใน <code class="il">private:</code> ให้ภายนอกใช้ได้แค่ฟังก์ชันใน <code class="il">public:</code> จึงไม่มีใครแก้ค่าข้างในผิด ๆ ได้</li>
+<li><b>constructor</b> ฟังก์ชันชื่อเดียวกับ class ไม่มีชนิด return ทำงานอัตโนมัติตอนสร้าง object ใช้ตั้งค่าเริ่มต้น ส่วน <code class="il">: pin_(pin)</code> เรียกว่า member initializer list คือการกำหนดค่า member ตอนสร้าง</li>
+<li><b><code class="il">this</code></b> pointer ไปยัง object ที่กำลังถูกเรียก compiler ส่งให้ทุกฟังก์ชันใน class แบบซ่อน เทียบได้กับ <code class="il">&amp;led</code> ใน <code class="il">led_on(&amp;led)</code> ของ C</li>
+</ul>
+
 <h3 id="s1">ต่อวงจร</h3>
 <p>breadboard คือแผงเสียบสายที่ไม่ต้องบัดกรี รู 5 รูที่เรียงอยู่ในแถวเดียวกัน (แนวตั้งฉากกับร่องกลาง) ต่อถึงกันอยู่ข้างใน ส่วนแถวยาวตามขอบที่มีเส้นสีแดงและน้ำเงิน ใช้เป็นรางไฟและราง GND</p>
 <ol>
@@ -54,6 +61,7 @@
 <text x="8" y="148" class="sub">I ≈ (3.3 − 2.0) V / 1 kΩ ≈ 1.3 mA — พอเห็นชัด และไม่เกิน standard drive ของ GPIO</text>
 </svg></div><figcaption>ต่อ LED ภายนอกที่ D2 ผ่าน R 1 kΩ ลง GND (active-HIGH)</figcaption></figure>
 <h3 id="s2">Hands-on</h3>
+<p>sketch นี้พิสูจน์ encapsulation: LED 2 ดวงที่ต่อวงจรต่างกัน (active-LOW และ active-HIGH) ถูกสั่งด้วยคำสั่งเดียวกัน</p>
 <ol>
 <li>เสียบสาย USB กลับ แล้วกด <b>File → New Sketch</b></li>
 <li>คัดลอกโค้ดข้างล่างไปวางแทนโค้ดเดิม แล้วกด <b>File → Save As…</b> ตั้งชื่อ <code class="il">led_class</code></li>
@@ -93,8 +101,8 @@ void loop() {
   delay(300);
 }</code></pre></div>
 <p>สังเกตว่าทั้งสองดวงติดพร้อมกัน แม้ LED บนบอร์ดเป็น active-LOW และ LED ภายนอกเป็น active-HIGH เพราะ class จัดการเรื่องนี้ไว้ใน <code class="il">write()</code> คนที่เรียกใช้แค่สั่ง <code class="il">on()</code> หรือ <code class="il">toggle()</code> ไม่ต้องรู้ว่าต่อวงจรแบบไหน</p>
-<p class="note">ทำไมมี <code class="il">begin()</code> แยก ไม่เรียก <code class="il">pinMode</code> ใน constructor? เพราะ object global ถูกสร้างก่อน <code class="il">main()</code> และก่อน <code class="il">init()</code> ฮาร์ดแวร์อาจยังไม่พร้อม เป็น pattern มาตรฐานของ embedded C++</p>
-<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>member initializer list (: pin_(pin)) ดีกว่ากำหนดค่าใน body อย่างไร?</summary><p>สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้อง default-construct แล้วค่อย assign และจำเป็นสำหรับ member ที่เป็น const หรือ reference</p></details><details><summary>object Led ใช้ RAM กี่ byte โดยประมาณ?</summary><p>ราว 3–4 byte (pin_, activeLow_, isOn_ + padding) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน</p></details>
+<p class="note">ทำไมมี <code class="il">begin()</code> แยก ไม่เรียก <code class="il">pinMode</code> ใน constructor? เพราะ constructor ของ object global ถูกเรียกโดย startup code ก่อน <code class="il">main()</code> (ดูแผนภาพบท 01) จึงทำงานก่อน <code class="il">init()</code> ฮาร์ดแวร์อาจยังไม่พร้อม เป็น pattern มาตรฐานของ embedded C++</p>
+<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>member initializer list (: pin_(pin)) ดีกว่ากำหนดค่าใน body อย่างไร?</summary><p>สร้าง member ด้วยค่าที่ถูกต้องตั้งแต่แรก ไม่ต้องสร้างด้วยค่าเริ่มต้นแล้วค่อยกำหนดค่าใหม่ และจำเป็นสำหรับ member ที่เป็น const หรือ reference</p></details><details><summary>object Led ใช้ RAM กี่ byte โดยประมาณ?</summary><p>ราว 3–4 byte (pin_, activeLow_, isOn_ และอาจมี padding คือ byte ว่างที่ compiler เติมให้ข้อมูลเรียงตรงตำแหน่ง) ฟังก์ชันไม่กิน RAM ต่อ object เพราะอยู่ใน flash ใช้ร่วมกัน</p></details>
 <label class="done"><input type="checkbox" id="done-l04" data-l="l04"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../03/"><small>← บทก่อนหน้า</small><span>03 · namespace, overloading, enum class</span></a><a class="next" href="../05/"><small>บทถัดไป →</small><span>05 · แยกโค้ดเป็นหลายไฟล์: header และ src/</span></a></nav>
