@@ -39,6 +39,7 @@ Generated files (`site-src/pages/`, `test_runner`) are gitignored. Do not commit
 - Keep lessons cumulative: later lessons (13–14, 15, 19–23) reuse files from earlier ones. Check downstream lessons when renaming files, pins or APIs. When adding, removing or renumbering lessons, update every "บท NN" / "lesson NN" reference.
 - Hardware assumptions: XIAO nRF52840 (Sense), Seeed nRF52 non-mbed core, 3.3 V GPIO, on-board RGB LED is active-LOW, D0 = pot, D1 = button to GND (INPUT_PULLUP), D2 = external LED via 1 kΩ.
 - Wrap any title or text inserted into HTML with `html.escape(...)`.
+- Third-party images (e.g. Seeed board photos and pinouts): use `photo(...)`, which links the image from its original URL with a visible source credit. Do not copy third-party image files into the repo. The owner's own photos may live in the repo.
 - SVG diagrams: use the existing classes (`b`, `ba`, `bm`, `ln`, `la`, `w`, `tt`, `sub`, `m`, `acc`) so they follow the theme; keep everything inside the `viewBox`.
 - The author section uses a neutral example name in code (`"Your Name"`); do not add personal email, phone or employer details.
 
