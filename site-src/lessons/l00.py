@@ -2,10 +2,8 @@ SEEED_WIKI = 'https://wiki.seeedstudio.com/XIAO_BLE/'
 SEEED_IMG = 'https://files.seeedstudio.com/wiki/XIAO-BLE/'
 BOARD_FIGS = (photo(SEEED_IMG + 'xiaonrf52840sence.png', 829, 620, 'Seeed XIAO nRF52840 Sense',
                     T('บอร์ด Seeed XIAO nRF52840 Sense ที่ใช้ในคอร์สนี้', 'The Seeed XIAO nRF52840 Sense board used in this course'), 'Seeed Studio Wiki', SEEED_WIKI, max_w=460)
-              + photo(SEEED_IMG + 'XIAO_nRF52840_Sense_front_pinout.png', 7680, 4320, 'XIAO nRF52840 Sense front pinout',
-                      T('แผนผังขาของ XIAO nRF52840 Sense ด้านหน้า (กดที่รูปเพื่อดูขนาดเต็ม) ช่อง ARDUINO NAME แสดงเป็น "Mbed core / Non-Mbed core" คอร์สนี้ใช้ core แบบ non-mbed จึงใช้เลขหลัง',
-                        'Front pinout of the XIAO nRF52840 Sense (click the image for full size). The ARDUINO NAME column reads "Mbed core / Non-Mbed core"; this course uses the non-mbed core, so use the second number.'),
-                      'Seeed Studio Wiki', SEEED_WIKI))
+              + T(f'<p class="note">ดูแผนผังขาแบบละเอียดได้ที่ <a href="{SEEED_IMG}XIAO_nRF52840_Sense_front_pinout.png">pinout ทางการด้านหน้า</a> และ <a href="{SEEED_IMG}XIAO_nRF52840_Sense_back_pinout.png">ด้านหลัง</a> จาก Seeed Studio Wiki (ไฟล์ใหญ่ ราว 2.6 MB) ในช่อง ARDUINO NAME ตัวเลขแสดงเป็น "Mbed core / Non-Mbed core" คอร์สนี้ใช้ core แบบ non-mbed จึงใช้เลขหลัง</p>',
+                  f'<p class="note">For the detailed pin map, see the official <a href="{SEEED_IMG}XIAO_nRF52840_Sense_front_pinout.png">front pinout</a> and <a href="{SEEED_IMG}XIAO_nRF52840_Sense_back_pinout.png">back pinout</a> on the Seeed Studio Wiki (large files, about 2.6 MB). In the ARDUINO NAME column the numbers read "Mbed core / Non-Mbed core"; this course uses the non-mbed core, so use the second number.</p>'))
 
 lesson('00', 'S', T('ติดตั้งเครื่องมือ + Blink แรก', 'Install the tools + first Blink'), 30, BOARD, goal(T('IDE คอมไพล์และแฟลชบอร์ดได้ รู้ว่า LED บนบอร์ดเป็น active-LOW', 'The IDE compiles and flashes the board, and you know the on-board LED is active-LOW')) + T('''
 <p>บทนี้เป็นบทติดตั้ง จึงใช้เวลานานกว่าบทอื่น ทำตามทีละขั้นจากบนลงล่าง ท้ายแต่ละขั้นมีวิธีเช็กว่าทำสำเร็จแล้ว ตัวอย่างเขียนสำหรับ Windows ถ้าใช้ macOS ให้ดูหมายเหตุในขั้นนั้น</p>
