@@ -1,7 +1,7 @@
 SEEED_WIKI = 'https://wiki.seeedstudio.com/XIAO_BLE/'
 SEEED_IMG = 'https://files.seeedstudio.com/wiki/XIAO-BLE/'
 BOARD_FIGS = (photo(SEEED_IMG + 'xiaonrf52840sence.png', 829, 620, 'Seeed XIAO nRF52840 Sense',
-                    T('บอร์ด Seeed XIAO nRF52840 Sense ที่ใช้ในคอร์สนี้', 'The Seeed XIAO nRF52840 Sense board used in this course'), 'Seeed Studio Wiki', SEEED_WIKI)
+                    T('บอร์ด Seeed XIAO nRF52840 Sense ที่ใช้ในคอร์สนี้', 'The Seeed XIAO nRF52840 Sense board used in this course'), 'Seeed Studio Wiki', SEEED_WIKI, max_w=460)
               + photo(SEEED_IMG + 'XIAO_nRF52840_Sense_front_pinout.png', 7680, 4320, 'XIAO nRF52840 Sense front pinout',
                       T('แผนผังขาของ XIAO nRF52840 Sense ด้านหน้า (กดที่รูปเพื่อดูขนาดเต็ม) ช่อง ARDUINO NAME แสดงเป็น "Mbed core / Non-Mbed core" คอร์สนี้ใช้ core แบบ non-mbed จึงใช้เลขหลัง',
                         'Front pinout of the XIAO nRF52840 Sense (click the image for full size). The ARDUINO NAME column reads "Mbed core / Non-Mbed core"; this course uses the non-mbed core, so use the second number.'),

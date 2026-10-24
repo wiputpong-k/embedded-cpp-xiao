@@ -1,4 +1,4 @@
-import html, json, os, re, runpy, shutil
+import hashlib, html, json, os, re, runpy, shutil
 D = os.path.dirname(os.path.abspath(__file__))
 LANGS = ('th', 'en')
 # Running `python build.py` re-runs this file once per language with LANG preset.
@@ -37,9 +37,11 @@ def code(txt, label='', en=None):
 def fig(svg, cap):
     return f'<figure class="dg"><div class="sv">{svg}</div><figcaption>{cap}</figcaption></figure>'
 
-def photo(src, w, h, alt, cap, credit, credit_url):
-    """Third-party image: linked from its source (not copied into the repo), with a visible credit."""
-    return (f'<figure class="dg ph"><a href="{src}"><img src="{src}" width="{w}" height="{h}" loading="lazy" alt="{html.escape(alt)}"></a>'
+def photo(src, w, h, alt, cap, credit, credit_url, max_w=None):
+    """Third-party image: linked from its source (not copied into the repo), with a visible credit.
+    Sizing is inline so a stale cached stylesheet can never let a large image stretch the page."""
+    style = f'max-width:min(100%,{max_w}px)' if max_w else 'max-width:100%'
+    return (f'<figure class="dg ph"><a href="{src}"><img src="{src}" width="{w}" height="{h}" style="{style};height:auto" loading="lazy" alt="{html.escape(alt)}"></a>'
             f'<figcaption>{cap} <span class="credit">({T("ที่มา", "Source")}: <a href="{credit_url}">{credit}</a>)</span></figcaption></figure>')
 
 def flow(steps, labels=None, w=400):
@@ -362,6 +364,8 @@ OUT = os.path.join(D, 'pages')
 LROOT = '' if LANG == 'th' else '../'          # from this language's home to the site root
 TITLE = T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')
 MINS = T('นาที', 'min')
+# Version tag on asset URLs, so browsers fetch the new CSS/JS as soon as it changes
+ASSET_V = hashlib.sha1(b''.join(open(os.path.join(D, f), 'rb').read() for f in ('style.css', 'app.js'))).hexdigest()[:8]
 
 def strip(s): return html.unescape(re.sub(r'<[^>]+>', '', s)).strip()
 
@@ -391,7 +395,7 @@ def doc(title, depth, other_href, body, page_class):
 <link rel="alternate" hreflang="th" href="{th_href}"><link rel="alternate" hreflang="en" href="{en_href}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="{root}assets/style.css">
+<link rel="stylesheet" href="{root}assets/style.css?v={ASSET_V}">
 </head>
 <body class="{page_class}">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -405,7 +409,7 @@ def doc(title, depth, other_href, body, page_class):
 <a href="{other_href}" class="lang" id="lang" hreflang="{lang_code}" aria-label="{lang_aria}">{lang_label}</a>
 </div></div>
 {body}
-<script src="{root}assets/app.js"></script>
+<script src="{root}assets/app.js?v={ASSET_V}"></script>
 </body>
 </html>
 '''
