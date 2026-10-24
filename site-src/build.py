@@ -1219,8 +1219,8 @@ page = f'''<title>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</title
 <header class="hero">
 <p class="eyebrow m">nRF52840 · Cortex-M4F · {T('19 บท · วันละ 20–30 นาที', '19 lessons · 20–30 min a day')}</p>
 <h1>{T('Embedded C++ บน XIAO', 'Embedded C++ on XIAO')}</h1>
-<p class="lede">{T('ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้ repo ที่ใช้เป็น portfolio ตอนสมัครงานสาย firmware',
- 'C++ foundations for people who already write C, learned hands-on with a real board, followed by Git, GitHub and CI/CD, ending with a repo you can use as a portfolio when applying for firmware jobs.')}</p>
+<p class="lede">{T('ปูพื้น C++ สำหรับคนที่เขียน C มาแล้ว ผ่านการลงมือบนบอร์ดจริง ต่อด้วย Git, GitHub และ CI/CD จนได้โปรเจกต์ firmware ที่สมบูรณ์ มีทั้ง test, CI และ release อัตโนมัติ',
+ 'C++ foundations for people who already write C, learned hands-on with a real board, followed by Git, GitHub and CI/CD, ending with a complete firmware project with tests, CI and automated releases.')}</p>
 </header>
 <section class="ov">
 <div class="ovg">
