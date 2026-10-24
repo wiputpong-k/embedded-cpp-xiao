@@ -28,8 +28,27 @@
 <header class="lh"><span class="big m">01</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>.ino is C++, and the path from code to board</h1><p class="meta">25 min · Hardware: Board only</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> See what Arduino hides from you, and the real toolchain</p>
-<p>On a computer, a C/C++ program starts at <code class="il">main()</code>, which the OS calls. A <b>microcontroller</b> (MCU: a single chip with CPU, memory and I/O pins built in, like the nRF52840 on the XIAO) has no OS to call it. So why does an Arduino sketch have no <code class="il">main()</code>? Because Arduino hides it from you.</p>
-<p>A .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. The terms in that paragraph:</p>
+<p>If you have written C for a <b>microcontroller</b> (MCU: a single chip with CPU, memory and I/O pins built in, like the nRF52840 on the XIAO), you wrote <code class="il">main()</code> yourself in <code class="il">src/main.c</code>. But who calls <code class="il">main()</code>? On a PC it is the OS. An MCU has no OS: on power-up or reset, the CPU runs the <b>startup code</b> (a short piece of code that comes with the chip, e.g. <code class="il">startup_xxx.s</code>), which sets up the stack and global variables and then jumps to <code class="il">main()</code>.</p>
+<p>Arduino uses the same mechanism. The only difference is that <code class="il">main()</code> moved into the core, and that <code class="il">main()</code> calls the <code class="il">setup()</code> and <code class="il">loop()</code> you write in the .ino. That is why a sketch has no <code class="il">main()</code>.</p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 346" role="img">
+<rect x="110" y="10" width="180" height="34" rx="8" class="b"/><text x="200" y="32" text-anchor="middle" class="tt">Reset / power-up</text>
+<line x1="200" y1="46" x2="200" y2="70" class="ln" marker-end="url(#ah)"/>
+<rect x="30" y="74" width="340" height="50" rx="8" class="b"/><text x="200" y="95" text-anchor="middle" class="tt m">startup code (Reset_Handler)</text>
+<text x="200" y="113" text-anchor="middle" class="sub">sets up stack and globals, then calls main()</text>
+<line x1="200" y1="126" x2="110" y2="154" class="ln" marker-end="url(#ah)"/><line x1="200" y1="126" x2="290" y2="154" class="ln" marker-end="url(#ah)"/>
+<text x="105" y="174" text-anchor="middle" class="sub">Bare-metal C</text><text x="295" y="174" text-anchor="middle" class="sub">Arduino (.ino)</text>
+<rect x="12" y="184" width="186" height="50" rx="8" class="ba"/><text x="105" y="205" text-anchor="middle" class="tt m">main()</text>
+<text x="105" y="223" text-anchor="middle" class="sub m">src/main.c · yours</text>
+<rect x="202" y="184" width="186" height="50" rx="8" class="bm"/><text x="295" y="205" text-anchor="middle" class="tt m">main()</text>
+<text x="295" y="223" text-anchor="middle" class="sub m">core/main.cpp · provided</text>
+<line x1="105" y1="236" x2="105" y2="258" class="ln" marker-end="url(#ah)"/><line x1="295" y1="236" x2="295" y2="258" class="ln" marker-end="url(#ah)"/>
+<rect x="12" y="262" width="186" height="50" rx="8" class="ba"/><text x="105" y="283" text-anchor="middle" class="tt m">init + while (1)</text>
+<text x="105" y="301" text-anchor="middle" class="sub">all written by you</text>
+<rect x="202" y="262" width="186" height="50" rx="8" class="ba"/><text x="295" y="283" text-anchor="middle" class="tt m">setup() · loop()</text>
+<text x="295" y="301" text-anchor="middle" class="sub">in .ino · all you write</text>
+<text x="200" y="336" text-anchor="middle" class="sub">Highlighted = code you write · the rest comes with the chip or core</text>
+</svg></div><figcaption>From reset to your code: in C you write main(); in Arduino you write only setup() and loop()</figcaption></figure>
+<p><b>".ino is C++"</b> means a .ino file is not a special language. The IDE only adds <code class="il">#include &lt;Arduino.h&gt;</code> and function prototypes, then hands the file to <b>arm-none-eabi-g++</b> to compile as ordinary C++. So everything in C++ (classes, namespaces, templates and so on) works in a sketch, which is what the rest of this course teaches, and you can split code into .h/.cpp files like any C++ project. The terms in that paragraph:</p>
 <ul>
 <li><b>toolchain</b>: the set of programs that turns code into a file the chip can run (compiler, linker, file converters). The IDE runs them when you press Verify.</li>
 <li><b>arm-none-eabi-g++</b>: a <b>cross-compiler</b> version of g++. It runs on your PC but produces code for another CPU: <i>arm</i> = the ARM CPU family (the nRF52840 is a Cortex-M4F), <i>none</i> = no OS, <i>eabi</i> = ARM's embedded standard for calling functions and laying out data.</li>
@@ -44,7 +63,7 @@
     loop();
   }
 }</code></pre></div>
-<p>On power-up or reset, the chip enters the core's <code class="il">main()</code>. It calls <code class="il">init()</code> to prepare the hardware, calls <code class="il">setup()</code> once, then calls <code class="il">loop()</code> forever, because firmware has no OS to "return to". What <code class="il">init()</code> prepares:</p>
+<p>The core's <code class="il">main()</code> calls <code class="il">init()</code> to prepare the hardware, calls <code class="il">setup()</code> once, then calls <code class="il">loop()</code> forever, because firmware has no OS to "return to". What <code class="il">init()</code> prepares:</p>
 <ul>
 <li><b>clock</b>: the timing signal that drives the CPU and other circuits (64 MHz on the nRF52840). It must be set up first.</li>
 <li><b>timer</b>: a counting circuit in the chip. <code class="il">millis()</code> and <code class="il">delay()</code> are built on it.</li>

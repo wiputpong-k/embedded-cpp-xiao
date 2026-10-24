@@ -107,6 +107,25 @@ SVG_REF = '''<svg viewBox="0 0 400 190" role="img">
 <text x="322" y="182" text-anchor="middle" class="sub">ไม่ใช่ตัวแปรใหม่ · ต้องผูกตอนสร้าง</text>
 </svg>'''
 
+SVG_ENTRY = '''<svg viewBox="0 0 400 346" role="img">
+<rect x="110" y="10" width="180" height="34" rx="8" class="b"/><text x="200" y="32" text-anchor="middle" class="tt">Reset / จ่ายไฟ</text>
+<line x1="200" y1="46" x2="200" y2="70" class="ln" marker-end="url(#ah)"/>
+<rect x="30" y="74" width="340" height="50" rx="8" class="b"/><text x="200" y="95" text-anchor="middle" class="tt m">startup code (Reset_Handler)</text>
+<text x="200" y="113" text-anchor="middle" class="sub">เตรียม stack และตัวแปร global แล้วเรียก main()</text>
+<line x1="200" y1="126" x2="110" y2="154" class="ln" marker-end="url(#ah)"/><line x1="200" y1="126" x2="290" y2="154" class="ln" marker-end="url(#ah)"/>
+<text x="105" y="174" text-anchor="middle" class="sub">C แบบ bare-metal</text><text x="295" y="174" text-anchor="middle" class="sub">Arduino (.ino)</text>
+<rect x="12" y="184" width="186" height="50" rx="8" class="ba"/><text x="105" y="205" text-anchor="middle" class="tt m">main()</text>
+<text x="105" y="223" text-anchor="middle" class="sub m">src/main.c · คุณเขียน</text>
+<rect x="202" y="184" width="186" height="50" rx="8" class="bm"/><text x="295" y="205" text-anchor="middle" class="tt m">main()</text>
+<text x="295" y="223" text-anchor="middle" class="sub m">core/main.cpp · มีให้แล้ว</text>
+<line x1="105" y1="236" x2="105" y2="258" class="ln" marker-end="url(#ah)"/><line x1="295" y1="236" x2="295" y2="258" class="ln" marker-end="url(#ah)"/>
+<rect x="12" y="262" width="186" height="50" rx="8" class="ba"/><text x="105" y="283" text-anchor="middle" class="tt m">init + while (1)</text>
+<text x="105" y="301" text-anchor="middle" class="sub">คุณเขียนเองทั้งหมด</text>
+<rect x="202" y="262" width="186" height="50" rx="8" class="ba"/><text x="295" y="283" text-anchor="middle" class="tt m">setup() · loop()</text>
+<text x="295" y="301" text-anchor="middle" class="sub">ใน .ino · คุณเขียนแค่นี้</text>
+<text x="200" y="336" text-anchor="middle" class="sub">กรอบเน้นสี = โค้ดที่คุณเขียน · ส่วนอื่นมากับชิปหรือ core</text>
+</svg>'''
+
 def mrow(y, a, b, acc=False):
     c = 'ba' if acc else 'b'
     return (f'<rect x="6" y="{y}" width="190" height="34" rx="6" class="b"/><text x="14" y="{y+21}" class="tt m sm">{html.escape(a)}</text>'
@@ -313,6 +332,10 @@ SVG_ROAD = flow([
 SVG_PINOUT = tr(SVG_PINOUT, {'สีส้ม = ขาที่ใช้ในคอร์ส: D0 Pot · D1 ปุ่ม · D2 LED ภายนอก': 'Orange = course pins: D0 pot · D1 button · D2 external LED'})
 SVG_REF = tr(SVG_REF, {'ชื่อเล่นของ current': 'alias of current', 'เป็นตัวแปรแยก · null ได้ · ชี้ใหม่ได้': 'nullable · can re-point',
                        'ไม่ใช่ตัวแปรใหม่ · ต้องผูกตอนสร้าง': 'never null · bound at init'})
+SVG_ENTRY = tr(SVG_ENTRY, {'จ่ายไฟ': 'power-up', 'เตรียม stack และตัวแปร global แล้วเรียก main()': 'sets up stack and globals, then calls main()',
+                           'C แบบ bare-metal': 'Bare-metal C', '· คุณเขียน<': '· yours<', '· มีให้แล้ว': '· provided',
+                           'คุณเขียนเองทั้งหมด': 'all written by you', 'ใน .ino · คุณเขียนแค่นี้': 'in .ino · all you write',
+                           'กรอบเน้นสี = โค้ดที่คุณเขียน · ส่วนอื่นมากับชิปหรือ core': 'Highlighted = code you write · the rest comes with the chip or core'})
 SVG_MANGLE = tr(SVG_MANGLE, {'ซอร์ส C++ (namespace logx)': 'C++ source (namespace logx)', 'ชื่อ symbol ใน .o / .elf': 'symbol name in .o / .elf',
                              'ถ้าต้องเรียกจาก C หรือ ASM ใช้ extern "C" ปิด mangling': 'Called from C or ASM? extern "C" turns mangling off'})
 SVG_WIRE = tr(SVG_WIRE, {'LED (ขายาว = +)': 'LED (long leg = +)', '— พอเห็นชัด และไม่เกิน standard drive ของ GPIO': ': bright enough, safe for GPIO'})

@@ -28,8 +28,27 @@
 <header class="lh"><span class="big m">01</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>.ino คือ C++ และเส้นทางจากโค้ดถึงบอร์ด</h1><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
 <p class="goal"><b>เป้าหมาย</b> เข้าใจว่า Arduino ซ่อนอะไรไว้ และเห็น toolchain จริง</p>
-<p>บนคอมพิวเตอร์ โปรแกรม C/C++ เริ่มที่ <code class="il">main()</code> ซึ่ง OS เป็นคนเรียก แต่บน <b>microcontroller</b> (MCU: ชิปตัวเดียวที่มี CPU, หน่วยความจำ และขา I/O อยู่ในตัว เช่น nRF52840 บน XIAO) ไม่มี OS คอยเรียกให้ แล้วทำไม sketch ของ Arduino ถึงไม่ต้องเขียน <code class="il">main()</code>? เพราะ Arduino ซ่อนไว้ให้</p>
-<p>ไฟล์ .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ คำศัพท์ในย่อหน้านี้:</p>
+<p>ถ้าเคยเขียน C บน <b>microcontroller</b> (MCU: ชิปตัวเดียวที่มี CPU, หน่วยความจำ และขา I/O อยู่ในตัว เช่น nRF52840 บน XIAO) คุณเขียน <code class="il">main()</code> เองใน <code class="il">src/main.c</code> แล้วใครเรียก <code class="il">main()</code>? บน PC คือ OS แต่ MCU ไม่มี OS: เมื่อจ่ายไฟหรือกด reset CPU จะรัน <b>startup code</b> (โค้ดสั้น ๆ ที่มากับชิป เช่นไฟล์ <code class="il">startup_xxx.s</code>) ซึ่งเตรียม stack และตัวแปร global แล้วกระโดดไป <code class="il">main()</code></p>
+<p>Arduino ใช้กลไกเดียวกัน ต่างแค่ <code class="il">main()</code> ย้ายไปอยู่ใน core และ <code class="il">main()</code> ตัวนั้นเรียก <code class="il">setup()</code> กับ <code class="il">loop()</code> ที่คุณเขียนใน .ino แทน sketch จึงไม่มี <code class="il">main()</code></p>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 346" role="img">
+<rect x="110" y="10" width="180" height="34" rx="8" class="b"/><text x="200" y="32" text-anchor="middle" class="tt">Reset / จ่ายไฟ</text>
+<line x1="200" y1="46" x2="200" y2="70" class="ln" marker-end="url(#ah)"/>
+<rect x="30" y="74" width="340" height="50" rx="8" class="b"/><text x="200" y="95" text-anchor="middle" class="tt m">startup code (Reset_Handler)</text>
+<text x="200" y="113" text-anchor="middle" class="sub">เตรียม stack และตัวแปร global แล้วเรียก main()</text>
+<line x1="200" y1="126" x2="110" y2="154" class="ln" marker-end="url(#ah)"/><line x1="200" y1="126" x2="290" y2="154" class="ln" marker-end="url(#ah)"/>
+<text x="105" y="174" text-anchor="middle" class="sub">C แบบ bare-metal</text><text x="295" y="174" text-anchor="middle" class="sub">Arduino (.ino)</text>
+<rect x="12" y="184" width="186" height="50" rx="8" class="ba"/><text x="105" y="205" text-anchor="middle" class="tt m">main()</text>
+<text x="105" y="223" text-anchor="middle" class="sub m">src/main.c · คุณเขียน</text>
+<rect x="202" y="184" width="186" height="50" rx="8" class="bm"/><text x="295" y="205" text-anchor="middle" class="tt m">main()</text>
+<text x="295" y="223" text-anchor="middle" class="sub m">core/main.cpp · มีให้แล้ว</text>
+<line x1="105" y1="236" x2="105" y2="258" class="ln" marker-end="url(#ah)"/><line x1="295" y1="236" x2="295" y2="258" class="ln" marker-end="url(#ah)"/>
+<rect x="12" y="262" width="186" height="50" rx="8" class="ba"/><text x="105" y="283" text-anchor="middle" class="tt m">init + while (1)</text>
+<text x="105" y="301" text-anchor="middle" class="sub">คุณเขียนเองทั้งหมด</text>
+<rect x="202" y="262" width="186" height="50" rx="8" class="ba"/><text x="295" y="283" text-anchor="middle" class="tt m">setup() · loop()</text>
+<text x="295" y="301" text-anchor="middle" class="sub">ใน .ino · คุณเขียนแค่นี้</text>
+<text x="200" y="336" text-anchor="middle" class="sub">กรอบเน้นสี = โค้ดที่คุณเขียน · ส่วนอื่นมากับชิปหรือ core</text>
+</svg></div><figcaption>จาก reset ถึงโค้ดของคุณ: ใน C คุณเขียน main() เอง ใน Arduino คุณเขียนแค่ setup() กับ loop()</figcaption></figure>
+<p><b>".ino คือ C++"</b> หมายความว่า .ino ไม่ใช่ภาษาพิเศษ IDE แค่เติม <code class="il">#include &lt;Arduino.h&gt;</code> และสร้าง function prototype ให้ แล้วส่งให้ <b>arm-none-eabi-g++</b> คอมไพล์เป็น C++ ปกติ ผลคือทุกอย่างของ C++ (class, namespace, template ฯลฯ) ใช้ใน sketch ได้ ซึ่งคือสิ่งที่คอร์สนี้สอนต่อไป และแยกโค้ดเป็นไฟล์ .h/.cpp ได้เหมือนโปรเจกต์ C++ ทั่วไป คำศัพท์ในย่อหน้านี้:</p>
 <ul>
 <li><b>toolchain</b> ชุดโปรแกรมที่แปลงโค้ดเป็นไฟล์ที่ลงชิปได้ (compiler, linker, เครื่องมือแปลงไฟล์) IDE เรียกให้เองเมื่อกด Verify</li>
 <li><b>arm-none-eabi-g++</b> g++ แบบ <b>cross-compiler</b> คือรันบน PC แต่สร้างโค้ดให้ CPU อื่น: <i>arm</i> = CPU ตระกูล ARM (nRF52840 ใช้ Cortex-M4F), <i>none</i> = ไม่มี OS, <i>eabi</i> = มาตรฐานการเรียกฟังก์ชันและจัดข้อมูลของ ARM สำหรับ embedded</li>
@@ -44,7 +63,7 @@
     loop();
   }
 }</code></pre></div>
-<p>เมื่อจ่ายไฟหรือกด reset ชิปจะเข้า <code class="il">main()</code> ของ core ซึ่งเรียก <code class="il">init()</code> เตรียมฮาร์ดแวร์ เรียก <code class="il">setup()</code> ครั้งเดียว แล้ววนเรียก <code class="il">loop()</code> ไม่รู้จบ เพราะ firmware ไม่มี OS ให้ "จบแล้วกลับไป" สิ่งที่ <code class="il">init()</code> เตรียม:</p>
+<p><code class="il">main()</code> ของ core เรียก <code class="il">init()</code> เตรียมฮาร์ดแวร์ เรียก <code class="il">setup()</code> ครั้งเดียว แล้ววนเรียก <code class="il">loop()</code> ไม่รู้จบ เพราะ firmware ไม่มี OS ให้ "จบแล้วกลับไป" สิ่งที่ <code class="il">init()</code> เตรียม:</p>
 <ul>
 <li><b>clock</b> สัญญาณจังหวะที่ขับ CPU และวงจรอื่น (nRF52840 = 64 MHz) ต้องตั้งก่อนทุกอย่าง</li>
 <li><b>timer</b> วงจรนับเวลาในชิป เป็นที่มาของ <code class="il">millis()</code> และ <code class="il">delay()</code></li>
