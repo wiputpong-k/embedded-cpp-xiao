@@ -31,6 +31,7 @@
 <p>CI (Continuous Integration) คือการให้เครื่องตรวจโค้ดทุกครั้งที่มีการเปลี่ยนแปลง GitHub Actions อ่านไฟล์ workflow (เขียนด้วย YAML) ในโฟลเดอร์ <code class="il">.github/workflows/</code> แล้วเปิดเครื่อง Linux ชั่วคราว (runner) มารันคำสั่งตามนั้น บทนี้เริ่มจาก job เดียวคือ <code class="il">host-tests</code> ที่รัน test จากบท 19–20 บทหน้าจะเพิ่ม job compile firmware</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 310" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">push / pull_request</text><text x="200" y="49" text-anchor="middle" class="sub">event ที่ trigger workflow</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><text x="212" y="79" class="sub m">ubuntu runner</text><rect x="40" y="90" width="320" height="50" rx="8" class="ba"/><text x="200" y="111" text-anchor="middle" class="tt">job: host-tests</text><text x="200" y="129" text-anchor="middle" class="sub">g++ → ./test_runner → cppcheck</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><text x="212" y="159" class="sub m">ผ่านแล้วค่อยรัน</text><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">job: build-firmware</text><text x="200" y="209" text-anchor="middle" class="sub">arduino-cli compile (needs: host-tests)</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="b"/><text x="200" y="271" text-anchor="middle" class="tt">artifact: firmware</text><text x="200" y="289" text-anchor="middle" class="sub">.hex / .zip ดาวน์โหลดได้จากหน้า Actions</text></svg></div><figcaption>workflow 2 job: test ก่อน ผ่านแล้วค่อย build (บทนี้ทำ job แรก)</figcaption></figure>
 <h3 id="s1">Hands-on</h3>
+<p>บทนี้พิสูจน์ว่า test ชุดเดียวกับที่รันในเครื่อง (บท 19–20) รันเองบนเซิร์ฟเวอร์ทุกครั้งที่ push และจับบั๊กได้ก่อน merge แม้เราจะลืมรันเอง</p>
 <ol>
 <li>ใน Git Bash เข้าไปที่ repo สร้าง branch ใหม่ และสร้างโฟลเดอร์ <code class="il">.github/workflows</code> (3 บรรทัดแรกของชุดคำสั่งข้างล่าง)</li>
 <li>รัน <code class="il">notepad .github/workflows/ci.yml</code> วางเนื้อหา <code class="il">ci.yml</code> ข้างล่าง แล้วบันทึก YAML นับการเว้นวรรคเป็นโครงสร้าง ต้องใช้ space ห้ามใช้ Tab และระยะย่อหน้าต้องตรงตามตัวอย่าง</li>
@@ -65,8 +66,20 @@ jobs:
         run: |
           sudo apt-get update &amp;&amp; sudo apt-get install -y cppcheck
           cppcheck --error-exitcode=1 --enable=warning,performance --std=c++17 -Ifirmware/src test/test_main.cpp</code></pre></div>
+<p><b>YAML</b> คือรูปแบบไฟล์ตั้งค่าที่เขียนเป็น <code class="il">ชื่อ: ค่า</code> และใช้การย่อหน้าบอกว่าอะไรอยู่ใต้อะไร อ่าน <code class="il">ci.yml</code> ทีละส่วน:</p>
+<ul>
+<li><code class="il">name: CI</code> ชื่อ workflow ที่เห็นในแท็บ Actions</li>
+<li><code class="il">on:</code> เหตุการณ์ที่ทำให้ workflow รัน: push เข้า <code class="il">main</code> และทุก pull request</li>
+<li><code class="il">jobs: host-tests:</code> งาน 1 ชิ้นชื่อ <code class="il">host-tests</code> (ชื่อนี้จะถูกใช้ตั้งเป็นเงื่อนไขของ PR ในบท 22)</li>
+<li><code class="il">runs-on: ubuntu-latest</code> ให้รันบนเครื่อง Linux ชั่วคราว (runner) ที่ GitHub เตรียมให้ ใช้เสร็จแล้วทิ้ง</li>
+<li><code class="il">steps:</code> ขั้นตอนที่ทำทีละขั้นจากบนลงล่าง ขั้นไหน fail ขั้นที่เหลือจะไม่ทำ</li>
+<li><code class="il">uses: actions/checkout@v4</code> เรียก <b>action</b> สำเร็จรูปที่คนอื่นเขียนไว้ ตัวนี้ดึงโค้ดของ repo ลงเครื่อง runner ส่วน <code class="il">@v4</code> คือเวอร์ชัน</li>
+<li><code class="il">run:</code> คำสั่งเหมือนพิมพ์ใน Git Bash ขั้น <i>Build tests</i> กับ <i>Run tests</i> คือคำสั่งเดียวกับบท 19 ส่วน <code class="il">run: |</code> คือเขียนหลายบรรทัด</li>
+<li><i>Static analysis</i> ติดตั้งแล้วรัน <b>cppcheck</b> โปรแกรมที่อ่านโค้ดหาบั๊กโดยไม่ต้องรัน เช่น ใช้ตัวแปรที่ยังไม่กำหนดค่า <code class="il">--error-exitcode=1</code> ให้คืนค่า 1 เมื่อเจอปัญหา job จึงขึ้นสีแดง</li>
+</ul>
 <h3 id="s2">ลองทำให้ CI แดง</h3>
 <p>สร้าง branch ใหม่ แก้ <code class="il">&gt;=</code> ใน Debouncer.h เป็น <code class="il">&gt;</code> แบบบท 20 แล้ว push และเปิด PR หน้า PR จะขึ้นกากบาทสีแดง คลิกดู log ของ step <i>Run tests</i> จะเห็นบรรทัด FAIL เดียวกับที่เห็นในเครื่อง จากนั้นปิด PR นี้ทิ้งด้วย <code class="il">gh pr close --delete-branch</code></p>
+<p>ผลนี้บอกอะไร: CI รัน test ชุดเดียวกับในเครื่องและได้ผลเดียวกัน ถ้าบั๊กหลุดเข้ามาใน PR จะเห็นกากบาทแดงก่อน merge โดยไม่ต้องพึ่งความจำของใคร ในบท 22 จะตั้งกฎให้ PR ที่แดง merge ไม่ได้เลย</p>
 <h3 id="s3">เช็กความเข้าใจ</h3><details><summary>runner ของ GitHub เป็น Linux แต่เครื่องเราเป็น Windows ทำไม test ยังได้ผลเหมือนกัน?</summary><p>เพราะโค้ดที่ test เป็น C++ มาตรฐานล้วน ไม่ขึ้นกับระบบปฏิบัติการหรือฮาร์ดแวร์ นี่คืออีกประโยชน์ของการแยก logic ออกจากฮาร์ดแวร์ในบท 19</p></details><details><summary>ทำไม job ถึงขึ้นสีแดงเมื่อ test fail?</summary><p>./test_runner คืน exit code 1 เมื่อมี CHECK ไม่ผ่าน GitHub Actions ถือว่า step ที่คืนค่าไม่เป็น 0 คือ fail และหยุด job ทันที</p></details>
 <label class="done"><input type="checkbox" id="done-l21" data-l="l21"> เรียนบทนี้จบแล้ว</label>
 </article>

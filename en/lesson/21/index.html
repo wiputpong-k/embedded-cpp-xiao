@@ -31,6 +31,7 @@
 <p>CI (Continuous Integration) means a machine checks the code on every change. GitHub Actions reads workflow files (written in YAML) in <code class="il">.github/workflows/</code>, starts a temporary Linux machine (a runner) and runs the commands in them. This lesson starts with one job, <code class="il">host-tests</code>, which runs the tests from lessons 19–20. The next lesson adds a job that compiles the firmware.</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 310" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">push / pull_request</text><text x="200" y="49" text-anchor="middle" class="sub">events that trigger the workflow</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><text x="212" y="79" class="sub m">ubuntu runner</text><rect x="40" y="90" width="320" height="50" rx="8" class="ba"/><text x="200" y="111" text-anchor="middle" class="tt">job: host-tests</text><text x="200" y="129" text-anchor="middle" class="sub">g++ → ./test_runner → cppcheck</text><line x1="200" y1="142" x2="200" y2="166" class="ln" marker-end="url(#ah)"/><text x="212" y="159" class="sub m">runs only if tests pass</text><rect x="40" y="170" width="320" height="50" rx="8" class="bm"/><text x="200" y="191" text-anchor="middle" class="tt">job: build-firmware</text><text x="200" y="209" text-anchor="middle" class="sub">arduino-cli compile (needs: host-tests)</text><line x1="200" y1="222" x2="200" y2="246" class="ln" marker-end="url(#ah)"/><rect x="40" y="250" width="320" height="50" rx="8" class="b"/><text x="200" y="271" text-anchor="middle" class="tt">artifact: firmware</text><text x="200" y="289" text-anchor="middle" class="sub">.hex / .zip, downloadable from Actions</text></svg></div><figcaption>A 2-job workflow: test first, build only after the tests pass (this lesson covers the first job)</figcaption></figure>
 <h3 id="s1">Hands-on</h3>
+<p>This lesson proves that the same tests you run locally (lessons 19–20) run by themselves on a server at every push, and catch a bug before merge even if you forget to run them.</p>
 <ol>
 <li>In Git Bash, go into the repo, create a new branch and create the <code class="il">.github/workflows</code> folder (the first 3 lines below).</li>
 <li>Run <code class="il">notepad .github/workflows/ci.yml</code>, paste the <code class="il">ci.yml</code> content below and save. YAML uses indentation as structure: use spaces, never Tab, and keep the indentation exactly as shown.</li>
@@ -65,8 +66,20 @@ jobs:
         run: |
           sudo apt-get update &amp;&amp; sudo apt-get install -y cppcheck
           cppcheck --error-exitcode=1 --enable=warning,performance --std=c++17 -Ifirmware/src test/test_main.cpp</code></pre></div>
+<p><b>YAML</b> is a settings-file format written as <code class="il">name: value</code>, where indentation says what belongs under what. Reading <code class="il">ci.yml</code> piece by piece:</p>
+<ul>
+<li><code class="il">name: CI</code>: the workflow name shown in the Actions tab.</li>
+<li><code class="il">on:</code>: the events that start the workflow: a push to <code class="il">main</code>, and every pull request.</li>
+<li><code class="il">jobs: host-tests:</code>: one job named <code class="il">host-tests</code> (lesson 22 uses this name as a PR requirement).</li>
+<li><code class="il">runs-on: ubuntu-latest</code>: run on a temporary Linux machine (a runner) that GitHub provides and throws away afterwards.</li>
+<li><code class="il">steps:</code>: the steps, run top to bottom. If one fails, the rest are skipped.</li>
+<li><code class="il">uses: actions/checkout@v4</code>: calls a ready-made <b>action</b> someone else wrote; this one fetches the repo's code onto the runner. <code class="il">@v4</code> is its version.</li>
+<li><code class="il">run:</code>: a command, as if typed in Git Bash. <i>Build tests</i> and <i>Run tests</i> are the same commands as lesson 19. <code class="il">run: |</code> starts a multi-line command.</li>
+<li><i>Static analysis</i> installs and runs <b>cppcheck</b>, a program that reads code to find bugs without running it, e.g. a variable used before it is set. <code class="il">--error-exitcode=1</code> makes it return 1 on a problem, so the job turns red.</li>
+</ul>
 <h3 id="s2">Make CI fail on purpose</h3>
 <p>Create a new branch, change <code class="il">&gt;=</code> to <code class="il">&gt;</code> in Debouncer.h as in lesson 20, push and open a PR. The PR shows a red cross; open the log of the <i>Run tests</i> step and you see the same FAIL line you saw locally. Then close that PR with <code class="il">gh pr close --delete-branch</code>.</p>
+<p>What this tells you: CI runs the same tests as your PC and gets the same result. If a bug slips into a PR, the red cross shows before merge, without relying on anyone's memory. Lesson 22 adds a rule so a red PR cannot be merged at all.</p>
 <h3 id="s3">Check your understanding</h3><details><summary>The GitHub runner is Linux and your PC is Windows. Why do the tests give the same result?</summary><p>Because the code under test is plain standard C++ that does not depend on the OS or hardware. That is another benefit of separating logic from hardware in lesson 19.</p></details><details><summary>Why does the job turn red when a test fails?</summary><p>./test_runner returns exit code 1 when any CHECK fails. GitHub Actions treats any step that returns non-zero as failed and stops the job.</p></details>
 <label class="done"><input type="checkbox" id="done-l21" data-l="l21"> I finished this lesson</label>
 </article>
