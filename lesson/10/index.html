@@ -27,14 +27,30 @@
 <article class="lesson" id="l10">
 <header class="lh"><span class="big m">10</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Template: RingBuffer&lt;T, N&gt;</h1><p class="meta">30 นาที · ฮาร์ดแวร์: Pot ที่ A0</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
-<p class="goal"><b>เป้าหมาย</b> เขียน container ขนาดคงที่ใช้ซ้ำได้ทุกชนิด โดยไม่ใช้ heap</p><div class="vs"><div><span class="tag">C</span><p>ทำ buffer สำหรับ int, float แยกกัน หรือใช้ <code class="il">void*</code> + macro ซึ่งไม่มี type safety</p></div><div><span class="tag t2">C++</span><p>template ให้ compiler สร้างโค้ดเฉพาะชนิดให้ ขนาด N เป็นค่าตอน compile ตรวจได้ด้วย <code class="il">static_assert</code></p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<p class="goal"><b>เป้าหมาย</b> เขียน container ขนาดคงที่ใช้ซ้ำได้ทุกชนิด โดยไม่ใช้ heap</p>
+<p>ค่าที่อ่านจาก pot จะแกว่งเล็กน้อยทุกครั้ง วิธีทำให้เรียบคือเก็บค่าล่าสุด N ค่าไว้แล้วเฉลี่ย (moving average) ต้องมีที่เก็บที่ใส่ค่าใหม่และทิ้งค่าเก่าได้เรื่อย ๆ และอยากใช้ซ้ำได้ทั้งกับ <code class="il">uint16_t</code>, <code class="il">float</code> หรือ struct คำศัพท์ในบทนี้:</p>
+<ul>
+<li><b>template</b> แม่แบบของ class หรือฟังก์ชันที่เว้นชนิด (<code class="il">T</code>) หรือค่าคงที่ (<code class="il">N</code>) ไว้ เมื่อเขียน <code class="il">RingBuffer&lt;uint16_t, 16&gt;</code> compiler จะสร้างโค้ดฉบับสำหรับ <code class="il">uint16_t</code> 16 ช่องให้ เรียกว่า template instantiation</li>
+<li><b>ring buffer / FIFO</b> array ขนาดคงที่ที่ใช้วนรอบ: <code class="il">head</code> คือช่องที่จะเขียนถัดไป <code class="il">tail</code> คือช่องที่จะอ่านถัดไป ถึงท้าย array ก็วนกลับไปช่อง 0 ด้วย <code class="il">% N</code> ค่าที่เข้าก่อนออกก่อน (First In, First Out)</li>
+<li><b>heap</b> หน่วยความจำที่จองตอนโปรแกรมทำงานด้วย <code class="il">new</code> หรือ <code class="il">malloc</code> buffer ในบทนี้ไม่ใช้ heap ขนาดรู้ตั้งแต่ตอน build (บท 11 อธิบายว่าทำไมสำคัญ)</li>
+<li><b><code class="il">static_assert</code></b> เงื่อนไขที่ compiler ตรวจตอน compile ถ้าไม่จริงจะ build ไม่ผ่าน</li>
+</ul>
+<div class="vs"><div><span class="tag">C</span><p>ทำ buffer สำหรับ int, float แยกกัน หรือใช้ <code class="il">void*</code> + macro ซึ่งไม่มี type safety</p></div><div><span class="tag t2">C++</span><p>template ให้ compiler สร้างโค้ดเฉพาะชนิดให้ ขนาด N เป็นค่าตอน compile ตรวจได้ด้วย <code class="il">static_assert</code></p></div></div><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
 <rect x="18" y="58" width="40" height="40" rx="6" class="b"/><text x="38" y="83" text-anchor="middle" class="tt m sm"></text><text x="38" y="112" text-anchor="middle" class="sub m">0</text><rect x="64" y="58" width="40" height="40" rx="6" class="b"/><text x="84" y="83" text-anchor="middle" class="tt m sm"></text><text x="84" y="112" text-anchor="middle" class="sub m">1</text><rect x="110" y="58" width="40" height="40" rx="6" class="ba"/><text x="130" y="83" text-anchor="middle" class="tt m sm">611</text><text x="130" y="112" text-anchor="middle" class="sub m">2</text><rect x="156" y="58" width="40" height="40" rx="6" class="ba"/><text x="176" y="83" text-anchor="middle" class="tt m sm">608</text><text x="176" y="112" text-anchor="middle" class="sub m">3</text><rect x="202" y="58" width="40" height="40" rx="6" class="ba"/><text x="222" y="83" text-anchor="middle" class="tt m sm">615</text><text x="222" y="112" text-anchor="middle" class="sub m">4</text><rect x="248" y="58" width="40" height="40" rx="6" class="ba"/><text x="268" y="83" text-anchor="middle" class="tt m sm">603</text><text x="268" y="112" text-anchor="middle" class="sub m">5</text><rect x="294" y="58" width="40" height="40" rx="6" class="b"/><text x="314" y="83" text-anchor="middle" class="tt m sm"></text><text x="314" y="112" text-anchor="middle" class="sub m">6</text><rect x="340" y="58" width="40" height="40" rx="6" class="b"/><text x="360" y="83" text-anchor="middle" class="tt m sm"></text><text x="360" y="112" text-anchor="middle" class="sub m">7</text>
 <text x="130" y="22" text-anchor="middle" class="tt acc">tail → pop()</text><line x1="130" y1="28" x2="130" y2="54" class="la" marker-end="url(#aha)"/>
 <text x="314" y="22" text-anchor="middle" class="tt">head → push()</text><line x1="314" y1="28" x2="314" y2="54" class="ln" marker-end="url(#ah)"/>
 <path d="M360 118 C360 156 38 156 38 120" class="ln dash" marker-end="url(#ah)"/>
 <text x="200" y="166" text-anchor="middle" class="sub">index = (index + 1) % N → วนกลับต้น buffer ไม่ต้องเลื่อนข้อมูล</text>
 </svg></div><figcaption>ring buffer: head เขียน tail อ่าน วนรอบด้วย modulo</figcaption></figure>
-<h3 id="s1">Hands-on</h3><p>สร้าง <code class="il">src/RingBuffer.h</code></p><div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
+<h3 id="s1">Hands-on</h3>
+<p>sketch นี้พิสูจน์ว่า template ตัวเดียวสร้าง buffer ตามชนิดและขนาดที่สั่งได้ ขนาดถูกล็อกตั้งแต่ตอน build และไม่ใช้ heap ใช้วงจร pot จากบท 06</p>
+<ol>
+<li>สร้าง sketch ใหม่ บันทึกชื่อ <code class="il">moving_average</code></li>
+<li>สร้างไฟล์ <code class="il">src/RingBuffer.h</code> แบบเดียวกับบท 05 (<b>Sketch → Show Sketch Folder</b> → สร้างโฟลเดอร์ <code class="il">src</code> → สร้างไฟล์ <code class="il">RingBuffer.h</code>) แล้ววางโค้ดชุดแรกข้างล่าง</li>
+<li>วางโค้ดชุดที่สองลงใน <code class="il">moving_average.ino</code> กด <b>Upload</b> แล้วจดตัวเลข <i>Global variables use</i> ในแถบ Output ไว้</li>
+<li>เปิด <b>Tools → Serial Plotter</b> ที่ 115200 baud แล้วหมุน pot</li>
+</ol>
+<div class="code"><div class="cl">src/RingBuffer.h</div><pre><code>#pragma once
 #include &lt;stddef.h&gt;
 
 // core ของ Seeed nRF52 มี class RingBuffer อยู่แล้ว จึงต้องอยู่ใน namespace ไม่ให้ชื่อชนกัน
@@ -101,7 +117,16 @@ void loop() {
   Serial.print(&quot;raw:&quot;); Serial.print(raw);
   Serial.print(&quot; avg:&quot;); Serial.println(average(samples));
   delay(20);
-}</code></pre></div><p class="note">ทำไมต้องเขียน <code class="il">xiao::RingBuffer</code>? core ของ Seeed nRF52 มี class ชื่อ <code class="il">RingBuffer</code> อยู่แล้ว (ใช้ภายในตัวจัดการ UART) ถ้าประกาศชื่อเดียวกันไว้นอก namespace จะ compile ไม่ผ่านเพราะชื่อชนกัน ไฟล์ <code class="il">RingBuffer.h</code> ของคอร์สจึงอยู่ใน <code class="il">namespace xiao</code> นี่คือเหตุผลจริงที่ต้องมี namespace ตามบท 03 ส่วน <code class="il">average(samples)</code> เรียกได้โดยไม่ต้องเติม <code class="il">xiao::</code> เพราะ compiler หาฟังก์ชันใน namespace ของชนิดพารามิเตอร์ให้เอง (argument-dependent lookup)</p><p>เปิด Serial Plotter เทียบเส้น raw กับ avg ลองเปลี่ยน N เป็น 4 และ 64 สังเกตความหน่วงและความเรียบ (moving average N จุด = delay ราว N/2 sample)</p><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?</summary><p>compiler สร้างโค้ด 2 ชุด (template instantiation) flash เพิ่มขึ้น ถ้ามีหลายชนิดเกินไปเรียกว่า code bloat</p></details><details><summary>ถ้า ISR เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?</summary><p>ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ต้องครอบด้วย CriticalSection หรือออกแบบ SPSC ที่ฝั่ง producer แก้แค่ head ฝั่ง consumer แก้แค่ tail</p></details>
+}</code></pre></div>
+<p>ผลที่ควรเห็น: เส้น <code class="il">raw</code> ขยับตาม pot และมีหยักเล็ก ๆ ส่วนเส้น <code class="il">avg</code> เรียบกว่าและตามมาช้ากว่าเล็กน้อย</p>
+<p>ผลนี้บอกอะไร ลองทีละข้อ:</p>
+<ul>
+<li><b>ขนาดล็อกตั้งแต่ build</b> เปลี่ยน <code class="il">16</code> เป็น <code class="il">64</code> แล้วกด Verify ตัวเลข <i>Global variables use</i> จะเพิ่ม 96 byte พอดี (เพิ่ม 48 ช่อง × 2 byte ของ <code class="il">uint16_t</code>) เพราะ buffer เป็นตัวแปร global ที่ linker จองที่ไว้ตายตัว (บท 01) ไม่ได้จองจาก heap ตอนรัน</li>
+<li><b>N มากขึ้น = เรียบขึ้นแต่ช้าลง</b> Upload ค่า 64 แล้วดู Plotter เส้น <code class="il">avg</code> เรียบขึ้นแต่ตามช้าลง (moving average N จุด หน่วงสัญญาณราว N/2 ค่า)</li>
+<li><b><code class="il">static_assert</code></b> เปลี่ยนเป็น <code class="il">0</code> แล้วกด Verify จะได้ <code class="il">error: static assertion failed: N must be &gt; 0</code> คือบั๊กถูกจับตั้งแต่ตอน compile จากนั้นเปลี่ยนกลับเป็น 16</li>
+</ul>
+<p class="note">ทำไมต้องเขียน <code class="il">xiao::RingBuffer</code>? core ของ Seeed nRF52 มี class ชื่อ <code class="il">RingBuffer</code> อยู่แล้ว ถ้าประกาศชื่อเดียวกันไว้นอก namespace จะ compile ไม่ผ่านเพราะชื่อชนกัน นี่คือเหตุผลจริงที่ต้องมี namespace ตามบท 03 ส่วน <code class="il">average(samples)</code> ไม่ต้องเติม <code class="il">xiao::</code> เพราะ compiler หาฟังก์ชันใน namespace เดียวกับชนิดของพารามิเตอร์ให้เอง</p>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าใช้ RingBuffer&lt;uint16_t,16&gt; และ RingBuffer&lt;float,16&gt; flash จะเป็นอย่างไร?</summary><p>compiler สร้างโค้ด 2 ชุด ชุดละชนิด flash จึงเพิ่มขึ้น ถ้าใช้หลายชนิดมากเกินไป flash จะบวมโดยไม่รู้ตัว เรียกว่า code bloat</p></details><details><summary>ถ้า ISR (บท 12) เป็นคน push และ loop เป็นคน pop ปลอดภัยไหม?</summary><p>ยังไม่ปลอดภัย เพราะ count_ ถูกแก้จากทั้งสองฝั่ง ISR อาจแทรกเข้ามากลางการแก้ค่า ต้องครอบด้วย CriticalSection (บท 06) หรือออกแบบใหม่ให้ฝั่ง ISR แก้แค่ head และฝั่ง loop แก้แค่ tail</p></details>
 <label class="done"><input type="checkbox" id="done-l10" data-l="l10"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../09/"><small>← บทก่อนหน้า</small><span>09 · Inheritance, virtual และ interface</span></a><a class="next" href="../11/"><small>บทถัดไป →</small><span>11 · หน่วยความจำใน embedded</span></a></nav>
