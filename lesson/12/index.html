@@ -25,9 +25,18 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">12 / 24</span></nav>
 <article class="lesson" id="l12">
-<header class="lh"><span class="big m">12</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Interrupt, volatile และ lambda</h1><p class="meta">25 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
+<header class="lh"><span class="big m">12</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Interrupt, volatile และ lambda</h1><p class="meta">30 นาที · ฮาร์ดแวร์: ปุ่มกดที่ D1</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
-<p class="goal"><b>เป้าหมาย</b> เขียน ISR ที่ถูกต้อง และแชร์ข้อมูลระหว่าง ISR กับ loop อย่างปลอดภัย</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
+<p class="goal"><b>เป้าหมาย</b> เขียน ISR ที่ถูกต้อง และแชร์ข้อมูลระหว่าง ISR กับ loop อย่างปลอดภัย</p>
+<p>บท 07 อ่านปุ่มด้วยการเช็กใน <code class="il">loop()</code> ทุกรอบ (เรียกว่า polling) ถ้า loop ติด <code class="il">delay()</code> อยู่ อาจพลาดการกดสั้น ๆ อีกวิธีคือให้ฮาร์ดแวร์เรียกโค้ดเราเองทันทีที่ขาเปลี่ยน คำศัพท์ในบทนี้:</p>
+<ul>
+<li><b>ISR</b> (Interrupt Service Routine) ฟังก์ชันที่ CPU กระโดดไปทำทันทีเมื่อเกิด interrupt (บท 06) ทำเสร็จแล้วกลับมาทำงานเดิมต่อตรงจุดที่ค้างไว้ ตามรูป</li>
+<li><b>FALLING</b> จังหวะที่ขาเปลี่ยนจาก HIGH เป็น LOW คือตอนเริ่มกดปุ่ม เพราะต่อแบบ INPUT_PULLUP (บท 07)</li>
+<li><b>volatile</b> ปกติ compiler อาจเก็บค่าตัวแปรไว้ใน register ของ CPU แล้วไม่อ่านจาก RAM ซ้ำ ถ้า ISR แก้ค่าใน RAM loop อาจไม่เห็น <code class="il">volatile</code> บังคับให้อ่านและเขียน RAM จริงทุกครั้ง</li>
+<li><b>atomic</b> การทำงานที่ไม่มีทางถูกแทรกกลาง <code class="il">noInterrupts()</code> / <code class="il">interrupts()</code> ปิดและเปิด interrupt เพื่อให้โค้ดช่วงนั้นเป็น atomic (เหมือน <code class="il">CriticalSection</code> บท 06)</li>
+<li><b>lambda</b> ฟังก์ชันไม่มีชื่อที่เขียนไว้ตรงที่ใช้ รูปแบบ <code class="il">[] { … }</code> โดย <code class="il">[]</code> ว่างหมายถึงไม่ดึงตัวแปร local ข้างนอกเข้าไปใช้ lambda แบบนี้ส่งเป็น function pointer ให้ <code class="il">attachInterrupt</code> ได้</li>
+</ul>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
 <text x="10" y="30" class="sub m">loop()</text><text x="10" y="112" class="sub m">ISR</text>
 <rect x="60" y="16" width="120" height="26" rx="5" class="bm"/><text x="120" y="33" text-anchor="middle" class="sub m">อ่าน pressCount</text>
 <rect x="222" y="16" width="160" height="26" rx="5" class="bm"/><text x="302" y="33" text-anchor="middle" class="sub m">ทำงานต่อจากเดิม</text>
@@ -38,7 +47,14 @@
 <text x="120" y="180" text-anchor="middle" class="sub">ขอบ FALLING ที่ D1 → CPU กระโดดเข้า ISR ทันที</text>
 <text x="300" y="134" text-anchor="middle" class="sub">ISR: สั้น · ไม่ delay · ไม่ Serial</text>
 </svg></div><figcaption>ISR แทรกกลาง loop ได้ทุกเมื่อ</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">isr_count.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+<h3 id="s1">Hands-on</h3>
+<p>sketch นี้พิสูจน์ว่า ISR ทำงานแทรกเข้ามาเองแม้ <code class="il">loop()</code> กำลังหยุดรอใน <code class="il">delay(500)</code> และแสดงว่าทำไม ISR บนปุ่มยังต้อง debounce ใช้วงจรปุ่มที่ D1 จากบท 07</p>
+<ol>
+<li>สร้าง sketch ใหม่ วางโค้ดข้างล่าง บันทึกชื่อ <code class="il">isr_count</code> แล้วกด <b>Upload</b></li>
+<li>เปิด <b>Tools → Serial Monitor</b> ที่ 115200 baud จะเห็นตัวเลขขึ้นทุกครึ่งวินาที</li>
+<li>กดปุ่มทีละครั้ง แล้วลองกดรัว ๆ 3 ครั้งภายในครึ่งวินาที</li>
+</ol>
+<div class="code"><div class="cl">isr_count.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
 constexpr uint8_t kButtonPin = D1;
 volatile uint32_t pressCount = 0;   // volatile: ค่าเปลี่ยนนอก flow ปกติ ห้าม cache
 
@@ -59,8 +75,14 @@ void loop() {
   Serial.println(count);
   delay(500);
 }</code></pre></div>
-<p>กดปุ่ม 1 ครั้ง ตัวเลขมักเพิ่มมากกว่า 1 นั่นคือ bounce ที่เห็นในบท 07 ข้อสรุป: ISR บนปุ่มกลไกต้อง debounce ด้วยเวลา (เช่นเช็ก <code class="il">millis()</code> ใน ISR หรือส่ง event ให้ loop จัดการ)</p>
-<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>volatile ทำให้ pressCount++ เป็น atomic ไหม?</summary><p>ไม่ volatile แค่บังคับให้อ่าน/เขียน memory จริงทุกครั้ง แต่ ++ คือ load-add-store 3 คำสั่ง ถูกแทรกกลางได้ ต้องใช้ critical section หรือ std::atomic</p></details><details><summary>อะไรห้ามทำใน ISR?</summary><p>delay(), Serial.print(), malloc/new, ทำงานนาน และเรียกฟังก์ชันที่ไม่ reentrant ให้ ISR ตั้ง flag หรือ push ลง buffer แล้วกลับเร็วที่สุด</p></details><aside class="iv"><b>มุมงานจริง</b><p>การลืม volatile เป็นสาเหตุอันดับต้น ๆ ของอาการ "build debug ทำงาน แต่ build release พัง" จำ 3 กรณีที่ต้องใช้: ตัวแปรที่ ISR แก้, memory-mapped register, ตัวแปรที่แชร์ระหว่าง thread และจำไว้ว่ามันไม่ใช่ synchronization</p></aside>
+<p><code class="il">attachInterrupt(ขา, ฟังก์ชัน, จังหวะ)</code> สั่งให้เรียกฟังก์ชันนั้นเมื่อขาเปลี่ยนตามจังหวะที่กำหนด ส่วน <code class="il">digitalPinToInterrupt()</code> แปลงเลขขาเป็นเลข interrupt ที่ core ใช้</p>
+<p>ผลนี้บอกอะไร:</p>
+<ul>
+<li><b>ISR แทรกได้ทุกเมื่อ</b> กดรัว 3 ครั้งในครึ่งวินาที ตัวเลขเพิ่มอย่างน้อย 3 ทั้งที่ช่วงนั้น <code class="il">loop()</code> หยุดอยู่ใน <code class="il">delay()</code> ตลอด ถ้าใช้ polling แบบบท 07 คู่กับ <code class="il">delay(500)</code> จะพลาดการกดส่วนใหญ่</li>
+<li><b>ยังต้อง debounce</b> กด 1 ครั้งตัวเลขมักเพิ่มมากกว่า 1 นั่นคือ bounce ที่เห็นในบท 07 เพราะหน้าสัมผัสเด้งทำให้เกิด FALLING หลายครั้ง ISR บนปุ่มกลไกจึงต้อง debounce ด้วยเวลา เช่นเช็ก <code class="il">millis()</code> ใน ISR หรือให้ ISR แค่บอก loop แล้วให้ <code class="il">Debouncer</code> จัดการ</li>
+</ul>
+<p class="note">บน Cortex-M การอ่านตัวแปร 32 bit ครั้งเดียวไม่ถูกแทรกกลางอยู่แล้ว แต่ถ้าต้องอ่านหลายตัวแปรพร้อมกัน หรือแก้ค่าแบบ <code class="il">++</code> ต้องครอบด้วย <code class="il">noInterrupts()</code> เสมอ ตัวอย่างนี้ครอบไว้ให้เป็นนิสัย</p>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>volatile ทำให้ pressCount++ ปลอดภัยจากการถูกแทรกไหม?</summary><p>ไม่ volatile แค่บังคับให้อ่าน/เขียน RAM จริงทุกครั้ง แต่ ++ คือ 3 คำสั่ง (อ่าน, บวก, เขียนกลับ) ISR อาจแทรกระหว่างนั้นได้ ต้องครอบด้วย noInterrupts() หรือ CriticalSection หรือใช้ std::atomic</p></details><details><summary>อะไรห้ามทำใน ISR?</summary><p>delay(), Serial.print(), malloc/new และงานที่ใช้เวลานาน รวมถึงฟังก์ชันที่จะพังถ้าถูกเรียกซ้อนกัน (เช่น ฟังก์ชันที่ loop กำลังเรียกอยู่ตอน ISR แทรกเข้ามา) ให้ ISR แค่ตั้ง flag หรือ push ลง buffer แล้วกลับเร็วที่สุด</p></details><aside class="iv"><b>มุมงานจริง</b><p>ลืม volatile มักทำให้โปรแกรมทำงานได้ตอนที่ compiler แทบไม่ optimize แต่พังเมื่อ optimize มากขึ้น (core นี้ใช้ -Ofast ดูได้ใน verbose output บท 01) จำ 3 กรณีที่ต้องใช้: ตัวแปรที่ ISR แก้, register ของฮาร์ดแวร์ที่อ่านผ่าน address และตัวแปรที่แชร์ระหว่าง task และจำไว้ว่า volatile ไม่ได้กันการถูกแทรกกลาง</p></aside>
 <label class="done"><input type="checkbox" id="done-l12" data-l="l12"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../11/"><small>← บทก่อนหน้า</small><span>11 · หน่วยความจำใน embedded</span></a><a class="next" href="../13/"><small>บทถัดไป →</small><span>13 · Mini project 1: cooperative scheduler</span></a></nav>
