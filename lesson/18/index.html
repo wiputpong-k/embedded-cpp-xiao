@@ -31,8 +31,9 @@
 <p>Pull Request (PR) คือคำขอให้รวม branch หนึ่งเข้า <code class="il">main</code> บน GitHub มีหน้าแสดง diff ให้คนอื่นอ่านและ comment ได้ และเป็นจุดที่ CI จะตรวจโค้ดให้อัตโนมัติก่อนรวม แม้ทำงานคนเดียว การผ่าน PR ก็ช่วยให้มีบันทึกว่าแต่ละการเปลี่ยนแปลงทำไปเพื่ออะไร</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git switch -c feature/x</text><text x="200" y="49" text-anchor="middle" class="sub">แตก branch จาก main</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">commit + git push</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">Pull Request</text><text x="200" y="193" text-anchor="middle" class="sub">คำอธิบาย + diff ให้คน review</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">CI ตรวจอัตโนมัติ</text><text x="200" y="273" text-anchor="middle" class="sub">test + build ต้องผ่าน</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">Review → Squash merge</text><text x="200" y="353" text-anchor="middle" class="sub">ลบ branch · main สะอาด</text></svg></div><figcaption>GitHub flow ที่บริษัทส่วนใหญ่ใช้</figcaption></figure>
 <h3 id="s1">Hands-on: PR แรก</h3>
+<p>บทนี้พิสูจน์ว่างานบน branch เข้า <code class="il">main</code> ได้ผ่าน PR และเมื่อ squash merge แล้ว main ได้ commit เดียวที่สรุปงานทั้ง PR</p>
 <ol>
-<li>สร้าง branch ใหม่ แล้วสร้างไฟล์ <code class="il">README.md</code> ในโฟลเดอร์ repo (เปิดด้วย VS Code หรือ Notepad) เขียนสั้น ๆ ว่าโปรเจกต์นี้คืออะไร ต่อขาไหนบ้าง และ build อย่างไร</li>
+<li>สร้าง branch ใหม่ แล้วรัน <code class="il">notepad README.md</code> (หรือ <code class="il">code README.md</code>) ตอบ Yes เมื่อถามว่าจะสร้างไฟล์ใหม่ไหม วางตัวอย่าง README ข้างล่าง แก้ให้ตรงกับของคุณ บันทึก แล้วปิด</li>
 <li>commit แล้ว push branch ขึ้น GitHub จากนั้นสร้าง PR ด้วย <code class="il">gh pr create --fill</code> (ใช้ข้อความ commit เป็นชื่อและคำอธิบาย PR)</li>
 <li>รัน <code class="il">gh pr view --web</code> เพื่อเปิด PR บนเว็บ ดูแท็บ <b>Files changed</b> แล้วลอง comment บรรทัดใดบรรทัดหนึ่ง 1 จุด</li>
 <li>รวม PR ด้วย squash merge แล้วกลับมาที่ <code class="il">main</code> ในเครื่องพร้อมดึงของใหม่ลงมา</li>
@@ -47,6 +48,26 @@ gh pr view --web
 gh pr merge --squash --delete-branch
 git switch main
 git pull</code></pre></div>
+<p><b>README.md</b> คือไฟล์แรกที่ GitHub แสดงบนหน้า repo เขียนด้วย <b>Markdown</b> ซึ่งเป็นข้อความธรรมดาที่มีเครื่องหมายบอกรูปแบบ: <code class="il">#</code> = หัวข้อ, <code class="il">|</code> = ช่องตาราง, <code class="il">1.</code> = รายการลำดับ และข้อความใน <code class="il">`…`</code> = โค้ด ตัวอย่าง:</p>
+<div class="code"><div class="cl">README.md</div><pre><code># xiao-embedded-cpp
+
+Firmware ตัวอย่างสำหรับ Seeed XIAO nRF52840 Sense: cooperative scheduler, debounce และ moving average
+
+## การต่อขา
+
+| ขา | ต่อกับ |
+|----|--------|
+| D0 / A0 | ขากลางของ pot 10 kΩ (ขาข้างต่อ 3V3 และ GND) |
+| D1 | ปุ่มกด ลง GND |
+| D2 | LED ผ่าน R 1 kΩ ลง GND |
+
+## วิธี build
+
+1. เปิด `firmware/firmware.ino` ใน Arduino IDE 2
+2. เลือกบอร์ด Seeed XIAO nRF52840 Sense แล้วกด Upload
+3. Serial Monitor ที่ 115200 baud: พิมพ์ตัวเลข 50–5000 เพื่อเปลี่ยนรอบกระพริบ</code></pre></div>
+<p class="note">ถ้ามีรูปการต่อวงจร ใส่ไฟล์รูปไว้ใน repo แล้วเพิ่มบรรทัด <code class="il">![wiring](wiring.jpg)</code> ใน README รูปจะแสดงบนหน้า GitHub</p>
+<p>ผลนี้บอกอะไร: หลังขั้นที่ 4 หน้า repo บน GitHub แสดง README ทันที และ <code class="il">git log --oneline -3</code> ในเครื่องจะเห็น commit ใหม่ของ PR นี้เป็น commit เดียวบน main ส่วนหน้า PR (พร้อม comment ของคุณ) ยังเปิดดูย้อนหลังได้ในแท็บ <b>Pull requests → Closed</b></p>
 <h3 id="s2">ตั้งกฎให้ main</h3>
 <ol>
 <li>เปิดหน้า repo บน GitHub ไปที่ <b>Settings → Branches</b></li>
