@@ -25,9 +25,18 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← สารบัญ</a><span class="m">11 / 24</span></nav>
 <article class="lesson" id="l11">
-<header class="lh"><span class="big m">11</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>หน่วยความจำใน embedded</h1><p class="meta">25 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
+<header class="lh"><span class="big m">11</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>หน่วยความจำใน embedded</h1><p class="meta">30 นาที · ฮาร์ดแวร์: บอร์ดอย่างเดียว</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">กฎที่ใช้ในทีมจริง</a></li><li><a href="#s3">เช็กความเข้าใจ</a></li></ol></nav>
-<p class="goal"><b>เป้าหมาย</b> รู้ว่าตัวแปรแต่ละแบบไปอยู่ส่วนไหน และกฎที่ทีม firmware ใช้จริง</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 350" role="img">
+<p class="goal"><b>เป้าหมาย</b> รู้ว่าตัวแปรแต่ละแบบไปอยู่ส่วนไหน และกฎที่ทีม firmware ใช้จริง</p>
+<p>บท 01 เห็นตัวเลข flash กับ RAM ตอน build แล้ว บทนี้ดูว่าข้างในแบ่งเป็นส่วนอะไรบ้าง linker วางแต่ละส่วนไว้ที่ address ตาม linker script ภาพรวมนี้เรียกว่า <b>memory map</b>:</p>
+<ul>
+<li><b>.text</b> โค้ดของโปรแกรม และ <b>.rodata</b> ค่าคงที่ (<code class="il">const</code>) อยู่ใน flash</li>
+<li><b>.data</b> ตัวแปร global ที่มีค่าเริ่มต้น อยู่ใน RAM แต่ค่าเริ่มต้นเก็บใน flash แล้ว startup code copy มาให้ก่อน <code class="il">setup()</code> (ลูกศรส้มในรูป)</li>
+<li><b>.bss</b> ตัวแปร global ที่เริ่มเป็น 0 อยู่ใน RAM startup code เคลียร์เป็น 0 ให้</li>
+<li><b>heap</b> RAM ที่จองตอนรันด้วย <code class="il">new</code> / <code class="il">malloc</code> (บท 10)</li>
+<li><b>stack</b> RAM ของตัวแปร local พารามิเตอร์ และ address ที่ต้องกลับเมื่อฟังก์ชันจบ ใช้แล้วคืนทันทีที่ฟังก์ชันจบ</li>
+</ul>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 350" role="img">
 <text x="100" y="20" text-anchor="middle" class="tt">Flash 1 MB</text><text x="100" y="35" text-anchor="middle" class="sub">ไม่หายเมื่อไฟดับ</text>
 <text x="300" y="20" text-anchor="middle" class="tt">RAM 256 KB</text><text x="300" y="35" text-anchor="middle" class="sub">หายเมื่อไฟดับ</text>
 <rect x="20" y="44" width="160" height="34" class="b"/><text x="100" y="65.0" text-anchor="middle" class="tt sm">Bootloader (UF2)</text>
@@ -45,7 +54,13 @@
 <text x="20" y="316" class="sub m">0x0000_0000 (ล่าง)</text><text x="220" y="316" class="sub m">0x2000_0000 (ล่าง)</text>
 <text x="20" y="336" class="sub">ลูกศรส้ม: startup code copy .data จาก flash ไป RAM ก่อน setup()</text>
 </svg></div><figcaption>memory map แบบย่อของ nRF52840 (ตัวเลขประมาณ ขึ้นกับ SoftDevice และ bootloader)</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+<h3 id="s1">Hands-on</h3>
+<p>sketch นี้พิสูจน์ว่าตัวแปรแต่ละแบบไปอยู่คนละส่วนตามรูปจริง โดยพิมพ์ address ของมันออกมา</p>
+<ol>
+<li>สร้าง sketch ใหม่ วางโค้ดข้างล่าง บันทึกชื่อ <code class="il">memmap</code> กด <b>Upload</b> แล้วจดตัวเลข <i>Global variables use</i> ไว้</li>
+<li>เปิด <b>Tools → Serial Monitor</b> ที่ 115200 baud ถ้าไม่มีข้อความ กด reset บนบอร์ด 1 ครั้ง</li>
+</ol>
+<div class="code"><div class="cl">memmap.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
 uint8_t bigStatic[8192];        // .bss  → นับใน &quot;Global variables use&quot;
 const char kMsg[] = &quot;hello&quot;;    // .rodata → อยู่ใน flash
 
@@ -61,15 +76,25 @@ void setup() {
 }
 
 void loop() {}</code></pre></div>
-<p>ดูว่า address ขึ้นต้น 0x000… (flash) หรือ 0x2000… (RAM) ตามรูปไหม จากนั้นเปลี่ยน <code class="il">bigStatic</code> เป็น 32768 แล้วดูตัวเลข RAM ตอน compile เปลี่ยน</p>
+<p><code class="il">(uintptr_t)</code> แปลง pointer เป็นตัวเลขขนาดเท่า address เพื่อพิมพ์เป็นเลขฐาน 16 (<code class="il">HEX</code>) ผลที่ควรเห็นประมาณนี้ (ตัวเลขอาจต่างไปเล็กน้อยตามเวอร์ชันของ core):</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>flash  : 0x30BCC
+static : 0x2000630C
+stack  : 0x2000…</code></pre></div>
+<p>ผลนี้บอกอะไร:</p>
+<ul>
+<li><b>flash กับ RAM แยกกันด้วย address</b> <code class="il">kMsg</code> = 0x30BCC (เต็ม ๆ คือ 0x0003_0BCC เพราะ <code class="il">HEX</code> ไม่พิมพ์เลข 0 นำหน้า) อยู่ในช่วงของ flash ที่เริ่มจาก 0x0000_0000 ตามรูป ส่วน <code class="il">bigStatic</code> และ <code class="il">onStack</code> ขึ้นต้นด้วย 0x2000… คืออยู่ใน RAM</li>
+<li><b>global นับตอน build, local ไม่นับ</b> เปลี่ยน <code class="il">8192</code> เป็น <code class="il">32768</code> แล้วกด Verify <i>Global variables use</i> จะเพิ่ม 24576 byte พอดี ถ้าเพิ่มขนาด <code class="il">onStack</code> แทน ตัวเลขนี้จะไม่เปลี่ยน (ตรงกับคำถามเรื่อง stack ในบท 01)</li>
+<li><b>stack ของ <code class="il">loop()</code> บนบอร์ดนี้</b> address ของ <code class="il">onStack</code> อยู่สูงกว่า <code class="il">bigStatic</code> แต่ไม่ได้อยู่ปลาย RAM เพราะ core nRF52 รัน <code class="il">setup()</code>/<code class="il">loop()</code> ใน task ของ FreeRTOS (บท 01) ซึ่ง stack ของ task ถูกจองจาก heap ขนาดเพียง 4 KB (<code class="il">LOOP_STACK_SZ</code> ใน <code class="il">main.cpp</code> ของ core) แม้ build จะบอกว่าเหลือ RAM กว่า 200 KB ก็ห้ามประกาศ array local ขนาดหลาย KB ใน <code class="il">loop()</code></li>
+</ul>
+
 <h3 id="s2">กฎที่ใช้ในทีมจริง</h3>
 <ul>
-<li>จอง memory ตอน init เท่านั้น หลังจากนั้นห้าม <code class="il">new</code>/<code class="il">malloc</code> ใน loop เพราะ heap fragment แล้วพังหลังรันหลายวัน</li>
-<li>เลี่ยง <code class="il">String</code> ของ Arduino ใช้ <code class="il">char buf[32]</code> + <code class="il">snprintf</code> แทน</li>
-<li>ใช้ <code class="il">std::array</code> / buffer ขนาดคงที่ หลีกเลี่ยง <code class="il">std::vector</code>, <code class="il">std::function</code> ที่อาจจอง heap เอง</li>
-<li>embedded มักปิด exceptions และ RTTI (<code class="il">-fno-exceptions -fno-rtti</code>) จึงจัดการ error ด้วยค่าที่ return</li>
+<li>จอง memory ตอนเริ่มต้นเท่านั้น หลังจากนั้นห้าม <code class="il">new</code>/<code class="il">malloc</code> ใน loop เพราะ heap จะเป็นรูพรุน (fragmentation: ที่ว่างรวมยังพอ แต่แตกเป็นชิ้นเล็กจนจองก้อนใหญ่ไม่ได้) แล้วพังหลังรันไปหลายวัน</li>
+<li>เลี่ยง <code class="il">String</code> ของ Arduino ซึ่งจอง heap ทุกครั้งที่ต่อข้อความ ใช้ <code class="il">char buf[32]</code> + <code class="il">snprintf</code> แทน</li>
+<li>ใช้ <code class="il">std::array</code> หรือ buffer ขนาดคงที่ หลีกเลี่ยง <code class="il">std::vector</code>, <code class="il">std::function</code> ที่อาจจอง heap เอง</li>
+<li>embedded มักปิด exceptions (<code class="il">try</code>/<code class="il">catch</code>) และ RTTI (ข้อมูลชนิดตอนรัน) เพื่อประหยัด flash จึงจัดการ error ด้วยค่าที่ return ดูได้จาก flag <code class="il">-fno-exceptions -fno-rtti</code> ในคำสั่ง compile แบบ verbose (บท 01)</li>
 </ul>
-<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>ตัวแปร static ภายในฟังก์ชันอยู่ส่วนไหน?</summary><p>.data หรือ .bss เหมือน global แต่ scope จำกัดในฟังก์ชัน จึงคงค่าระหว่างการเรียก</p></details><details><summary>stack overflow บน MCU ไม่มี OS แสดงอาการอย่างไร?</summary><p>stack โตลงไปทับ heap หรือ .bss ทำให้ค่าตัวแปรเพี้ยนแบบสุ่มหรือ HardFault วิธีตรวจคือ stack painting (เติม pattern แล้วดูว่าถูกเขียนลึกแค่ไหน) หรือเปิด MPU guard</p></details><aside class="iv"><b>มุมงานจริง</b><p>ใช้ memory map นี้ทุกครั้งที่เจอ HardFault หรือ RAM ไม่พอ: ดูว่า address ที่พังอยู่ใน .text / .data / .bss / heap / stack ส่วนไหน และเปิดไฟล์ .map จาก linker ดูว่าอะไรกินที่มากที่สุด</p></aside>
+<h3 id="s3">เช็กความเข้าใจ</h3><details><summary>ตัวแปร static ภายในฟังก์ชันอยู่ส่วนไหน?</summary><p>.data หรือ .bss เหมือน global แต่ใช้ชื่อได้แค่ในฟังก์ชันนั้น จึงคงค่าไว้ระหว่างการเรียกแต่ละครั้ง</p></details><details><summary>stack overflow บน MCU ที่ไม่มี OS แสดงอาการอย่างไร?</summary><p>stack โตจนทับข้อมูลส่วนอื่น ค่าตัวแปรเพี้ยนแบบสุ่ม หรือ CPU หยุดด้วย HardFault (error ร้ายแรงของ Cortex-M ที่ทำให้บอร์ดค้างหรือ reset) วิธีตรวจคือเติมค่าที่รู้จักลงใน stack ตอนเริ่ม แล้วดูภายหลังว่าถูกเขียนทับลึกแค่ไหน</p></details><aside class="iv"><b>มุมงานจริง</b><p>ใช้ memory map นี้ทุกครั้งที่เจอ HardFault หรือ RAM ไม่พอ: ดูว่า address ที่พังอยู่ใน .text / .data / .bss / heap / stack ส่วนไหน และเปิดไฟล์ .map ที่ linker สร้าง (อยู่ในโฟลเดอร์ build เดียวกับ .elf) ดูว่าอะไรกินที่มากที่สุด</p></aside>
 <label class="done"><input type="checkbox" id="done-l11" data-l="l11"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../10/"><small>← บทก่อนหน้า</small><span>10 · Template: RingBuffer&lt;T, N&gt;</span></a><a class="next" href="../12/"><small>บทถัดไป →</small><span>12 · Interrupt, volatile และ lambda</span></a></nav>

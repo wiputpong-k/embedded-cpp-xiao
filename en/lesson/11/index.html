@@ -25,9 +25,18 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← Contents</a><span class="m">11 / 24</span></nav>
 <article class="lesson" id="l11">
-<header class="lh"><span class="big m">11</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Memory in embedded systems</h1><p class="meta">25 min · Hardware: Board only</p></div></header>
+<header class="lh"><span class="big m">11</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Memory in embedded systems</h1><p class="meta">30 min · Hardware: Board only</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Rules real teams use</a></li><li><a href="#s3">Check your understanding</a></li></ol></nav>
-<p class="goal"><b>Goal</b> Know where each kind of variable lives, and the rules real firmware teams follow</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 350" role="img">
+<p class="goal"><b>Goal</b> Know where each kind of variable lives, and the rules real firmware teams follow</p>
+<p>Lesson 01 showed the flash and RAM numbers at build time. This lesson looks at the sections inside them. The linker places each section at an address from the linker script; that layout is the <b>memory map</b>:</p>
+<ul>
+<li><b>.text</b> (program code) and <b>.rodata</b> (<code class="il">const</code> data) live in flash.</li>
+<li><b>.data</b>: globals with an initial value. They live in RAM, but the initial values are stored in flash and the startup code copies them over before <code class="il">setup()</code> (the orange arrow in the figure).</li>
+<li><b>.bss</b>: globals that start at 0, in RAM. The startup code clears them.</li>
+<li><b>heap</b>: RAM reserved at runtime with <code class="il">new</code> / <code class="il">malloc</code> (lesson 10).</li>
+<li><b>stack</b>: RAM for local variables, parameters and return addresses, given back as soon as a function returns.</li>
+</ul>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 350" role="img">
 <text x="100" y="20" text-anchor="middle" class="tt">Flash 1 MB</text><text x="100" y="35" text-anchor="middle" class="sub">kept without power</text>
 <text x="300" y="20" text-anchor="middle" class="tt">RAM 256 KB</text><text x="300" y="35" text-anchor="middle" class="sub">lost without power</text>
 <rect x="20" y="44" width="160" height="34" class="b"/><text x="100" y="65.0" text-anchor="middle" class="tt sm">Bootloader (UF2)</text>
@@ -45,7 +54,13 @@
 <text x="20" y="316" class="sub m">0x0000_0000 (bottom)</text><text x="220" y="316" class="sub m">0x2000_0000 (bottom)</text>
 <text x="20" y="336" class="sub">Orange arrow: startup copies .data flash → RAM before setup()</text>
 </svg></div><figcaption>Simplified nRF52840 memory map (approximate; depends on the SoftDevice and bootloader)</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">memmap.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+<h3 id="s1">Hands-on</h3>
+<p>This sketch proves that each kind of variable lands in a different section, as in the figure, by printing their addresses.</p>
+<ol>
+<li>Create a new sketch, paste the code below, save it as <code class="il">memmap</code>, press <b>Upload</b>, and note the <i>Global variables use</i> number.</li>
+<li>Open <b>Tools → Serial Monitor</b> at 115200 baud. If nothing appears, press reset on the board once.</li>
+</ol>
+<div class="code"><div class="cl">memmap.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
 uint8_t bigStatic[8192];        // .bss  → counted in &quot;Global variables use&quot;
 const char kMsg[] = &quot;hello&quot;;    // .rodata → lives in flash
 
@@ -61,15 +76,25 @@ void setup() {
 }
 
 void loop() {}</code></pre></div>
-<p>Check that the addresses start with 0x000… (flash) or 0x2000… (RAM) as in the diagram. Then change <code class="il">bigStatic</code> to 32768 and watch the RAM figure change at compile time.</p>
+<p><code class="il">(uintptr_t)</code> turns a pointer into an address-sized number so it can be printed in hex (<code class="il">HEX</code>). Expected output, roughly (the numbers may differ slightly with the core version):</p>
+<div class="code"><div class="cl">Serial Monitor</div><pre><code>flash  : 0x30BCC
+static : 0x2000630C
+stack  : 0x2000…</code></pre></div>
+<p>What the output tells you:</p>
+<ul>
+<li><b>Flash and RAM are told apart by address</b>: <code class="il">kMsg</code> = 0x30BCC (0x0003_0BCC in full; <code class="il">HEX</code> drops leading zeros), inside flash, which starts at 0x0000_0000 as in the figure. <code class="il">bigStatic</code> and <code class="il">onStack</code> start with 0x2000…, so they are in RAM.</li>
+<li><b>Globals are counted at build time, locals are not</b>: change <code class="il">8192</code> to <code class="il">32768</code> and press Verify. <i>Global variables use</i> grows by exactly 24576 bytes. Make <code class="il">onStack</code> bigger instead and the number does not change (the stack question from lesson 01).</li>
+<li><b>The stack of <code class="il">loop()</code> on this board</b>: <code class="il">onStack</code> sits above <code class="il">bigStatic</code> but not at the top of RAM, because the nRF52 core runs <code class="il">setup()</code>/<code class="il">loop()</code> in a FreeRTOS task (lesson 01), and a task's stack is taken from the heap, only 4 KB here (<code class="il">LOOP_STACK_SZ</code> in the core's <code class="il">main.cpp</code>). Even though the build says over 200 KB of RAM is left, never declare local arrays of several KB in <code class="il">loop()</code>.</li>
+</ul>
+
 <h3 id="s2">Rules real teams use</h3>
 <ul>
-<li>Allocate memory at init only. Never <code class="il">new</code>/<code class="il">malloc</code> in the loop afterwards: the heap fragments and the device fails after days of running.</li>
-<li>Avoid Arduino's <code class="il">String</code>; use <code class="il">char buf[32]</code> + <code class="il">snprintf</code> instead.</li>
-<li>Use <code class="il">std::array</code> / fixed-size buffers, and avoid <code class="il">std::vector</code> and <code class="il">std::function</code>, which may allocate on the heap.</li>
-<li>Embedded builds often disable exceptions and RTTI (<code class="il">-fno-exceptions -fno-rtti</code>), so errors are handled with return values.</li>
+<li>Allocate memory at startup only. Never <code class="il">new</code>/<code class="il">malloc</code> in the loop afterwards: the heap fragments (enough free space in total, but in pieces too small for a large request) and the device fails after days of running.</li>
+<li>Avoid Arduino's <code class="il">String</code>, which allocates on the heap every time you append; use <code class="il">char buf[32]</code> + <code class="il">snprintf</code> instead.</li>
+<li>Use <code class="il">std::array</code> or fixed-size buffers, and avoid <code class="il">std::vector</code> and <code class="il">std::function</code>, which may allocate on the heap.</li>
+<li>Embedded builds often disable exceptions (<code class="il">try</code>/<code class="il">catch</code>) and RTTI (type information at runtime) to save flash, so errors are handled with return values. You can see the <code class="il">-fno-exceptions -fno-rtti</code> flags in the verbose compile command (lesson 01).</li>
 </ul>
-<h3 id="s3">Check your understanding</h3><details><summary>Where does a static variable inside a function live?</summary><p>In .data or .bss like a global, but its scope is limited to the function, so it keeps its value between calls.</p></details><details><summary>What does a stack overflow look like on an MCU without an OS?</summary><p>The stack grows down into the heap or .bss, causing random variable corruption or a HardFault. Detect it with stack painting (fill a pattern and see how deep it gets overwritten) or an MPU guard region.</p></details><aside class="iv"><b>In practice</b><p>Reach for this memory map whenever you hit a HardFault or run out of RAM: find which of .text / .data / .bss / heap / stack the faulting address falls in, and open the linker .map file to see what uses the most space.</p></aside>
+<h3 id="s3">Check your understanding</h3><details><summary>Where does a static variable inside a function live?</summary><p>In .data or .bss like a global, but its name is only usable inside that function, so it keeps its value between calls.</p></details><details><summary>What does a stack overflow look like on an MCU without an OS?</summary><p>The stack grows over other data: variables change at random, or the CPU stops with a HardFault (a fatal Cortex-M error that hangs or resets the board). To detect it, fill the stack with a known value at startup and later check how deep it has been overwritten.</p></details><aside class="iv"><b>In practice</b><p>Reach for this memory map whenever you hit a HardFault or run out of RAM: find which of .text / .data / .bss / heap / stack the faulting address falls in, and open the .map file the linker writes (in the same build folder as the .elf) to see what uses the most space.</p></aside>
 <label class="done"><input type="checkbox" id="done-l11" data-l="l11"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../10/"><small>← Previous</small><span>10 · Template: RingBuffer&lt;T, N&gt;</span></a><a class="next" href="../12/"><small>Next →</small><span>12 · Interrupts, volatile and lambdas</span></a></nav>
