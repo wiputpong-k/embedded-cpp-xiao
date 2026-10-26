@@ -28,7 +28,14 @@
 <header class="lh"><span class="big m">09</span><div class="lhm"><p class="mod">โมดูล A · C++ สำหรับคนเขียน C</p><h1>Inheritance, virtual และ interface</h1><p class="meta">25 นาที · ฮาร์ดแวร์: Pot ที่ A0</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
 <p class="goal"><b>เป้าหมาย</b> ออกแบบ interface ISensor ให้สลับเซนเซอร์จริงกับเซนเซอร์ปลอมได้ และรู้ต้นทุนของ virtual</p>
-<p>ใน C ทำ polymorphism ด้วย struct ของ function pointer เอง ใน C++ ใช้ <code class="il">virtual</code> แล้ว compiler สร้างตาราง (vtable) ให้ ประโยชน์หลักใน embedded คือสลับ implementation ได้ เช่น ใช้ FakeSensor ตอน test โดยไม่ต้องแก้โค้ดที่เรียกใช้</p>
+<p>สมมติ firmware ต้องอ่านเซนเซอร์หลายแบบ และตอน test อยากใช้เซนเซอร์ปลอมแทนของจริง โดยไม่ต้องแก้โค้ดที่เรียกใช้ ใน C ทำได้ด้วย struct ที่เก็บ function pointer ไว้เอง ใน C++ ใช้ <code class="il">virtual</code> แล้ว compiler สร้างตารางนั้นให้ คำศัพท์ในบทนี้:</p>
+<ul>
+<li><b>inheritance</b> class ใหม่รับทุกอย่างจาก class เดิม เขียนว่า <code class="il">class PotSensor : public ISensor</code> class เดิมเรียกว่า base ส่วน class ใหม่เรียกว่า derived</li>
+<li><b>virtual / override</b> <code class="il">virtual</code> บอกว่าฟังก์ชันนี้ derived เขียนทับได้ <code class="il">override</code> บอกว่ากำลังเขียนทับ (ถ้าชื่อหรือพารามิเตอร์ไม่ตรง compiler จะแจ้ง error)</li>
+<li><b>pure virtual / interface</b> <code class="il">= 0</code> คือฟังก์ชันที่ base ไม่มีตัวจริง derived ต้องเขียนเอง class ที่มีแต่ฟังก์ชันแบบนี้เรียกว่า interface ใช้เป็น "สัญญา" ว่าเซนเซอร์ทุกตัวต้องมี <code class="il">name()</code> และ <code class="il">read()</code></li>
+<li><b>polymorphism</b> เรียกผ่าน pointer ชนิด base (<code class="il">ISensor*</code>) แต่ฟังก์ชันที่ทำงานเป็นของชนิดจริงของ object</li>
+<li><b>vtable / vptr</b> vtable คือตาราง address ของฟังก์ชัน virtual มี 1 ตารางต่อ class เก็บใน flash ส่วน vptr คือ pointer ที่ซ่อนอยู่ในทุก object ชี้ไปที่ vtable ของ class นั้น</li>
+</ul>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
 <text x="10" y="18" class="sub">object: pot</text>
 <rect x="10" y="26" width="118" height="34" rx="6" class="ba"/><text x="20" y="48" class="tt m sm">vptr (4 B)</text>
@@ -44,7 +51,13 @@
 <text x="10" y="166" class="sub">ต้นทุน: RAM +4 B ต่อ object, flash 1 ตารางต่อ class, call ทางอ้อม 1 ครั้ง</text>
 <text x="10" y="186" class="sub">FakeSensor มี vtable ของตัวเอง ชี้ไปฟังก์ชันของมัน</text>
 </svg></div><figcaption>กลไกของ virtual call</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
+<h3 id="s1">Hands-on</h3>
+<p>sketch นี้พิสูจน์ polymorphism: <code class="il">loop()</code> เรียก <code class="il">s-&gt;read()</code> บรรทัดเดียว แต่ได้ค่าจากเซนเซอร์ 2 ชนิด ใช้วงจร pot จากบท 06</p>
+<ol>
+<li>สร้าง sketch ใหม่ วางโค้ดข้างล่าง บันทึกชื่อ <code class="il">sensors</code> แล้วกด <b>Upload</b></li>
+<li>เปิด <b>Tools → Serial Plotter</b> ตั้ง 115200 baud แล้วหมุน pot</li>
+</ol>
+<div class="code"><div class="cl">sensors.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // เปิด USB และ Serial (core นี้ต้องมี)
 class ISensor {
 public:
   virtual ~ISensor() = default;
@@ -82,7 +95,14 @@ void loop() {
   }
   Serial.println();
   delay(50);
-}</code></pre></div><p>เปิด Tools → Serial Plotter จะเห็นกราฟ 2 เส้น หมุน pot เทียบกับคลื่น sine</p><h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ทำไม base class ต้องมี virtual destructor?</summary><p>ถ้า delete object ผ่าน pointer ของ base แล้ว destructor ไม่ virtual destructor ของ derived จะไม่ถูกเรียก resource รั่ว</p></details><details><summary>ถ้าไม่อยากจ่ายต้นทุน virtual มีทางเลือกอะไร?</summary><p>ใช้ template (static polymorphism / CRTP) ให้ compiler รู้ชนิดตอน compile แล้ว inline ได้ แลกกับ code size ที่อาจเพิ่มขึ้น</p></details><aside class="iv"><b>มุมงานจริง</b><p>เวลาทีมถกกันว่า "virtual ช้าไหม" ให้คุยด้วยตัวเลข: เพิ่ม load 2 ครั้ง + indirect branch ต่อ call บน Cortex-M4 ราวไม่กี่ cycle ต้นทุนจริงคือ inline ไม่ได้ จึงควรเลี่ยงเฉพาะใน hot loop หรือ ISR</p></aside>
+}</code></pre></div>
+<p>ผลที่ควรเห็น: กราฟ 2 เส้น เส้น <code class="il">pot</code> ขึ้นลง 0–100 ตามที่หมุน และเส้น <code class="il">fake</code> เป็นคลื่น sine ระหว่าง 10–90 (Serial Plotter อ่านรูปแบบ <code class="il">ชื่อ:ค่า</code> ในแต่ละบรรทัดเป็นเส้นกราฟ)</p>
+<p>ผลนี้บอกอะไร:</p>
+<ul>
+<li><b>polymorphism</b> <code class="il">s</code> เป็น <code class="il">ISensor*</code> ทั้งสองรอบ แต่รอบแรกได้ <code class="il">PotSensor::read()</code> รอบสองได้ <code class="il">FakeSensor::read()</code> เพราะแต่ละ object ชี้ไปที่ vtable ของ class ตัวเองตามรูป</li>
+<li><b>สลับได้โดยไม่แก้ผู้เรียก</b> จะเพิ่มเซนเซอร์ใหม่ แค่เขียน class ที่สืบจาก <code class="il">ISensor</code> แล้วใส่ใน <code class="il">sensors[]</code> โดย <code class="il">loop()</code> ไม่ต้องแก้เลย นี่คือเหตุผลที่เซนเซอร์ปลอมใช้แทนของจริงตอน test ได้ (บท 20)</li>
+</ul>
+<h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ทำไม base class ต้องมี virtual destructor?</summary><p>ถ้าทำลาย object ผ่าน pointer ชนิด base (เช่น delete) แล้ว destructor ไม่ virtual destructor ของ derived จะไม่ถูกเรียก resource ที่มันถืออยู่จึงไม่ถูกคืน</p></details><details><summary>ถ้าไม่อยากจ่ายต้นทุน virtual มีทางเลือกอะไร?</summary><p>ใช้ template (บท 10) ให้ compiler รู้ชนิดจริงตอน compile จึงเรียกฟังก์ชันตรง ๆ ได้ แลกกับ flash ที่อาจเพิ่มขึ้น เพราะได้โค้ด 1 ชุดต่อชนิด</p></details><aside class="iv"><b>มุมงานจริง</b><p>virtual call ต้องอ่าน vptr และ vtable ก่อนแล้วจึงกระโดดไปเรียก เพิ่มเวลาแค่ไม่กี่ cycle (จังหวะ clock บท 01) บน Cortex-M4 ต้นทุนที่สำคัญกว่าคือ compiler นำตัวฟังก์ชันไปแปะแทนการเรียก (inline) ไม่ได้ จึงเลี่ยง virtual เฉพาะในโค้ดที่ถูกเรียกถี่มาก ๆ หรือใน ISR (บท 12) ที่เหลือใช้ได้ตามสบาย</p></aside>
 <label class="done"><input type="checkbox" id="done-l09" data-l="l09"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../08/"><small>← บทก่อนหน้า</small><span>08 · State machine</span></a><a class="next" href="../10/"><small>บทถัดไป →</small><span>10 · Template: RingBuffer&lt;T, N&gt;</span></a></nav>

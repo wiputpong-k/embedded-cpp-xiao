@@ -28,7 +28,14 @@
 <header class="lh"><span class="big m">09</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Inheritance, virtual and interfaces</h1><p class="meta">25 min · Hardware: Pot on A0</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> Design an ISensor interface that lets you swap a real sensor for a fake one, and know what virtual costs</p>
-<p>In C you build polymorphism yourself from a struct of function pointers. In C++ you write <code class="il">virtual</code> and the compiler builds the table (vtable) for you. The main benefit in embedded is swapping implementations, for example using FakeSensor in tests without touching the calling code.</p>
+<p>Say your firmware reads several kinds of sensor, and in tests you want a fake sensor instead of the real one without touching the calling code. In C you build that from a struct of function pointers. In C++ you write <code class="il">virtual</code> and the compiler builds the table for you. Terms in this lesson:</p>
+<ul>
+<li><b>inheritance</b>: a new class takes everything from an existing one, written <code class="il">class PotSensor : public ISensor</code>. The existing class is the base; the new one is the derived class.</li>
+<li><b>virtual / override</b>: <code class="il">virtual</code> says a derived class may replace this function; <code class="il">override</code> says "I am replacing it" (if the name or parameters do not match, the compiler reports an error).</li>
+<li><b>pure virtual / interface</b>: <code class="il">= 0</code> marks a function with no body in the base; every derived class must write it. A class made only of these is an interface: a "contract" that every sensor has <code class="il">name()</code> and <code class="il">read()</code>.</li>
+<li><b>polymorphism</b>: you call through a base pointer (<code class="il">ISensor*</code>), but the function that runs belongs to the object's real type.</li>
+<li><b>vtable / vptr</b>: the vtable is a table of addresses of the virtual functions, one per class, stored in flash. The vptr is a hidden pointer inside every object that points to its class's vtable.</li>
+</ul>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 200" role="img">
 <text x="10" y="18" class="sub">object: pot</text>
 <rect x="10" y="26" width="118" height="34" rx="6" class="ba"/><text x="20" y="48" class="tt m sm">vptr (4 B)</text>
@@ -44,7 +51,13 @@
 <text x="10" y="166" class="sub">Cost: +4 B RAM/object, 1 flash table/class, 1 indirect call</text>
 <text x="10" y="186" class="sub">FakeSensor has its own vtable pointing to its own functions</text>
 </svg></div><figcaption>How a virtual call works</figcaption></figure>
-<h3 id="s1">Hands-on</h3><div class="code"><div class="cl">sensors.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
+<h3 id="s1">Hands-on</h3>
+<p>This sketch proves polymorphism: <code class="il">loop()</code> calls <code class="il">s-&gt;read()</code> on a single line, yet gets values from two kinds of sensor. It uses the pot wiring from lesson 06.</p>
+<ol>
+<li>Create a new sketch, paste the code below, save it as <code class="il">sensors</code>, and press <b>Upload</b>.</li>
+<li>Open <b>Tools → Serial Plotter</b> at 115200 baud and turn the pot.</li>
+</ol>
+<div class="code"><div class="cl">sensors.ino</div><pre><code>#include &lt;Adafruit_TinyUSB.h&gt;   // enables USB and Serial (required by this core)
 class ISensor {
 public:
   virtual ~ISensor() = default;
@@ -82,7 +95,14 @@ void loop() {
   }
   Serial.println();
   delay(50);
-}</code></pre></div><p>Open Tools → Serial Plotter to see two lines: the pot as you turn it, and a sine wave.</p><h3 id="s2">Check your understanding</h3><details><summary>Why does the base class need a virtual destructor?</summary><p>If you delete an object through a base pointer and the destructor is not virtual, the derived destructor never runs and resources leak.</p></details><details><summary>What can you use if you do not want to pay for virtual?</summary><p>Templates (static polymorphism / CRTP): the compiler knows the type at compile time and can inline, at the cost of possibly larger code.</p></details><aside class="iv"><b>In practice</b><p>When a team debates "is virtual slow?", talk numbers: two extra loads plus an indirect branch per call, a few cycles on a Cortex-M4. The real cost is lost inlining, so avoid it only in hot loops and ISRs.</p></aside>
+}</code></pre></div>
+<p>Expected result: two lines. <code class="il">pot</code> moves between 0 and 100 as you turn it, and <code class="il">fake</code> is a sine wave between 10 and 90. (Serial Plotter turns each <code class="il">name:value</code> pair on a line into a plotted line.)</p>
+<p>What the result tells you:</p>
+<ul>
+<li><b>polymorphism</b>: <code class="il">s</code> is an <code class="il">ISensor*</code> both times, yet the first pass runs <code class="il">PotSensor::read()</code> and the second <code class="il">FakeSensor::read()</code>, because each object points to its own class's vtable, as in the figure.</li>
+<li><b>Swap without touching the caller</b>: to add a sensor, write a class derived from <code class="il">ISensor</code> and put it in <code class="il">sensors[]</code>; <code class="il">loop()</code> does not change. That is why a fake sensor can stand in for the real one in tests (lesson 20).</li>
+</ul>
+<h3 id="s2">Check your understanding</h3><details><summary>Why does the base class need a virtual destructor?</summary><p>If an object is destroyed through a base pointer (e.g. with delete) and the destructor is not virtual, the derived destructor never runs, so the resources it holds are never released.</p></details><details><summary>What can you use if you do not want to pay for virtual?</summary><p>Use templates (lesson 10): the compiler knows the real type at compile time and calls the function directly, at the cost of possibly more flash, since you get one copy of the code per type.</p></details><aside class="iv"><b>In practice</b><p>A virtual call reads the vptr and the vtable before jumping, which adds only a few cycles (clock ticks, lesson 01) on a Cortex-M4. The bigger cost is that the compiler cannot paste the function body in place of the call (inlining). So avoid virtual only in code that runs extremely often or inside an ISR (lesson 12); elsewhere use it freely.</p></aside>
 <label class="done"><input type="checkbox" id="done-l09" data-l="l09"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../08/"><small>← Previous</small><span>08 · State machine</span></a><a class="next" href="../10/"><small>Next →</small><span>10 · Template: RingBuffer&lt;T, N&gt;</span></a></nav>
