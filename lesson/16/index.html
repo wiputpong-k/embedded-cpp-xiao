@@ -27,7 +27,14 @@
 <article class="lesson" id="l16">
 <header class="lh"><span class="big m">16</span><div class="lhm"><p class="mod">โมดูล B · Git และ GitHub</p><h1>Branch, merge และแก้ conflict</h1><p class="meta">25 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">Hands-on: สร้าง conflict เองแล้วแก้</a></li><li><a href="#s2">เช็กความเข้าใจ</a></li></ol></nav>
-<p class="goal"><b>เป้าหมาย</b> แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<p class="goal"><b>เป้าหมาย</b> แยกงานเป็น branch และแก้ merge conflict ได้โดยไม่ตื่นตระหนก</p>
+<ul>
+<li><b>branch</b> เส้นทางงานแยกออกมาจาก <code class="il">main</code> commit บน branch ไม่กระทบ main จนกว่าจะรวมกลับ</li>
+<li><b>merge</b> การรวมงานจาก branch หนึ่งเข้าอีก branch ถ้าแก้คนละบรรทัด Git รวมให้เองอัตโนมัติ</li>
+<li><b>conflict</b> เมื่อทั้งสอง branch แก้บรรทัดเดียวกัน Git ไม่รู้ว่าจะเอาแบบไหน จึงหยุดให้คุณเลือก</li>
+<li><b>HEAD</b> ตำแหน่งที่คุณอยู่ตอนนี้ คือ branch ที่ <code class="il">git switch</code> มาล่าสุด</li>
+</ul>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
 <line x1="30" y1="50" x2="370" y2="50" class="w"/>
 <path d="M150 50 C170 50 170 112 196 112 H270 C296 112 296 50 314 50" class="w acc"/>
 <circle cx="40" cy="50" r="9" class="pn"/><circle cx="95" cy="50" r="9" class="pn"/><circle cx="150" cy="50" r="9" class="pn"/>
@@ -38,23 +45,41 @@
 <text x="230" y="28" text-anchor="middle" class="sub">แก้บรรทัดเดียวกัน</text><text x="318" y="28" text-anchor="middle" class="sub">merge</text>
 <text x="10" y="166" class="sub">ถ้า 2 branch แก้บรรทัดเดียวกัน git จะหยุดให้คุณเลือก = merge conflict</text>
 </svg></div><figcaption>feature branch แตกจาก main แล้ว merge กลับ</figcaption></figure>
-<h3 id="s1">Hands-on: สร้าง conflict เองแล้วแก้</h3><div class="code"><div class="cl">terminal</div><pre><code>git switch -c feature/fast-blink
-# ใน firmware.ino แก้ {500, 0, blinkTask} เป็น {250, 0, blinkTask}
+<h3 id="s1">Hands-on: สร้าง conflict เองแล้วแก้</h3>
+<p>บทนี้พิสูจน์ว่าแต่ละ branch เก็บไฟล์คนละฉบับ และเมื่อสอง branch แก้บรรทัดเดียวกัน Git จะไม่เดาให้ แต่หยุดให้คุณตัดสินใจ ทำใน Git Bash ที่โฟลเดอร์ <code class="il">~/xiao-embedded-cpp</code></p>
+<ol>
+<li>สร้าง branch ใหม่แล้วสลับไปอยู่ (<code class="il">switch -c</code>) เปิด <code class="il">firmware/firmware.ino</code> ด้วย <code class="il">notepad</code> แก้ <code class="il">{500, 0, blinkTask}</code> เป็น <code class="il">{250, 0, blinkTask}</code> บันทึก ปิด แล้ว commit (<code class="il">-a</code> = add ทุกไฟล์ที่แก้, <code class="il">-m</code> = ข้อความ)</li>
+<li>กลับไปที่ <code class="il">main</code> แล้วเปิดไฟล์อีกครั้ง จะเห็นว่ายังเป็น <code class="il">500</code> เพราะการแก้อยู่บน branch อื่น แก้บรรทัดเดียวกันเป็น <code class="il">{1000, 0, blinkTask}</code> แล้ว commit</li>
+<li>รัน <code class="il">git merge</code> จะได้ข้อความ <code class="il">CONFLICT (content): Merge conflict in firmware/firmware.ino</code></li>
+</ol>
+<div class="code"><div class="cl">Git Bash</div><pre><code>cd ~/xiao-embedded-cpp
+git switch -c feature/fast-blink
+notepad firmware/firmware.ino      # แก้ 500 เป็น 250 บันทึก ปิด
 git commit -am &quot;feat: faster default blink&quot;
 
 git switch main
-# แก้บรรทัดเดียวกันเป็น {1000, 0, blinkTask}
+notepad firmware/firmware.ino      # ยังเป็น 500: แก้เป็น 1000 บันทึก ปิด
 git commit -am &quot;chore: slower default blink&quot;
 
-git merge feature/fast-blink      # → CONFLICT</code></pre></div><div class="code"><div class="cl">firmware.ino ตอน conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+git merge feature/fast-blink       # → CONFLICT</code></pre></div>
+<ol start="4">
+<li>เปิด <code class="il">firmware/firmware.ino</code> อีกครั้ง Git ใส่เครื่องหมายไว้ตรงบรรทัดที่ชนกัน ส่วนระหว่าง <code class="il">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> กับ <code class="il">=======</code> คือของ branch ที่คุณอยู่ (main) ส่วนระหว่าง <code class="il">=======</code> กับ <code class="il">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> คือของ branch ที่กำลัง merge เข้ามา</li>
+<li>เลือกเก็บบรรทัดเดียวที่ต้องการ เช่น <code class="il">{250, 0, blinkTask},</code> ลบอีกบรรทัดและเครื่องหมาย 3 บรรทัดออกให้หมด แล้วบันทึก</li>
+</ol>
+<div class="code"><div class="cl">firmware.ino ตอน conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
   {1000, 0, blinkTask},
 =======
   {250, 0, blinkTask},
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code># แก้ไฟล์ให้เหลือบรรทัดที่ต้องการ ลบเครื่องหมาย &lt;&lt;&lt; === &gt;&gt;&gt; ออก
-git add firmware/firmware.ino
-git commit                         # ปิด merge
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div>
+<ol start="6">
+<li>รัน <code class="il">git add</code> และ <code class="il">git commit</code> โดยไม่ใส่ <code class="il">-m</code> Git จะเปิด editor ที่เลือกไว้ในบท 15 พร้อมข้อความ <code class="il">Merge branch 'feature/fast-blink'</code> ให้แล้ว แค่บันทึกแล้วปิดหน้าต่าง editor commit จะเสร็จเมื่อปิด editor</li>
+<li>รัน <code class="il">git log --oneline --graph --all</code> จะเห็นเส้นของสอง branch มาบรรจบกันเหมือนในรูป แล้วลบ branch ที่ใช้เสร็จแล้ว</li>
+</ol>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git add firmware/firmware.ino
+git commit                         # ปิด merge: บันทึกแล้วปิด editor
 git log --oneline --graph --all
 git branch -d feature/fast-blink</code></pre></div>
+<p>ผลนี้บอกอะไร: ขั้นที่ 2 เห็นว่า main ยังเป็น 500 คือแต่ละ branch แยกกันจริง ส่วนขั้นที่ 3 Git ไม่เลือกค่าให้เอง เพราะการตัดสินว่าค่าไหนถูกเป็นหน้าที่ของคน conflict จึงไม่ใช่ error แต่เป็นคำถามจาก Git ตอบด้วยการแก้ไฟล์แล้ว commit</p>
 <p class="note">merge เก็บประวัติตามจริง (มี merge commit) ส่วน <code class="il">git rebase main</code> ย้าย commit ของ branch ไปต่อท้าย main ทำให้ประวัติเป็นเส้นตรง กฎ: ห้าม rebase branch ที่คนอื่นดึงไปแล้ว</p>
 <h3 id="s2">เช็กความเข้าใจ</h3><details><summary>ถ้าแก้ conflict ผิดแล้วอยากเริ่มใหม่ทำอย่างไร?</summary><p>git merge --abort ก่อน commit จะกลับไปสถานะก่อน merge</p></details><details><summary>ทำไมทีมไม่ commit ตรงเข้า main?</summary><p>main ควร build ได้และ test ผ่านเสมอ การผ่าน branch + PR ให้ CI และคนอื่นตรวจก่อน และย้อนกลับง่าย</p></details>
 <label class="done"><input type="checkbox" id="done-l16" data-l="l16"> เรียนบทนี้จบแล้ว</label>

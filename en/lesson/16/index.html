@@ -27,7 +27,14 @@
 <article class="lesson" id="l16">
 <header class="lh"><span class="big m">16</span><div class="lhm"><p class="mod">Module B · Git and GitHub</p><h1>Branch, merge and resolve conflicts</h1><p class="meta">25 min · Hardware: Computer</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on: create a conflict, then resolve it</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
-<p class="goal"><b>Goal</b> Split work into branches, and resolve merge conflicts without panic</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
+<p class="goal"><b>Goal</b> Split work into branches, and resolve merge conflicts without panic</p>
+<ul>
+<li><b>branch</b>: a separate line of work split off <code class="il">main</code>. Commits on a branch do not touch main until you merge them back.</li>
+<li><b>merge</b>: combining the work of one branch into another. If the two changed different lines, Git combines them automatically.</li>
+<li><b>conflict</b>: both branches changed the same line, so Git cannot know which to keep and stops for you to choose.</li>
+<li><b>HEAD</b>: where you are right now, i.e. the branch you last <code class="il">git switch</code>ed to.</li>
+</ul>
+<figure class="dg"><div class="sv"><svg viewBox="0 0 400 170" role="img">
 <line x1="30" y1="50" x2="370" y2="50" class="w"/>
 <path d="M150 50 C170 50 170 112 196 112 H270 C296 112 296 50 314 50" class="w acc"/>
 <circle cx="40" cy="50" r="9" class="pn"/><circle cx="95" cy="50" r="9" class="pn"/><circle cx="150" cy="50" r="9" class="pn"/>
@@ -38,23 +45,41 @@
 <text x="230" y="28" text-anchor="middle" class="sub">same line edited</text><text x="318" y="28" text-anchor="middle" class="sub">merge</text>
 <text x="10" y="166" class="sub">Same line changed on both branches → git stops = merge conflict</text>
 </svg></div><figcaption>A feature branch splits off main, then merges back</figcaption></figure>
-<h3 id="s1">Hands-on: create a conflict, then resolve it</h3><div class="code"><div class="cl">terminal</div><pre><code>git switch -c feature/fast-blink
-# in firmware.ino change {500, 0, blinkTask} to {250, 0, blinkTask}
+<h3 id="s1">Hands-on: create a conflict, then resolve it</h3>
+<p>This lesson proves that each branch keeps its own version of a file, and that when two branches change the same line Git does not guess but stops for you to decide. Work in Git Bash in the <code class="il">~/xiao-embedded-cpp</code> folder.</p>
+<ol>
+<li>Create a new branch and switch to it (<code class="il">switch -c</code>). Open <code class="il">firmware/firmware.ino</code> with <code class="il">notepad</code>, change <code class="il">{500, 0, blinkTask}</code> to <code class="il">{250, 0, blinkTask}</code>, save, close, and commit (<code class="il">-a</code> = add every changed file, <code class="il">-m</code> = message).</li>
+<li>Switch back to <code class="il">main</code> and open the file again: it still says <code class="il">500</code>, because the change lives on the other branch. Change the same line to <code class="il">{1000, 0, blinkTask}</code> and commit.</li>
+<li>Run <code class="il">git merge</code>. You get <code class="il">CONFLICT (content): Merge conflict in firmware/firmware.ino</code>.</li>
+</ol>
+<div class="code"><div class="cl">Git Bash</div><pre><code>cd ~/xiao-embedded-cpp
+git switch -c feature/fast-blink
+notepad firmware/firmware.ino      # change 500 to 250, save, close
 git commit -am &quot;feat: faster default blink&quot;
 
 git switch main
-# change the same line to {1000, 0, blinkTask}
+notepad firmware/firmware.ino      # still 500: change to 1000, save, close
 git commit -am &quot;chore: slower default blink&quot;
 
-git merge feature/fast-blink      # → CONFLICT</code></pre></div><div class="code"><div class="cl">firmware.ino during the conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+git merge feature/fast-blink       # → CONFLICT</code></pre></div>
+<ol start="4">
+<li>Open <code class="il">firmware/firmware.ino</code> again. Git has marked the clashing lines: between <code class="il">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code class="il">=======</code> is your current branch's version (main); between <code class="il">=======</code> and <code class="il">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> is the version from the branch being merged.</li>
+<li>Keep the one line you want, e.g. <code class="il">{250, 0, blinkTask},</code>, delete the other line and all three marker lines, and save.</li>
+</ol>
+<div class="code"><div class="cl">firmware.ino during the conflict</div><pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
   {1000, 0, blinkTask},
 =======
   {250, 0, blinkTask},
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div><div class="code"><div class="cl">terminal</div><pre><code># keep the line you want and delete the &lt;&lt;&lt; === &gt;&gt;&gt; markers
-git add firmware/firmware.ino
-git commit                         # completes the merge
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/fast-blink</code></pre></div>
+<ol start="6">
+<li>Run <code class="il">git add</code> and <code class="il">git commit</code> without <code class="il">-m</code>. Git opens the editor you chose in lesson 15 with the message <code class="il">Merge branch 'feature/fast-blink'</code> already filled in. Just save and close the editor window; the commit finishes when the editor closes.</li>
+<li>Run <code class="il">git log --oneline --graph --all</code>: the lines of the two branches join, as in the figure. Then delete the finished branch.</li>
+</ol>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git add firmware/firmware.ino
+git commit                         # completes the merge: save and close the editor
 git log --oneline --graph --all
 git branch -d feature/fast-blink</code></pre></div>
+<p>What this tells you: in step 2 main still said 500, so the branches really are separate. In step 3 Git did not pick a value, because deciding which is right is a person's job. A conflict is not an error but a question from Git, answered by editing the file and committing.</p>
 <p class="note">merge keeps the real history (with a merge commit), while <code class="il">git rebase main</code> replays the branch's commits on top of main for a straight-line history. Rule: never rebase a branch someone else has already pulled.</p>
 <h3 id="s2">Check your understanding</h3><details><summary>You resolved a conflict wrongly and want to start over. What do you do?</summary><p>git merge --abort before you commit takes you back to the state before the merge.</p></details><details><summary>Why do teams not commit straight to main?</summary><p>main should always build and pass its tests. Going through a branch + PR lets CI and teammates check first, and makes changes easy to revert.</p></details>
 <label class="done"><input type="checkbox" id="done-l16" data-l="l16"> I finished this lesson</label>
