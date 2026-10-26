@@ -29,6 +29,7 @@
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Step 1: Add the release workflow</a></li><li><a href="#s2">Step 2: Tag and push</a></li><li><a href="#s3">Step 3: Flash the Release file onto the board</a></li><li><a href="#s4">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> Push a tag, get a GitHub Release with the firmware files and the version number built in, and flash that file onto the board</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git tag -a v0.1.0</text><text x="200" y="49" text-anchor="middle" class="sub">SemVer version tag</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">git push origin v0.1.0</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">release.yml</text><text x="200" y="193" text-anchor="middle" class="sub">write version.h → compile</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">GitHub Release</text><text x="200" y="273" text-anchor="middle" class="sub">attach .hex / .zip + release notes</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">team / QA download and flash</text><text x="200" y="353" text-anchor="middle" class="sub">any version can be restored</text></svg></div><figcaption>From a tag to the file QA downloads and flashes</figcaption></figure>
 <p>CD (Continuous Delivery) means delivering ready-to-use files automatically. The workflow in this lesson runs when you push a <b>tag</b> starting with <code class="il">v</code>, such as <code class="il">v0.1.0</code>. It writes <code class="il">version.h</code> from the tag name, compiles the firmware, and creates a GitHub Release page with the files attached for download.</p>
+<p>This lesson proves that the file on the board was built from a tag by the CI machine, not on someone's PC, and that the firmware can report its own version.</p>
 <h3 id="s1">Step 1: Add the release workflow</h3>
 <p>main only accepts changes through PRs (lesson 18), so add this file through a PR as before. Create <code class="il">.github/workflows/release.yml</code> with the content below, then run the next set of commands.</p>
 <div class="code"><div class="cl">.github/workflows/release.yml</div><pre><code>name: Release
@@ -66,7 +67,15 @@ jobs:
           files: |
             out/*.hex
             out/*.zip
-          generate_release_notes: true</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/release
+          generate_release_notes: true</code></pre></div>
+<p>What differs from <code class="il">ci.yml</code>:</p>
+<ul>
+<li><code class="il">tags: ['v*.*.*']</code>: runs only when you push a tag shaped like v plus three numbers, e.g. <code class="il">v0.1.0</code>, not on ordinary code pushes.</li>
+<li><code class="il">permissions: contents: write</code>: lets the workflow write to the repo, which creating a Release page needs (see the second question).</li>
+<li><i>Stamp version</i> writes <code class="il">firmware/src/version.h</code> with one line, <code class="il">#define FW_VERSION "v0.1.0"</code>; <code class="il">GITHUB_REF_NAME</code> is the name of the pushed tag. The <code class="il">#if __has_include("src/version.h")</code> line in firmware.ino (lessons 13–14) finds this file and uses it instead of <code class="il">"dev"</code>.</li>
+<li><code class="il">action-gh-release</code> creates the Release page with the .hex and .zip attached; <code class="il">generate_release_notes</code> writes the list of changes from your PR titles.</li>
+</ul>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/release
 git add .github/workflows/release.yml
 git commit -m &quot;ci: release firmware on version tag&quot;
 git push -u origin ci/release
@@ -80,7 +89,7 @@ git pull</code></pre></div>
 git push origin v0.1.0
 gh release view --web</code></pre></div>
 <h3 id="s3">Step 3: Flash the Release file onto the board</h3>
-<p>The XIAO nRF52840 takes firmware through its bootloader as a <code class="il">.zip</code> (DFU package), not as a raw .hex. Arduino IDE does this for you on every Upload; for a file from a Release you use the <code class="il">adafruit-nrfutil</code> tool.</p>
+<p>The XIAO nRF52840 takes firmware through its bootloader as a <code class="il">.zip</code> called a DFU package (DFU = Device Firmware Update: sending new firmware for the bootloader to write into flash, lesson 01), not as a raw .hex. Arduino IDE does this for you on every Upload; for a file from a Release you use the <code class="il">adafruit-nrfutil</code> tool.</p>
 <ol>
 <li>If you do not have Python yet, install it first (the first command below, in PowerShell), close the terminal and open it again. Then install <code class="il">adafruit-nrfutil</code> with pip.</li>
 <li>In Git Bash, download the <code class="il">.zip</code> from the Release (named something like <code class="il">firmware.ino.zip</code>).</li>
@@ -90,9 +99,9 @@ gh release view --web</code></pre></div>
 </ol><div class="code"><div class="cl">PowerShell</div><pre><code>winget install -e --id Python.Python.3.12
 pip install adafruit-nrfutil</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>gh release download v0.1.0 --pattern &quot;*.zip&quot;
 adafruit-nrfutil --verbose dfu serial --package firmware.ino.zip -p COM5 -b 115200 --singlebank</code></pre></div>
-<p>This is traceability: you always know which firmware version each board runs, and the tag takes you back to that version's code.</p>
-<p class="note">SemVer: MAJOR.MINOR.PATCH. Bug fix → +PATCH, backward-compatible feature → +MINOR, breaking change (e.g. a protocol) → +MAJOR. If you want a .uf2 to drag onto the drive that appears after a double-tap reset, convert the .hex with uf2conv.py (family 0xADA52840).</p>
-<h3 id="s4">Check your understanding</h3><details><summary>Why generate version.h in CI instead of writing the version in the code?</summary><p>The tag becomes the single source of truth, so you cannot forget to bump the number, and local builds say "dev", clearly not a release.</p></details><details><summary>Is permissions: contents: write required?</summary><p>Yes. In many repos the default GITHUB_TOKEN is read-only, and creating a Release needs write access.</p></details>
+<p>What this tells you: seeing <code class="il">fw v0.1.0</code> instead of <code class="il">fw dev</code> means the firmware on the board really is the file CI built from that tag. This is <b>traceability</b>: you always know which firmware version each board runs, and the tag takes you back to that version's code.</p>
+<p class="note">Number versions with SemVer: MAJOR.MINOR.PATCH. A bug fix bumps PATCH, a feature that still works with the old version bumps MINOR, and a change the old version cannot handle (e.g. a new Serial command format) bumps MAJOR.</p>
+<h3 id="s4">Check your understanding</h3><details><summary>Why generate version.h in CI instead of writing the version in the code?</summary><p>The tag becomes the single source of truth, so you cannot forget to bump the number, and local builds say "dev", clearly not a release.</p></details><details><summary>Is permissions: contents: write required?</summary><p>Yes. The workflow uses GITHUB_TOKEN (a temporary key GitHub issues for every run), which is read-only by default in many repos, and creating a Release needs write access.</p></details>
 <label class="done"><input type="checkbox" id="done-l23" data-l="l23"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../22/"><small>← Previous</small><span>22 · CI 2: compile the firmware in CI</span></a><a class="next" href="../24/"><small>Next →</small><span>24 · Capstone and review</span></a></nav>

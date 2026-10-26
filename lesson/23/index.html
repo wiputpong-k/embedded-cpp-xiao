@@ -29,6 +29,7 @@
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">ขั้นที่ 1: เพิ่ม workflow release</a></li><li><a href="#s2">ขั้นที่ 2: ติด tag แล้ว push</a></li><li><a href="#s3">ขั้นที่ 3: แฟลชไฟล์จาก Release ลงบอร์ด</a></li><li><a href="#s4">เช็กความเข้าใจ</a></li></ol></nav>
 <p class="goal"><b>เป้าหมาย</b> push tag แล้วได้ GitHub Release ที่มีไฟล์ firmware และเลขเวอร์ชันฝังในตัว แล้วแฟลชไฟล์นั้นลงบอร์ดได้</p><figure class="dg"><div class="sv"><svg viewBox="0 0 400 374" role="img"><rect x="40" y="10" width="320" height="50" rx="8" class="b"/><text x="200" y="31" text-anchor="middle" class="tt">git tag -a v0.1.0</text><text x="200" y="49" text-anchor="middle" class="sub">ติดเวอร์ชันแบบ SemVer</text><line x1="200" y1="62" x2="200" y2="86" class="ln" marker-end="url(#ah)"/><rect x="40" y="90" width="320" height="34" rx="8" class="b"/><text x="200" y="112" text-anchor="middle" class="tt">git push origin v0.1.0</text><line x1="200" y1="126" x2="200" y2="150" class="ln" marker-end="url(#ah)"/><rect x="40" y="154" width="320" height="50" rx="8" class="ba"/><text x="200" y="175" text-anchor="middle" class="tt">release.yml</text><text x="200" y="193" text-anchor="middle" class="sub">สร้าง version.h → compile</text><line x1="200" y1="206" x2="200" y2="230" class="ln" marker-end="url(#ah)"/><rect x="40" y="234" width="320" height="50" rx="8" class="bm"/><text x="200" y="255" text-anchor="middle" class="tt">GitHub Release</text><text x="200" y="273" text-anchor="middle" class="sub">แนบ .hex / .zip + release notes</text><line x1="200" y1="286" x2="200" y2="310" class="ln" marker-end="url(#ah)"/><rect x="40" y="314" width="320" height="50" rx="8" class="b"/><text x="200" y="335" text-anchor="middle" class="tt">ทีม / QA ดาวน์โหลดไปแฟลช</text><text x="200" y="353" text-anchor="middle" class="sub">ทุกเวอร์ชันย้อนกลับได้</text></svg></div><figcaption>จาก tag ถึงไฟล์ที่ QA ดาวน์โหลดไปแฟลช</figcaption></figure>
 <p>CD (Continuous Delivery) คือการส่งมอบไฟล์ที่พร้อมใช้งานโดยอัตโนมัติ workflow ในบทนี้ทำงานเมื่อ push <b>tag</b> ที่ขึ้นต้นด้วย <code class="il">v</code> เช่น <code class="il">v0.1.0</code> มันจะสร้างไฟล์ <code class="il">version.h</code> จากชื่อ tag, compile firmware แล้วสร้างหน้า GitHub Release พร้อมแนบไฟล์ให้ดาวน์โหลด</p>
+<p>บทนี้พิสูจน์ว่าไฟล์ที่ลงบอร์ดสร้างจาก tag โดยเครื่อง CI ไม่ใช่จากเครื่องใครคนหนึ่ง และ firmware บอกเวอร์ชันของตัวเองได้</p>
 <h3 id="s1">ขั้นที่ 1: เพิ่ม workflow release</h3>
 <p>main ถูกตั้งกฎให้รับการเปลี่ยนแปลงผ่าน PR เท่านั้น (บท 18) จึงต้องเพิ่มไฟล์นี้ผ่าน PR เหมือนเดิม สร้างไฟล์ <code class="il">.github/workflows/release.yml</code> ด้วยเนื้อหาข้างล่าง แล้วรันคำสั่งชุดถัดไป</p>
 <div class="code"><div class="cl">.github/workflows/release.yml</div><pre><code>name: Release
@@ -66,7 +67,15 @@ jobs:
           files: |
             out/*.hex
             out/*.zip
-          generate_release_notes: true</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/release
+          generate_release_notes: true</code></pre></div>
+<p>ส่วนที่ต่างจาก <code class="il">ci.yml</code>:</p>
+<ul>
+<li><code class="il">tags: ['v*.*.*']</code> รันเฉพาะเมื่อ push tag ที่มีรูปแบบ v ตามด้วยตัวเลข 3 ชุด เช่น <code class="il">v0.1.0</code> ไม่รันตอน push code ปกติ</li>
+<li><code class="il">permissions: contents: write</code> ให้สิทธิ์ workflow เขียนลง repo ได้ เพราะต้องสร้างหน้า Release (ดูคำถามข้อสอง)</li>
+<li><i>Stamp version</i> เขียนไฟล์ <code class="il">firmware/src/version.h</code> หนึ่งบรรทัดคือ <code class="il">#define FW_VERSION "v0.1.0"</code> โดย <code class="il">GITHUB_REF_NAME</code> คือชื่อ tag ที่ push มา บรรทัด <code class="il">#if __has_include("src/version.h")</code> ใน firmware.ino (บท 13–14) จะเจอไฟล์นี้และใช้ค่าแทน <code class="il">"dev"</code></li>
+<li><code class="il">action-gh-release</code> สร้างหน้า Release แนบไฟล์ .hex และ .zip ส่วน <code class="il">generate_release_notes</code> เขียนรายการสิ่งที่เปลี่ยนจากชื่อ PR ให้เอง</li>
+</ul>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/release
 git add .github/workflows/release.yml
 git commit -m &quot;ci: release firmware on version tag&quot;
 git push -u origin ci/release
@@ -80,7 +89,7 @@ git pull</code></pre></div>
 git push origin v0.1.0
 gh release view --web</code></pre></div>
 <h3 id="s3">ขั้นที่ 3: แฟลชไฟล์จาก Release ลงบอร์ด</h3>
-<p>บอร์ด XIAO nRF52840 รับ firmware ผ่าน bootloader ด้วยไฟล์ <code class="il">.zip</code> (DFU package) ไม่ใช่ไฟล์ .hex โดยตรง Arduino IDE ทำขั้นนี้ให้ทุกครั้งที่กด Upload ส่วนไฟล์จาก Release ต้องใช้เครื่องมือ <code class="il">adafruit-nrfutil</code></p>
+<p>บอร์ด XIAO nRF52840 รับ firmware ผ่าน bootloader ด้วยไฟล์ <code class="il">.zip</code> ที่เรียกว่า DFU package (DFU = Device Firmware Update คือการส่ง firmware ใหม่ให้ bootloader เขียนลง flash ตามบท 01) ไม่ใช่ไฟล์ .hex โดยตรง Arduino IDE ทำขั้นนี้ให้ทุกครั้งที่กด Upload ส่วนไฟล์จาก Release ต้องใช้เครื่องมือ <code class="il">adafruit-nrfutil</code></p>
 <ol>
 <li>ถ้ายังไม่มี Python ให้ติดตั้งก่อน (คำสั่งแรกข้างล่าง ใน PowerShell) แล้วปิด terminal เปิดใหม่ จากนั้นติดตั้ง <code class="il">adafruit-nrfutil</code> ด้วย pip</li>
 <li>ใน Git Bash ดาวน์โหลดไฟล์ <code class="il">.zip</code> จาก Release (ชื่อประมาณ <code class="il">firmware.ino.zip</code>)</li>
@@ -90,9 +99,9 @@ gh release view --web</code></pre></div>
 </ol><div class="code"><div class="cl">PowerShell</div><pre><code>winget install -e --id Python.Python.3.12
 pip install adafruit-nrfutil</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>gh release download v0.1.0 --pattern &quot;*.zip&quot;
 adafruit-nrfutil --verbose dfu serial --package firmware.ino.zip -p COM5 -b 115200 --singlebank</code></pre></div>
-<p>นี่คือ traceability: รู้เสมอว่าบอร์ดตัวไหนรัน firmware เวอร์ชันไหน และย้อนไปดูโค้ดของเวอร์ชันนั้นได้จาก tag</p>
-<p class="note">SemVer: MAJOR.MINOR.PATCH แก้บั๊ก +PATCH, ฟีเจอร์ใหม่ที่เข้ากันได้ +MINOR, เปลี่ยนแบบเข้ากันไม่ได้ (เช่น protocol) +MAJOR ถ้าต้องการไฟล์ .uf2 สำหรับลากวางลงไดรฟ์ที่ขึ้นมาตอน double-tap reset ให้แปลงจาก .hex ด้วย uf2conv.py (family 0xADA52840)</p>
-<h3 id="s4">เช็กความเข้าใจ</h3><details><summary>ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?</summary><p>ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release</p></details><details><summary>permissions: contents: write จำเป็นไหม?</summary><p>จำเป็น GITHUB_TOKEN ค่าเริ่มต้นอ่านอย่างเดียวในหลาย repo ต้องให้สิทธิ์เขียนเพื่อสร้าง Release</p></details>
+<p>ผลนี้บอกอะไร: เห็น <code class="il">fw v0.1.0</code> แทน <code class="il">fw dev</code> แปลว่า firmware บนบอร์ดคือไฟล์ที่ CI build จาก tag นั้นจริง เรียกว่า <b>traceability</b>: รู้เสมอว่าบอร์ดตัวไหนรัน firmware เวอร์ชันไหน และย้อนไปดูโค้ดของเวอร์ชันนั้นได้จาก tag</p>
+<p class="note">ตั้งเลขเวอร์ชันแบบ SemVer: MAJOR.MINOR.PATCH แก้บั๊กเพิ่ม PATCH, เพิ่มฟีเจอร์ที่ยังใช้กับของเดิมได้เพิ่ม MINOR, เปลี่ยนแบบที่ของเดิมใช้ไม่ได้ (เช่น เปลี่ยนรูปแบบคำสั่ง Serial) เพิ่ม MAJOR</p>
+<h3 id="s4">เช็กความเข้าใจ</h3><details><summary>ทำไมสร้าง version.h ใน CI แทนเขียนเลขเวอร์ชันในโค้ด?</summary><p>ให้ tag เป็นแหล่งความจริงแหล่งเดียว ลืมแก้เลขไม่ได้ และ build ในเครื่องจะติด "dev" ชัดเจนว่าไม่ใช่ของ release</p></details><details><summary>permissions: contents: write จำเป็นไหม?</summary><p>จำเป็น workflow ใช้ GITHUB_TOKEN (กุญแจชั่วคราวที่ GitHub ออกให้ทุกครั้งที่รัน) ซึ่งในหลาย repo อ่านได้อย่างเดียวเป็นค่าเริ่มต้น การสร้าง Release ต้องได้สิทธิ์เขียน</p></details>
 <label class="done"><input type="checkbox" id="done-l23" data-l="l23"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../22/"><small>← บทก่อนหน้า</small><span>22 · CI 2: compile firmware ใน CI</span></a><a class="next" href="../24/"><small>บทถัดไป →</small><span>24 · Capstone และทบทวน</span></a></nav>
