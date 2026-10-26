@@ -28,16 +28,19 @@
 <header class="lh"><span class="big m">22</span><div class="lhm"><p class="mod">Module C · Testable code and CI/CD</p><h1>CI 2: compile the firmware in CI</h1><p class="meta">30 min · Hardware: Computer</p></div></header>
 <nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Step 1: Find the FQBN with arduino-cli</a></li><li><a href="#s2">Step 2: Add the build-firmware job</a></li><li><a href="#s3">Step 3: Require PRs to pass CI</a></li><li><a href="#s4">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> Add a job that compiles the firmware after the tests pass, and require PRs to pass CI before merging</p>
+<p>The last lesson's CI tests the logic, but nobody checks yet that the whole firmware compiles. This lesson proves that the firmware builds on a clean machine that is not yours (not just "works on my PC"), and that a PR that breaks the build cannot be merged.</p>
 <h3 id="s1">Step 1: Find the FQBN with arduino-cli</h3>
-<p>CI has no Arduino IDE to click, so it uses arduino-cli, Arduino driven by typed commands. It needs the board's full name (FQBN), and the surest way to get it right is to ask arduino-cli on your own machine.</p>
+<p>CI has no Arduino IDE to click, so it uses <b>arduino-cli</b>, Arduino driven by typed commands (Arduino IDE 2 itself runs arduino-cli behind the scenes). It needs the board's full name, the <b>FQBN</b> (Fully Qualified Board Name), in the form <code class="il">vendor:architecture:board</code>. The first line of the verbose output in lesson 01 shows it too.</p>
 <ol>
-<li>Open <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> and download the file ending in <code class="il">Windows_64bit.zip</code> from the latest release.</li>
-<li>Extract the zip into a folder that is easy to find, e.g. <code class="il">C:\tools\arduino-cli</code>.</li>
-<li>Open that folder in File Explorer, right-click an empty area and choose <b>Open in Terminal</b> (this opens PowerShell).</li>
-<li>Run the commands below one line at a time. The last one lists the boards with their FQBN, e.g. <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code>.</li>
-</ol><div class="code"><div class="cl">PowerShell</div><pre><code>.\arduino-cli.exe core update-index --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-.\arduino-cli.exe core install Seeeduino:nrf52 --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-.\arduino-cli.exe board listall xiao</code></pre></div>
+<li>Arduino IDE 2 ships with arduino-cli and shares the core you installed in lesson 00. Open PowerShell and run the command below (if the IDE is installed elsewhere, adjust the path).</li>
+<li>Find the <i>Seeed XIAO nRF52840 Sense</i> line. Its FQBN is <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code>. If your board is not the Sense model, use that model's value instead.</li>
+</ol>
+<p class="note">macOS / Linux, or not using Arduino IDE 2: download arduino-cli from <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> and run <code class="il">core install Seeeduino:nrf52 --additional-urls …</code> before <code class="il">board listall</code>, as in the <i>Install board core</i> step of ci.yml below.</p>
+<div class="code"><div class="cl">PowerShell</div><pre><code>&amp; &quot;C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe&quot; board listall xiao</code></pre></div><div class="code"><div class="cl">Expected output</div><pre><code>Board Name                     FQBN
+Seeed XIAO nRF52840            Seeeduino:nrf52:xiaonRF52840
+Seeed XIAO nRF52840 Plus       Seeeduino:nrf52:xiaonRF52840Plus
+Seeed XIAO nRF52840 Sense      Seeeduino:nrf52:xiaonRF52840Sense
+Seeed XIAO nRF52840 Sense Plus Seeeduino:nrf52:xiaonRF52840SensePlus</code></pre></div>
 <h3 id="s2">Step 2: Add the build-firmware job</h3>
 <ol>
 <li>In Git Bash, create a new branch, open <code class="il">.github/workflows/ci.yml</code> and replace its content with the file below (the <code class="il">env:</code> section and the <code class="il">build-firmware</code> job are new). If the FQBN from step 1 differs from the one in the file, change it to match.</li>
@@ -88,7 +91,17 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: out/</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/build-firmware
+          path: out/</code></pre></div>
+<p>What is new since lesson 21:</p>
+<ul>
+<li><code class="il">env:</code>: variables shared by every job, used in commands as <code class="il">"$BOARD_URL"</code> and <code class="il">"$FQBN"</code>, so you change them in one place.</li>
+<li><code class="il">needs: host-tests</code>: this job waits until <code class="il">host-tests</code> has passed.</li>
+<li><code class="il">setup-python</code> + <code class="il">pip install adafruit-nrfutil</code>: the tool the core uses to package the .zip for the bootloader (lesson 23); on Linux you install it yourself.</li>
+<li><code class="il">setup-arduino-cli</code> and the <i>Install board core</i> step install arduino-cli and the Seeed core every time, because the runner is a clean machine. It is the same as Boards Manager in lesson 00.</li>
+<li><i>Compile</i> is the IDE's Verify button as a command. <code class="il">--output-dir out</code> puts the results (.hex, .zip) in an <code class="il">out</code> folder.</li>
+<li><code class="il">upload-artifact</code> stores the <code class="il">out</code> folder with that run under the name <i>firmware</i>. Files produced by a build like this are called <b>artifacts</b>.</li>
+</ul>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/build-firmware
 # edit ci.yml and save, then:
 git add .github/
 git commit -m &quot;ci: compile firmware after host tests&quot;
@@ -102,7 +115,7 @@ gh pr checks --watch</code></pre></div>
 <li>Add a CI status badge at the top of the README (replace <code class="il">&lt;user&gt;</code> with your GitHub account name) and commit it through a PR.</li>
 </ol><div class="code"><div class="cl">README.md</div><pre><code>![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></pre></div>
 <p class="note">If the CI compile fails at the packaging step, check that adafruit-nrfutil is installed and that the FQBN matches what <code class="il">arduino-cli board listall xiao</code> shows. Pin the core version with <code class="il">Seeeduino:nrf52@x.y.z</code> so builds are reproducible.</p>
-<h3 id="s4">Check your understanding</h3><details><summary>What is needs: host-tests for?</summary><p>build-firmware runs only after the tests pass, which saves time and makes the order of priority clear. Without it, the two jobs run in parallel.</p></details><details><summary>Why pin the core and action versions?</summary><p>For reproducible builds. If the core updates itself, the firmware may change behavior without anyone touching the code. It is the same idea as a locked BOM in hardware.</p></details><aside class="iv"><b>In practice</b><p>Teams often mix up CI and CD: CI = integrate code often and check it automatically every time; CD = deliver ready-to-use artifacts automatically (next lesson). Keeping them apart makes pipeline discussions easier.</p></aside>
+<h3 id="s4">Check your understanding</h3><details><summary>What is needs: host-tests for?</summary><p>build-firmware runs only after the tests pass, which saves time and makes the order of priority clear. Without it, the two jobs run in parallel.</p></details><details><summary>Why pin the core and action versions?</summary><p>So that building again at any time gives the same firmware. If the core updates itself, the firmware may behave differently without anyone touching the code. It is the same idea as locking part numbers in a hardware BOM (bill of materials).</p></details><aside class="iv"><b>In practice</b><p>Teams often mix up CI and CD: CI = integrate code often and check it automatically every time; CD = deliver ready-to-use artifacts automatically (next lesson). Keeping them apart makes pipeline discussions easier.</p></aside>
 <label class="done"><input type="checkbox" id="done-l22" data-l="l22"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../21/"><small>← Previous</small><span>21 · CI 1: run tests automatically with GitHub Actions</span></a><a class="next" href="../23/"><small>Next →</small><span>23 · CD: automatic firmware releases from tags</span></a></nav>

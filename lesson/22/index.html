@@ -28,16 +28,19 @@
 <header class="lh"><span class="big m">22</span><div class="lhm"><p class="mod">โมดูล C · Testable code และ CI/CD</p><h1>CI 2: compile firmware ใน CI</h1><p class="meta">30 นาที · ฮาร์ดแวร์: คอมพิวเตอร์</p></div></header>
 <nav class="toc" aria-label="ในบทนี้"><b>ในบทนี้</b><ol><li><a href="#s1">ขั้นที่ 1: หาค่า FQBN ด้วย arduino-cli</a></li><li><a href="#s2">ขั้นที่ 2: เพิ่ม job build-firmware</a></li><li><a href="#s3">ขั้นที่ 3: บังคับให้ PR ต้องผ่าน CI</a></li><li><a href="#s4">เช็กความเข้าใจ</a></li></ol></nav>
 <p class="goal"><b>เป้าหมาย</b> เพิ่ม job ที่ compile firmware ทุกครั้งหลัง test ผ่าน และบังคับให้ PR ต้องผ่าน CI ก่อน merge</p>
+<p>บทที่แล้ว CI รัน test ของ logic แต่ยังไม่รู้ว่า firmware ทั้งก้อน compile ผ่านหรือเปล่า บทนี้พิสูจน์ว่า firmware build ได้บนเครื่องเปล่าที่ไม่ใช่เครื่องเรา (ไม่ใช่แค่ "ในเครื่องผมได้") และ PR ที่ทำให้ build พังจะ merge ไม่ได้</p>
 <h3 id="s1">ขั้นที่ 1: หาค่า FQBN ด้วย arduino-cli</h3>
-<p>CI ไม่มี Arduino IDE ให้กด จึงใช้ arduino-cli ซึ่งเป็น Arduino แบบสั่งงานด้วยคำสั่งพิมพ์ ต้องบอกชื่อเต็มของบอร์ด (FQBN) ให้ถูก วิธีที่แน่นอนที่สุดคือถาม arduino-cli ในเครื่องเอง</p>
+<p>CI ไม่มี Arduino IDE ให้กด จึงใช้ <b>arduino-cli</b> คือ Arduino แบบสั่งงานด้วยคำสั่งพิมพ์ (Arduino IDE 2 เองก็เรียก arduino-cli อยู่เบื้องหลัง) ต้องบอกชื่อเต็มของบอร์ดที่เรียกว่า <b>FQBN</b> (Fully Qualified Board Name) ในรูป <code class="il">ผู้ผลิต:สถาปัตยกรรม:บอร์ด</code> บรรทัดแรกของ verbose output ในบท 01 ก็แสดงค่านี้</p>
 <ol>
-<li>เปิดหน้า <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> แล้วดาวน์โหลดไฟล์ที่ลงท้ายด้วย <code class="il">Windows_64bit.zip</code> ของเวอร์ชันล่าสุด</li>
-<li>แตกไฟล์ zip ไว้ในโฟลเดอร์ที่หาง่าย เช่น <code class="il">C:\tools\arduino-cli</code></li>
-<li>เปิดโฟลเดอร์นั้นใน File Explorer คลิกขวาที่พื้นที่ว่าง แล้วเลือก <b>Open in Terminal</b> (เปิด PowerShell)</li>
-<li>รันคำสั่งข้างล่างทีละบรรทัด คำสั่งสุดท้ายจะแสดงชื่อบอร์ดพร้อม FQBN เช่น <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code></li>
-</ol><div class="code"><div class="cl">PowerShell</div><pre><code>.\arduino-cli.exe core update-index --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-.\arduino-cli.exe core install Seeeduino:nrf52 --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-.\arduino-cli.exe board listall xiao</code></pre></div>
+<li>Arduino IDE 2 มี arduino-cli มาให้แล้ว และใช้ core ที่ติดตั้งไว้ในบท 00 ตัวเดียวกัน เปิด PowerShell แล้วรันคำสั่งข้างล่าง (ถ้าติดตั้ง IDE ไว้ที่อื่น ให้แก้ path ให้ตรง)</li>
+<li>มองหาบรรทัด <i>Seeed XIAO nRF52840 Sense</i> ค่า FQBN คือ <code class="il">Seeeduino:nrf52:xiaonRF52840Sense</code> ถ้าบอร์ดของคุณไม่ใช่รุ่น Sense ให้ใช้ค่าของรุ่นนั้นแทน</li>
+</ol>
+<p class="note">macOS / Linux หรือไม่ได้ใช้ Arduino IDE 2: ดาวน์โหลด arduino-cli จาก <a href="https://github.com/arduino/arduino-cli/releases">github.com/arduino/arduino-cli/releases</a> แล้วรัน <code class="il">core install Seeeduino:nrf52 --additional-urls …</code> ก่อน <code class="il">board listall</code> แบบเดียวกับขั้น <i>Install board core</i> ใน ci.yml ข้างล่าง</p>
+<div class="code"><div class="cl">PowerShell</div><pre><code>&amp; &quot;C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe&quot; board listall xiao</code></pre></div><div class="code"><div class="cl">ผลที่ควรเห็น</div><pre><code>Board Name                     FQBN
+Seeed XIAO nRF52840            Seeeduino:nrf52:xiaonRF52840
+Seeed XIAO nRF52840 Plus       Seeeduino:nrf52:xiaonRF52840Plus
+Seeed XIAO nRF52840 Sense      Seeeduino:nrf52:xiaonRF52840Sense
+Seeed XIAO nRF52840 Sense Plus Seeeduino:nrf52:xiaonRF52840SensePlus</code></pre></div>
 <h3 id="s2">ขั้นที่ 2: เพิ่ม job build-firmware</h3>
 <ol>
 <li>ใน Git Bash สร้าง branch ใหม่ แล้วเปิด <code class="il">.github/workflows/ci.yml</code> แทนที่เนื้อหาทั้งหมดด้วยไฟล์ข้างล่าง (ส่วน <code class="il">env:</code> และ job <code class="il">build-firmware</code> เป็นของใหม่) ถ้า FQBN ที่ได้จากขั้นที่ 1 ต่างจากในไฟล์ ให้แก้ให้ตรง</li>
@@ -88,7 +91,17 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: out/</code></pre></div><div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/build-firmware
+          path: out/</code></pre></div>
+<p>ส่วนที่เพิ่มจากบท 21:</p>
+<ul>
+<li><code class="il">env:</code> ตัวแปรที่ทุก job ใช้ร่วมกัน เรียกในคำสั่งด้วย <code class="il">"$BOARD_URL"</code> และ <code class="il">"$FQBN"</code> แก้ที่เดียวพอ</li>
+<li><code class="il">needs: host-tests</code> ให้ job นี้รอจน <code class="il">host-tests</code> ผ่านก่อนค่อยเริ่ม</li>
+<li><code class="il">setup-python</code> + <code class="il">pip install adafruit-nrfutil</code> เครื่องมือที่ core ใช้แพ็กไฟล์ .zip สำหรับ bootloader (บท 23) บน Linux ต้องติดตั้งเอง</li>
+<li><code class="il">setup-arduino-cli</code> และขั้น <i>Install board core</i> ติดตั้ง arduino-cli และ core ของ Seeed ทุกครั้ง เพราะ runner เป็นเครื่องเปล่า เทียบได้กับ Boards Manager ในบท 00</li>
+<li><i>Compile</i> คือปุ่ม Verify ของ IDE ในรูปคำสั่ง <code class="il">--output-dir out</code> ให้เก็บผลลัพธ์ (.hex, .zip) ไว้ในโฟลเดอร์ <code class="il">out</code></li>
+<li><code class="il">upload-artifact</code> เก็บโฟลเดอร์ <code class="il">out</code> ไว้กับ run นั้นในชื่อ <i>firmware</i> ไฟล์ที่ได้จากการ build แบบนี้เรียกว่า <b>artifact</b></li>
+</ul>
+<div class="code"><div class="cl">Git Bash</div><pre><code>git switch -c ci/build-firmware
 # แก้ ci.yml แล้วบันทึก จากนั้น:
 git add .github/
 git commit -m &quot;ci: compile firmware after host tests&quot;
@@ -102,7 +115,7 @@ gh pr checks --watch</code></pre></div>
 <li>ใส่ badge แสดงสถานะ CI ไว้บนสุดของ README (เปลี่ยน <code class="il">&lt;user&gt;</code> เป็นชื่อบัญชี GitHub ของคุณ) แล้ว commit ผ่าน PR</li>
 </ol><div class="code"><div class="cl">README.md</div><pre><code>![CI](https://github.com/&lt;user&gt;/xiao-embedded-cpp/actions/workflows/ci.yml/badge.svg)</code></pre></div>
 <p class="note">ถ้า compile ใน CI ล้มที่ขั้น packaging ให้ดูว่าติดตั้ง adafruit-nrfutil แล้ว และ FQBN ตรงกับที่ <code class="il">arduino-cli board listall xiao</code> แสดง เวอร์ชัน core ควร pin ด้วย <code class="il">Seeeduino:nrf52@x.y.z</code> เพื่อให้ build ซ้ำได้เหมือนเดิม</p>
-<h3 id="s4">เช็กความเข้าใจ</h3><details><summary>needs: host-tests มีไว้ทำไม?</summary><p>ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน</p></details><details><summary>ทำไมต้อง pin เวอร์ชัน core / action?</summary><p>ให้ build reproducible ถ้า core อัปเดตเอง firmware อาจเปลี่ยนพฤติกรรมโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับ BOM lock ในฮาร์ดแวร์</p></details><aside class="iv"><b>มุมงานจริง</b><p>ในทีม CI กับ CD มักถูกพูดปนกัน: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป) แยกให้ชัดแล้วจะคุยเรื่อง pipeline กันง่ายขึ้น</p></aside>
+<h3 id="s4">เช็กความเข้าใจ</h3><details><summary>needs: host-tests มีไว้ทำไม?</summary><p>ให้ build-firmware รันหลัง test ผ่านเท่านั้น ประหยัดเวลาและสื่อลำดับความสำคัญ ถ้าไม่ใส่ 2 job จะรันขนานกัน</p></details><details><summary>ทำไมต้อง pin เวอร์ชัน core / action?</summary><p>ให้ build ซ้ำเมื่อไรก็ได้ firmware เหมือนเดิม ถ้า core อัปเดตเอง firmware อาจทำงานต่างไปโดยไม่มีใครแก้โค้ด เป็นหลักเดียวกับการล็อกรุ่นชิ้นส่วนใน BOM (รายการชิ้นส่วน) ของฮาร์ดแวร์</p></details><aside class="iv"><b>มุมงานจริง</b><p>ในทีม CI กับ CD มักถูกพูดปนกัน: CI = รวมโค้ดบ่อยและตรวจอัตโนมัติทุกครั้ง, CD = ส่งมอบ artifact ที่พร้อมใช้อัตโนมัติ (บทถัดไป) แยกให้ชัดแล้วจะคุยเรื่อง pipeline กันง่ายขึ้น</p></aside>
 <label class="done"><input type="checkbox" id="done-l22" data-l="l22"> เรียนบทนี้จบแล้ว</label>
 </article>
 <nav class="pager"><a class="prev" href="../21/"><small>← บทก่อนหน้า</small><span>21 · CI 1: รัน test อัตโนมัติด้วย GitHub Actions</span></a><a class="next" href="../23/"><small>บทถัดไป →</small><span>23 · CD: release firmware อัตโนมัติด้วย tag</span></a></nav>
