@@ -478,7 +478,7 @@ for i, l in enumerate(LESSONS):
     body, heads, toc = add_toc(l['body'].replace('@ROOT@', '../../' + LROOT))
     m = re.search(r'<p class="goal"><b>.*?</b> (.*?)</p>', body)
     goal_text = strip(m.group(1)) if m else ''
-    search.append(dict(n=n, t=strip(l['title']), g=goal_text, h=heads, u=f'lesson/{n}/', m=MODS[l['mod']]))
+    search.append(dict(n=n, t=l['title'], g=goal_text, h=heads, u=f'lesson/{n}/', m=MODS[l['mod']]))
     prev = LESSONS[i - 1] if i else None
     nxt = LESSONS[i + 1] if i + 1 < N else None
     def pager_link(x, cls, label):
@@ -496,7 +496,7 @@ for i, l in enumerate(LESSONS):
 </article>
 <nav class="pager">{pager_link(prev, 'prev', T('← บทก่อนหน้า', '← Previous'))}{pager_link(nxt, 'next', T('บทถัดไป →', 'Next →'))}</nav>
 </main>'''
-    write(f'lesson/{n}/index.html', doc(f'{n} · {strip(l["title"])} · {TITLE}', 2, other, page_body, 'lesson-page', f'lesson/{n}/',
+    write(f'lesson/{n}/index.html', doc(f'{n} · {l["title"]} · {TITLE}', 2, other, page_body, 'lesson-page', f'lesson/{n}/',
                                             f'{T("บท", "Lesson")} {n}: {goal_text} · {TITLE}'))
 
 # ---- home ----
