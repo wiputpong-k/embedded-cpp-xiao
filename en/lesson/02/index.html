@@ -25,8 +25,8 @@
 <main class="wrap">
 <nav class="crumb"><a href="../../">← Contents</a><span class="m">02 / 24</span></nav>
 <article class="lesson" id="l02">
-<header class="lh"><span class="big m">02</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Reference, const and constexpr instead of #define</h1><p class="meta">25 min · Hardware: Board only</p></div></header>
-<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Hands-on</a></li><li><a href="#s2">Check your understanding</a></li></ol></nav>
+<header class="lh"><span class="big m">02</span><div class="lhm"><p class="mod">Module A · C++ for C programmers</p><h1>Reference, const and constexpr instead of #define</h1><p class="meta">30 min · Hardware: Board only</p></div></header>
+<nav class="toc" aria-label="In this lesson"><b>In this lesson</b><ol><li><a href="#s1">Why constexpr beats #define</a></li><li><a href="#s2">Passing a copy vs passing a reference</a></li><li><a href="#s3">Hands-on</a></li><li><a href="#s4">Check your understanding</a></li></ol></nav>
 <p class="goal"><b>Goal</b> Stop using #define for constants, and pass parameters by reference in the right places</p>
 <p>In C, constants are often <code class="il">#define LED_COUNT 3</code>. The preprocessor (the first build stage from lesson 01) simply replaces the text <code class="il">LED_COUNT</code> with <code class="il">3</code> before compiling, so the value has no type and no scope. C++ has a better way, plus references, which replace pointers in many cases.</p>
 <div class="vs"><div><span class="tag">C</span><p>Constants use <code class="il">#define</code>: no type, no scope. To change the caller's variable you pass a pointer.</p></div><div><span class="tag t2">C++</span><p><code class="il">constexpr</code> has a type and is computed at compile time, using no RAM. <code class="il">T&amp;</code> is an alias for an existing variable: never null, no <code class="il">*</code> needed.</p></div></div>
@@ -34,7 +34,37 @@
 <li><b>compile time / runtime</b>: a value known while compiling (on the PC, before the board) versus one known only while the program runs on the board. A compile-time value needs no work on the chip and no RAM.</li>
 <li><b>scope</b>: the region where a name can be used, e.g. inside a function's <code class="il">{ }</code>. <code class="il">#define</code> ignores scope: it applies to the rest of the file.</li>
 <li><b>reference (<code class="il">T&amp;</code>)</b>: a second name for an existing variable. Changing it changes the original, like passing a pointer, but with no <code class="il">&amp;</code> at the call and no <code class="il">*</code> when using it.</li>
+<li><b><code class="il">constexpr</code></b>: short for constant expression, usually said "const-ex-per". A constant the compiler works out while compiling.</li>
 </ul>
+<h3 id="s1">Why constexpr beats #define</h3>
+<p>On the board the result is the same: the number is built into the code and uses no RAM. But <code class="il">#define</code> only replaces text, while <code class="il">constexpr</code> is a real value the compiler knows about, so it can catch mistakes. The clearest example:</p>
+<div class="code"><pre><code>#define SIZE 2 + 3
+int a = SIZE * 2;             // text becomes 2 + 3 * 2 = 8 (not 10!)
+
+constexpr int kSize = 2 + 3;
+int b = kSize * 2;            // = 10, correct
+
+constexpr uint8_t kBad = 300; // error: 300 does not fit in uint8_t (0-255)</code></pre></div>
+<ul>
+<li><b>It has a type</b>: the compiler checks that the value fits. <code class="il">#define</code> has no type, so nothing is checked.</li>
+<li><b>It has a scope</b>: <code class="il">#define</code> replaces the word everywhere after it, including in files included later. If the name clashes with one in a library, things break in ways that are hard to trace.</li>
+<li><b>Readable errors</b>: errors and the debugger show the name <code class="il">kSize</code>; with <code class="il">#define</code> you only see the number it was replaced with.</li>
+</ul>
+<p><code class="il">#define</code> is still the tool for preprocessor jobs such as include guards (<code class="il">#ifndef FOO_H</code>) or switching code on and off with <code class="il">#ifdef DEBUG</code>. For constants, use <code class="il">constexpr</code>.</p>
+<h3 id="s2">Passing a copy vs passing a reference</h3>
+<div class="code"><pre><code>void addCopy(size_t n) { n = n + 1; }   // gets a copy: the original does not change
+void addRef(size_t&amp; n)  { n = n + 1; }   // gets the original: the original changes
+
+size_t i = 0;
+addCopy(i);   // i is still 0
+addRef(i);    // i is now 1</code></pre></div>
+<p>Think of a document: passing by value hands over a photocopy, so scribbling on it leaves the original alone; passing a reference hands over the original. How to choose:</p>
+<ul>
+<li><b>Must change the caller's variable</b> → <code class="il">T&amp;</code></li>
+<li><b>Only reads it, small type</b> (<code class="il">int</code>, <code class="il">size_t</code>, <code class="il">float</code>, <code class="il">bool</code>, pointers) → pass by value; copying something small is as fast as a reference.</li>
+<li><b>Only reads it, large data</b> (struct, <code class="il">String</code>, buffer) → <code class="il">const T&amp;</code>: no full copy, less RAM, and <code class="il">const</code> stops accidental changes.</li>
+</ul>
+<p>If the function produces a single result, a <code class="il">return</code> value is usually easier to read than changing a reference.</p>
 <figure class="dg"><div class="sv"><svg viewBox="0 0 400 190" role="img">
 <text x="205" y="22" text-anchor="middle" class="sub m">current @ 0x2000_0104</text>
 <rect x="150" y="30" width="110" height="46" rx="8" class="ba"/><text x="205" y="59" text-anchor="middle" class="tt m">2</text>
@@ -45,7 +75,7 @@
 <text x="84" y="182" text-anchor="middle" class="sub">nullable · can re-point</text>
 <text x="322" y="182" text-anchor="middle" class="sub">never null · bound at init</text>
 </svg></div><figcaption>A pointer stores an address of its own; a reference stays bound to the original variable for life</figcaption></figure>
-<h3 id="s1">Hands-on</h3>
+<h3 id="s3">Hands-on</h3>
 <p>This sketch proves three things: <code class="il">constexpr</code> can size an array and is computed at compile time, a reference changes the caller's variable without a pointer, and <code class="il">const</code> lets the compiler catch bugs for you.</p>
 <ol>
 <li>Create a new sketch (<b>File → New Sketch</b>), paste the code below, and save it as <code class="il">rgb_cycle</code>.</li>
@@ -80,7 +110,10 @@ void loop() {
   nextIndex(current);
 }</code></pre></div>
 <ul>
-<li><code class="il">uint8_t</code>, <code class="il">uint32_t</code>: types with an explicit size (8 and 32 bits); <code class="il">size_t</code> is for counts and sizes. They replace <code class="il">int</code>, whose size depends on the board (lesson 01).</li>
+<li><code class="il">uint8_t</code>, <code class="il">uint32_t</code>: types with an explicit size (8 and 32 bits). They replace <code class="il">int</code>, whose size depends on the board (lesson 01).</li>
+<li><code class="il">size_t</code> is a <b>type</b> (not a variable): an unsigned integer for sizes, counts and indexes. On the XIAO it is 32 bits, and it is the type <code class="il">sizeof</code> returns.</li>
+<li><code class="il">sizeof(kLedPins) / sizeof(kLedPins[0])</code> = size of the whole array divided by the size of one element = number of elements. Here 3 / 1 = 3 (a <code class="il">uint8_t</code> is 1 byte). It only works on a real array: an array passed into a function becomes a pointer and the formula is wrong.</li>
+<li><code class="il">(idx + 1) % kLedCount</code>: <code class="il">%</code> is the remainder, so idx cycles 0 → 1 → 2 → 0 (since 3 % 3 = 0) and never runs past the last LED.</li>
 <li><code class="il">for (uint8_t pin : kLedPins)</code> is C++11's <b>range-based for</b>: it visits every element of the array without an index.</li>
 <li><code class="il">HIGH</code> = off and <code class="il">LOW</code> = on, because the on-board LED is active-LOW (lesson 00).</li>
 </ul>
@@ -95,7 +128,7 @@ void printPin(const uint8_t&amp; p) {
   p = 0;
 }</code></pre></div>
 <p>The compiler refuses with <code class="il">error: assignment of read-only reference 'p'</code>. That is what const buys you: the bug is caught at compile time, not while the board runs. (<code class="il">const uint8_t&amp;</code> is only for this experiment; small types like this are normally passed by value, see the first question below.) Delete the function afterwards.</p>
-<h3 id="s2">Check your understanding</h3><details><summary>When should you pass const T& instead of by value?</summary><p>When T is bigger than a register (a 32-bit storage slot inside the CPU), such as a struct or buffer, to avoid a copy. Pass int, float and pointers by value: faster and easier to read.</p></details><details><summary>How does constexpr differ from const?</summary><p>const means read-only, but the value may only be known at runtime. constexpr must be known at compile time, so it can size an array (and feed templates, lesson 10).</p></details><aside class="iv"><b>In practice</b><p>In firmware code reviews, #define constants are often sent back to become constexpr: #define has no type checking, ignores namespaces and scope, is invisible to the debugger, and macro expansion can cause side effects.</p></aside>
+<h3 id="s4">Check your understanding</h3><details><summary>When should you pass const T& instead of by value?</summary><p>When T is bigger than a register (a 32-bit storage slot inside the CPU), such as a struct or buffer, to avoid a copy. Pass int, float and pointers by value: faster and easier to read.</p></details><details><summary>How does constexpr differ from const?</summary><p>const means read-only, but the value may only be known at runtime. constexpr must be known at compile time, so it can size an array (and feed templates, lesson 10).</p></details><aside class="iv"><b>In practice</b><p>In firmware code reviews, #define constants are often sent back to become constexpr: #define has no type checking, ignores namespaces and scope, is invisible to the debugger, and macro expansion can cause side effects.</p></aside>
 <label class="done"><input type="checkbox" id="done-l02" data-l="l02"> I finished this lesson</label>
 </article>
 <nav class="pager"><a class="prev" href="../01/"><small>← Previous</small><span>01 · .ino is C++, and the path from code to board</span></a><a class="next" href="../03/"><small>Next →</small><span>03 · namespace, overloading, enum class</span></a></nav>
